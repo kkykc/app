@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>KKYKC</title>
+<style>
+  :root { --oranje: #e8630a; --tekst: #1f2328; --zacht: #6a737d; --bg: #fff; --kader: #e5e7eb; }
+  @media (prefers-color-scheme: dark) { :root { --tekst: #e6e6e6; --zacht: #9aa4ae; --bg: #16181c; --kader: #2c3036; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: var(--tekst); background: var(--bg); }
+  header { background: var(--oranje); color: #fff; padding: 14px 18px; font-weight: bold; font-size: 20px; letter-spacing: .5px; }
+  main { max-width: 520px; margin: 0 auto; padding: 24px 18px; }
+  .kaart { border: 1px solid var(--kader); border-radius: 12px; padding: 20px; }
+  .zacht { color: var(--zacht); font-size: 14px; }
+  .fout { color: #c62828; }
+  button.lijn { margin-top: 16px; padding: 10px 18px; border-radius: 20px; border: 1px solid var(--kader); background: transparent; color: var(--tekst); font-size: 15px; cursor: pointer; }
+  .chip { display: inline-block; padding: 3px 10px; margin: 2px 4px 2px 0; border-radius: 12px; background: var(--oranje); color: #fff; font-size: 13px; }
+  #knop { margin-top: 14px; min-height: 44px; }
+</style>
+<script src="https://accounts.google.com/gsi/client" async></script>
+<script src="api.js"></script>
+</head>
+<body>
+<header>KKYKC</header>
+<main>
+  <div class="kaart" id="kaart">
+    <div id="uit">
+      <p>Meld je aan met je Google-account.</p>
+      <p class="zacht">De app ziet enkel je naam en e-mailadres, geen bestanden.</p>
+      <div id="knop"></div>
+      <p id="melding"></p>
+    </div>
+    <div id="in" hidden>
+      <p id="wie">Even geduld…</p>
+      <p id="rollen"></p>
+      <p class="zacht" id="tijd"></p>
+      <button class="lijn" id="opnieuw">Opnieuw meten</button>
+      <button class="lijn" id="afmelden">Afmelden</button>
+    </div>
+  </div>
+  <p class="zacht" style="margin-top:18px">Testversie – nog niet verspreiden. · <a href="privacy.html" style="color:inherit">Privacy</a></p>
+</main>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var NAMEN = { hoofdtrainer: 'hoofdtrainer', trainer: 'trainer', sporter: 'sporter' };
+  function tekst(el, t, fout) { el.textContent = t; el.className = fout ? 'fout' : ''; }
+  function toon(aan) { $('uit').hidden = aan; $('in').hidden = !aan; }
+  function laad() {
+    toon(true); tekst($('wie'), 'Even geduld…'); $('rollen').textContent = ''; $('tijd').textContent = '';
+    KKYKC.api('wieBenIk').then(function (r) {
+      var d = r.data;
+      tekst($('wie'), 'Je bent ' + (d.naam || d.email) + (d.naam ? ' (' + d.email + ')' : '') + '.');
+      var el = $('rollen'); el.textContent = '';
+      if (!d.rollen.length) el.textContent = 'Nog geen rol gekoppeld aan dit account.';
+      else { el.appendChild(document.createTextNode('Rol: ')); d.rollen.forEach(function (x) { var s = document.createElement('span'); s.className = 'chip'; s.textContent = NAMEN[x] || x; el.appendChild(s); }); }
+      $('tijd').textContent = 'Aanroep: ' + (r.ms / 1000).toFixed(1).replace('.', ',') + ' s (server ' + ((r.serverMs || 0) / 1000).toFixed(1).replace('.', ',') + ' s)';
+    }, function (e) {
+      if (e.code === 'token' || e.code === 'verlopen' || e.code === 'aud') { toon(false); $('knop').textContent = ''; KKYKC.knop($('knop')); tekst($('melding'), e.message, true); }
+      else tekst($('wie'), e.message, true); $('tijd').textContent = e.ms ? 'Aanroep: ' + (e.ms / 1000).toFixed(1).replace('.', ',') + ' s' : '';
+    });
+  }
+  if (!KKYKC.ingesteld()) { tekst($('uit').firstElementChild, 'De app is nog niet ingesteld (client-ID of API-adres ontbreekt).', true); return; }
+  KKYKC.opAanmelden(function () { $('melding').textContent = ''; laad(); });
+  $('afmelden').onclick = function () { KKYKC.afmelden(); toon(false); $('knop').textContent = ''; KKYKC.knop($('knop')); };
+  $('opnieuw').onclick = laad;
+  if (KKYKC.aangemeld()) laad(); else KKYKC.knop($('knop'));
+})();
+</script>
+</body>
+</html>
