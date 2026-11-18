@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="nl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>KKYKC – Mijn trainingen</title>
+<script src="https://accounts.google.com/gsi/client" async></script>
+<script src="api.js"></script>
+
+<script>
+/* Thema en weergave worden per toestel bewaard; sinds 11/11/2026 ook de laatst geladen gegevens van JOUW account (max. 14 dagen), om sneller te openen */
+(function(){ var t = null; try { t = localStorage.getItem('kkykc-mt-thema'); } catch (e) {}
+  if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); })();
+</script>
+<style>
+:root{--or:#C96008;--or-ink:#9A4700;--geel:#FDE68A;--bg:#fff;--fg:#1C1712;--mu:#6E6257;--ln:#E8DDD0;--kaart:#FFFBF6;--beige:#E2D3C3;--grijs:#ECE7E1;
+  --ok:#2F7D3B;--ok-bg:#DCEFDD;--warn:#9A6A00;--warn-bg:#FCEBB6;--oranje:#B4560B;--oranje-bg:#FAD9BC;--blauw:#2F6B8F;--blauw-bg:#DCEAF3;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17130F;--fg:#F3ECE4;--mu:#B2A595;--ln:#3A3027;--kaart:#211B15;--beige:#4A3B2E;--grijs:#2C2620;--or-ink:#F0A060;
+  --ok:#7FCB8A;--ok-bg:#1F3A24;--warn:#E9C25A;--warn-bg:#3D3112;--oranje:#F0A060;--oranje-bg:#43280F;--blauw:#7DB3D6;--blauw-bg:#1C2D3A;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17130F;--fg:#F3ECE4;--mu:#B2A595;--ln:#3A3027;--kaart:#211B15;--beige:#4A3B2E;--grijs:#2C2620;--or-ink:#F0A060;
+  --ok:#7FCB8A;--ok-bg:#1F3A24;--warn:#E9C25A;--warn-bg:#3D3112;--oranje:#F0A060;--oranje-bg:#43280F;--blauw:#7DB3D6;--blauw-bg:#1C2D3A;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--fg);font-size:15px}
+header{background:var(--or);color:#fff;padding:12px 16px}
+.hin{max-width:900px;margin:auto;display:flex;gap:10px;align-items:center}.hin>div{flex:1;min-width:0}
+header h1{margin:0;font-size:20px}header #wie{font-size:13px;opacity:.9}
+.tknop{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.75);border-radius:6px;padding:6px 10px;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
+main{padding:12px 16px 30px;max-width:900px;margin:auto}
+h2{font-size:17px;margin:20px 0 8px;border-bottom:2px solid var(--or);padding-bottom:4px}
+.dag{background:var(--kaart);border:1px solid var(--ln);border-radius:8px;padding:10px 12px;margin:8px 0}
+.dag b{display:block;margin-bottom:4px}.inh{white-space:pre-wrap;font-size:14px}.mu{color:var(--mu);font-size:13px}
+.chip{display:inline-block;padding:2px 8px;border-radius:12px;font-size:13px;font-weight:bold;color:#222;margin:4px 6px 4px 0;cursor:pointer;border:0;font-family:inherit}
+.chip span{display:inline-block;margin-left:6px;background:#fff8;border-radius:50%;width:17px;text-align:center}
+table{border-collapse:collapse;width:100%;font-size:14px}td,th{border-bottom:1px solid var(--ln);padding:6px 4px;text-align:left;vertical-align:top}
+.knop{display:inline-block;background:var(--or);color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:bold;margin:8px 0;border:0;font:inherit;font-weight:bold;cursor:pointer}
+.balk{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.weergave{display:flex;gap:4px}.weergave button{border:1px solid var(--ln);background:var(--kaart);color:var(--fg);border-radius:8px;padding:7px 12px;font:inherit;font-size:14px;cursor:pointer}
+.weergave button[aria-pressed="true"]{background:var(--or);color:#fff;border-color:var(--or)}
+#pop{display:none;position:fixed;inset:0;background:#0008;align-items:center;justify-content:center;padding:16px;z-index:9}
+#pop .k{background:var(--bg);color:var(--fg);border-radius:10px;max-width:480px;width:100%;padding:16px;max-height:85vh;overflow:auto;border-top:4px solid var(--or)}
+details.ex{margin:6px 0;border:1px solid var(--li,#ddd);border-radius:8px;padding:4px 10px}details.ex summary{cursor:pointer;font-weight:bold;font-size:14px;padding:4px 0}details.ex h4{margin:8px 0 2px;font-size:14px}details.ex ul{margin:4px 0 4px 18px;padding:0}details.ex li{margin:3px 0}
+#pop h3{margin:0 0 2px}#pop .blok{margin-top:10px}#pop .blok b{display:block;color:var(--or-ink)}
+.scroll{overflow-x:auto}
+/* kalender */
+.kal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.kal .kh{font-size:11px;font-weight:bold;color:var(--mu);text-align:center;padding:2px 0}
+.kal .wkk{grid-column:1/-1;font-size:12px;color:var(--mu);margin-top:8px;border-top:2px solid var(--beige);padding-top:3px}
+.kal .wkk b{color:var(--fg)}
+.kd{border:1px solid var(--ln);background:var(--kaart);border-radius:6px;min-height:58px;padding:3px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.kd.vandaag{outline:2px solid var(--or)}.kd.weg{opacity:.45}
+.kd .dnr{font-size:10.5px;color:var(--mu)}
+.wo{display:block;width:100%;text-align:left;border:0;border-left:4px solid var(--mu);background:var(--grijs);color:var(--fg);border-radius:4px;padding:3px 4px;font:inherit;font-size:11px;line-height:1.25;cursor:pointer;overflow-wrap:anywhere}
+.wo b{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wo .dl{display:block;height:4px;border-radius:2px;margin-top:2px}
+.wo .lang{display:none}
+.c-groen{border-color:var(--ok);background:var(--ok-bg)}.c-geel{border-color:var(--warn);background:var(--warn-bg)}
+.c-oranje{border-color:var(--oranje);background:var(--oranje-bg)}.c-extra{border-color:var(--blauw);background:var(--blauw-bg)}
+.c-niet{border-color:var(--mu);background:transparent;opacity:.75}
+.c-gepland{border:1px dashed var(--beige);border-left:4px solid var(--beige);background:transparent}
+.legende{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:var(--mu);margin:4px 0 8px}
+.legende i{display:inline-block;width:12px;height:10px;border-left:4px solid;margin-right:4px;vertical-align:middle;border-radius:2px}
+.vgl{width:100%;font-size:14px;margin-top:6px}.vgl th{color:var(--mu);font-weight:normal;width:34%}
+.kd-t{width:100%;font-size:13.5px;margin-top:4px}.kd-t th,.kd-t td{padding:5px 6px}.kd-t thead th{font-size:12px;color:var(--mu);border-bottom:2px solid var(--or)}
+.kd-t tbody th{color:var(--mu);font-weight:normal;white-space:nowrap}
+.kd-z{width:auto;margin-top:6px}.kd-z th,.kd-z td{padding:2px 8px;border:1px solid var(--ln);font-size:12px;text-align:center}
+.pil{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;font-weight:bold;white-space:nowrap}
+.p-ok{background:var(--ok-bg);color:var(--ok)}.p-warn{background:var(--warn-bg);color:var(--warn)}.p-grijs{background:var(--grijs);color:var(--mu)}
+#pop .k{max-width:560px}
+@media (max-width:480px){.kd-t th,.kd-t td{padding:4px 3px;font-size:12.5px}}
+@media (min-width:700px){.kal{gap:4px}.kd{min-height:84px;padding:4px}.wo{font-size:12px;padding:4px 6px}.wo b{font-size:12px}.wo .lang{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-top:2px}.kal .kh{font-size:12px}}
+.p-blauw{background:var(--blauw-bg);color:var(--blauw)}.p-bad{background:var(--oranje-bg);color:var(--oranje)}
+h3{margin:14px 0 6px}
+#mtbalk{max-width:900px;margin:10px auto 0;padding:8px 12px;border-radius:8px;font-size:13px;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;background:var(--grijs);border:1px solid var(--ln)}
+#mtbalk[hidden]{display:none}
+#mtbalk.nieuw{background:var(--oranje-bg);border-color:var(--oranje)}#mtbalk.ok{background:var(--ok-bg);border-color:var(--ok)}
+#mtbalk button{margin-left:auto;background:var(--or);color:#fff;border:0;border-radius:6px;padding:6px 14px;font:inherit;font-size:13px;font-weight:bold;cursor:pointer}
+@media (max-width:930px){#mtbalk{margin:10px 12px 0}}
+</style></head>
+<body>
+<header><div class="hin"><div><h1>Mijn trainingen</h1><div id="wie">Laden…</div></div>
+  <button class="tknop" id="btnThema" type="button" onclick="themaWissel()" aria-pressed="false">&#9790; Donker</button><button class="tknop" id="btnAf" type="button" onclick="appAfmelden()" hidden>Afmelden</button></div></header>
+<div id="mtbalk" role="status" hidden></div>
+<main id="inhoud"><p class="mu">Je gegevens worden geladen…</p></main>
+<div id="pop" onclick="if(event.target===this)sluit()"><div class="k" id="popk" role="dialog" aria-modal="true"></div></div>
+<script>
+var D = null, DAGEN = ['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'], DK = ['ma','di','wo','do','vr','za','zo'];
+var WEERGAVE = 'kalender', KAL = [];
+try { var w0 = localStorage.getItem('kkykc-mt-weergave'); if (w0 === 'lijst' || w0 === 'kalender') WEERGAVE = w0; } catch (e) {}
+function themaHuidig(){ var t = document.documentElement.getAttribute('data-theme'); if (t === 'light' || t === 'dark') return t;
+  return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light'; }
+function themaKnop(){ var b = document.getElementById('btnThema'), d = themaHuidig() === 'dark';
+  b.textContent = d ? '☀ Licht' : '☾ Donker'; b.setAttribute('aria-pressed', d ? 'true' : 'false'); b.title = d ? 'Lichte modus' : 'Donkere modus'; }
+function themaWissel(){ var n = themaHuidig() === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', n);
+  try { localStorage.setItem('kkykc-mt-thema', n); } catch (e) {} themaKnop(); }
+themaKnop();
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>'"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]; }); }
+function dnr(d){ var p = d.split('-'); return Math.round(Date.UTC(+p[0], +p[1]-1, +p[2]) / 864e5); }
+function ddmm(n){ var x = new Date(n * 864e5); return x.getUTCDate() + '/' + (x.getUTCMonth() + 1); }
+function wdag(n){ return ((n % 7) + 10) % 7; }   /* ma = 0 */
+function datum(d){ var p = d.split('-'), x = new Date(Date.UTC(+p[0], +p[1]-1, +p[2])); return DAGEN[x.getUTCDay()] + ' ' + (+p[2]) + '/' + (+p[1]); }
+function isoWeek(n){ var thu = n - wdag(n) + 3, j1 = Math.round(Date.UTC(new Date(thu * 864e5).getUTCFullYear(), 0, 1) / 864e5); return Math.floor((thu - j1) / 7) + 1; }
+function getal(s){ var m = /(\d+(?:[.,]\d+)?)/.exec(String(s || '')); return m ? Number(m[1].replace(',', '.')) : null; }
+function minuten(s){   /* zelfde lezing als het dashboard: u:mm, 1u15, 75', 75 min, 1,5u */
+  var t = String(s || '').trim().toLowerCase(), m;
+  if (!t) return null;
+  if ((m = /^(\d+):(\d{1,2}):(\d{1,2})$/.exec(t))) return +m[1] <= 6 ? +m[1] * 60 + +m[2] + m[3] / 60 : null;
+  if ((m = /^(\d+):(\d{1,2})$/.exec(t))) return +m[1] <= 6 ? +m[1] * 60 + +m[2] : null;
+  if ((m = /^(\d+)[.,](\d+)\s*(u|uur|h)$/.exec(t))) return Number(m[1] + '.' + m[2]) * 60;
+  if ((m = /^(?:(\d+)\s*(?:u|uur|h)\s*)?(?:(\d+)\s*(?:min|m|minuten|')?)?\s*(?:(\d+)\s*(?:s|sec|"))?$/.exec(t)) && (m[1] || m[2])) {
+    if (!m[1] && /^\d+$/.test(t) && +m[2] <= 5) return null;
+    return (+m[1] || 0) * 60 + (+m[2] || 0) + (+m[3] || 0) / 60;
+  }
+  return null;
+}
+function kleur(n){ var k = (D.doelen[n] || {}).kleur || '#eeeeee'; return /^#[0-9a-f]{3,8}$/i.test(k) ? k : '#eeeeee'; }
+function chip(i){ var p = D.plan[i]; if (!p.doel) return '';
+  return '<button class="chip" style="background:' + kleur(p.doel) + '" onclick="toon(' + i + ')">' + esc(p.doel) + '<span>?</span></button>'; }
+function toon(i){
+  var p = D.plan[i], d = D.doelen[p.doel] || {}, wi = D.weekinfo[p.w] || {}, h = '';
+  h += '<h3><span class="chip" style="background:' + kleur(p.doel) + '">' + esc(p.doel) + '</span></h3>';
+  if (d.vakterm) h += '<div class="mu">' + esc(d.vakterm) + '</div>';
+  [['Wat', d.wat], ['Waarom', d.waarom], ['Hoe voelt het', d.voelt]].forEach(function(x){ if (x[1]) h += '<div class="blok"><b>' + x[0] + '</b>' + esc(x[1]) + '</div>'; });
+  if (p.waarom) h += '<div class="blok"><b>Waarom nu</b>' + esc(p.waarom) + '</div>';
+  h += '<div class="blok mu">Week ' + p.w + (wi.fase ? ' · fase ' + esc(wi.fase) : '') + (wi.focus ? ' · focus: ' + esc(wi.focus) : '') + (p.doel_auto ? '<br>(automatisch toegekend)' : '') + '</div>';
+  h += '<p><button class="knop" onclick="sluit()">Sluiten</button></p>';
+  popup(h);
+}
+function popup(h){ document.getElementById('popk').innerHTML = h; document.getElementById('pop').style.display = 'flex'; }
+function sluit(){ document.getElementById('pop').style.display = 'none'; }
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape') sluit(); });
+function toonFout(t){ document.getElementById('wie').textContent = ''; document.getElementById('inhoud').innerHTML = '<p>' + esc(t) + '</p>'; }
+
+/* ---------- rekenen zoals het dashboard (TSS-schaal, verwachte RPE, categorie, tijd/afstand lezen) ----------
+   Parameters uit het schema (D.rek, door de backend meegestuurd); TSS_STD = zelfde standaard als kkykc_dashboard.html. */
+var TSS_STD = {
+  rpe_per_uur: {'0':0,'1':20,'2':30,'3':40,'4':50,'5':60,'6':70,'7':80,'8':100,'9':120,'10':140},
+  zone_rpe: {T0:1, T1:2.5, T2:5, T3:6, T4:7.5, TMAX:9},
+  land_rpe: {'Loop rustig':3, 'Loop tempo':6, 'Fietsen':2.5, 'Core-stability':3, 'Kracht zaal':5, 'Overig':3},
+  soort_rpe: {kayak:3, kajak:3, lopen:3.5, loop:3.5, fietsen:2.5, fiets:2.5, hometrainer:2.5, kracht:5, chup:5, core:3, houding:2, ergo:4, zwemmen:3.5, wandelen:1, rolschaatsen:2.5, _standaard:3},
+  rem_rpe: 1.0, rem_zones: ['T1','T2','T3','T4','TMAX'], delta_rpe: 1.5
+};
+function R(){ return (D && D.rek) || {}; }
+function T(){ var t = {}, k, x = R().tss || {}; for (k in TSS_STD) t[k] = TSS_STD[k]; for (k in x) t[k] = x[k]; return t; }
+function fmt(x, nd){ if (nd == null) nd = 1; return x == null || !isFinite(x) ? '–' : x.toFixed(nd).replace('.', ','); }
+function sgnN(x, nd){ if (nd == null) nd = 1; if (x == null || !isFinite(x)) return '–'; var v = Number(x.toFixed(nd)); return v === 0 ? fmt(0, nd) : (v > 0 ? '+' : '') + fmt(v, nd); }
+function sgnPct(u, g){ if (u == null || !g) return '–'; var q = u / g - 1; return (q > 0 ? '+' : '') + Math.round(q * 100) + ' %'; }
+function tssUur(rpe){ var t = T().rpe_per_uur, r = Math.max(0, Math.min(10, rpe)), a = Math.floor(r), b = Math.min(10, a + 1); return t[a] + (t[b] - t[a]) * (r - a); }
+function rpeVanTssUur(x){ var t = T().rpe_per_uur; for (var r = 0; r < 10; r++) if (x <= t[r + 1]) return r + (x - t[r]) / ((t[r + 1] - t[r]) || 1); return 10; }
+/* kolom KA (extra uitleg) staat in het schema meestal al achteraan in de inhoud (na ' | '): enkel tonen als ze er nog niet in zit */
+function normTxt(t){ return String(t || '').toLowerCase().replace(/\s+/g, ' ').trim(); }
+function extraTekst(p){ var x = normTxt(p.ext); return x && normTxt(p.inh).indexOf(x) < 0 ? p.ext : ''; }
+function metRem(p){ return /\bmet\s+rem\b/i.test((p.inh || '') + ' ' + (p.ext || '')); }
+function planTss(p){
+  var t = T(), rem = metRem(p) ? (t.rem_rpe || 0) : 0, tss = 0;
+  (R().zones || []).forEach(function(z, i){
+    var r = (t.zone_rpe[z] != null ? t.zone_rpe[z] : 3) + ((t.rem_zones || []).indexOf(z) >= 0 ? rem : 0);
+    tss += ((p.z && p.z[i]) || 0) / 60 * tssUur(r);
+  });
+  if (p.lm) tss += p.lm / 60 * tssUur(t.land_rpe[p.lt] != null ? t.land_rpe[p.lt] : (t.land_rpe.Overig != null ? t.land_rpe.Overig : 3));
+  return tss;
+}
+function soortRpe(soort, c){
+  var m = T().soort_rpe, s = String(soort || '').toLowerCase(), ks = Object.keys(m).sort(function(a, b){ return b.length - a.length; });
+  for (var i = 0; i < ks.length; i++) if (ks[i][0] !== '_' && s.indexOf(ks[i]) >= 0) return [m[ks[i]], ks[i]];
+  return c === 'water' ? [m.kayak != null ? m.kayak : 3, 'water (T1)'] : [m._standaard != null ? m._standaard : 3, 'standaard'];
+}
+function categorie(soort){   /* zoals het dashboard: exacte soort, daarna deelwoord (> 2 tekens); anders de oude trefwoorden */
+  var s = String(soort || '').trim().toLowerCase(), map = R().soort_naar_categorie || {}, c, i;
+  if (!s) return '';
+  for (c in map) if ((map[c] || []).indexOf(s) >= 0) return c;
+  for (c in map){ var w = (map[c] || []).slice().sort(function(a, b){ return b.length - a.length; });
+    for (i = 0; i < w.length; i++) if (w[i].length > 2 && s.indexOf(w[i]) >= 0) return c; }
+  return cat(s);
+}
+function gevoelScore(gv){
+  var g = R().gevoel_schaal || {}, k = String(gv || '').replace(/️/g, '').trim(), e;
+  if (!k) return null;
+  var kk = /^[\x00-\x7f]*$/.test(k) ? k.toUpperCase() : k;
+  if (g[kk] != null) return g[kk];
+  for (e in g) if (e.toLowerCase() === k.toLowerCase()) return g[e];
+  for (e in g) if (!/^[\x00-\x7f]*$/.test(e) && k.indexOf(e) === 0) return g[e];
+  var w = k.toLowerCase().replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim();
+  for (e in g) if (e.toLowerCase() === w) return g[e];
+  return null;
+}
+/* planning: verwachte belasting en RPE (worden pas getoond als de sporter de training invulde) */
+function bereidPlan(){
+  D.plan.forEach(function(p){
+    if (!p.cat) p.cat = cat((p.type || '') + ' ' + (p.inh || '')) || 'overig';   /* C-groep: enkel tekst */
+    p.tss = (p.z || p.lm) ? planTss(p) : null;
+    p.rpeExp = p.tss != null && p.duur > 0 && p.cat !== 'overig' ? rpeVanTssUur(p.tss / (p.duur / 60)) : null;
+  });
+}
+/* logboek: tijd, afstand, RPE, gevoel en categorie lezen met dezelfde grenzen als het dashboard */
+function bereidLogboek(){
+  var dr = R().drempels || {}, tmin = dr.tijd_min || 5, tmax = dr.tijd_max || 480, vmin = dr.snelheid_water_min_kmu || 3, vmax = dr.snelheid_water_max_kmu || 17;
+  D.logboek.forEach(function(e){
+    e.min = minuten(e.tijd); if (e.min != null && !(e.min >= tmin && e.min <= tmax)) e.min = null;
+    e.km = getal(e.afstand); if (!(e.km > 0)) e.km = null;
+    e.cat = categorie(e.soort) || (e.km ? (R().lege_soort_met_afstand || 'water') : '');
+    e.kmOk = true;
+    if (e.cat === 'water' && e.km && e.min){ var v = e.km / (e.min / 60); if (!(v >= vmin && v <= vmax)) e.kmOk = false; }
+    var r = getal(e.rpe); e.rpeN = r != null && r >= 0 && r <= 10 ? r : null;
+    e.gevoelN = gevoelScore(e.gevoel);
+  });
+}
+function belasting(e, p){   /* zelfde volgorde als het dashboard: RPE × duur → plan geschaald naar duur → typische RPE per soort */
+  var mi = e.min, sch = '';
+  if (!mi && e.cat === 'water' && e.km){ mi = e.km / ((R().snelheid || {}).T1 || 10.5) * 60; sch = ' (duur geschat uit km aan T1-snelheid)'; }
+  if (e.rpeN != null && mi) return {l: mi / 60 * tssUur(e.rpeN), bron: 'RPE', f: fmt(mi, 0) + ' min × ' + fmt(tssUur(e.rpeN), 0) + ' TSS/u (RPE ' + fmt(e.rpeN, 1) + ')' + sch};
+  if (p && p.tss != null){
+    if (e.min && p.duur > 0) return {l: p.tss * e.min / p.duur, bron: 'plan', f: 'geen RPE: plan ' + fmt(p.tss, 0) + ' TSS × ' + fmt(e.min, 0) + '/' + fmt(p.duur, 0) + ' min'};
+    return {l: p.tss, bron: 'plan', f: 'geen RPE/tijd: zoals gepland ' + fmt(p.tss, 0) + ' TSS'};
+  }
+  if (!mi) return {l: null, bron: '–', f: 'geen duur: niet berekend'};
+  var sr = soortRpe(e.soort, e.cat);
+  return {l: mi / 60 * tssUur(sr[0]), bron: 'soort', f: 'geen RPE: ' + fmt(mi, 0) + ' min × ' + fmt(tssUur(sr[0]), 0) + ' TSS/u (typische RPE ' + fmt(sr[0], 1) + ' voor ' + sr[1] + ')' + sch};
+}
+
+/* ---------- koppeling gepland ↔ uitgevoerd (per dag; dagdeel eerst, zelfde categorie water/land zoals het dashboard) ---------- */
+function koppel(){
+  var vand = dnr(D.vandaag), perDag = {};
+  D.plan.forEach(function(p, i){ p.i = i; p.dn = dnr(p.d); (perDag[p.dn] = perDag[p.dn] || {p: [], l: []}).p.push(p); });
+  D.logboek.forEach(function(t){ t.dn = dnr(t.d); (perDag[t.dn] = perDag[t.dn] || {p: [], l: []}).l.push(t); });
+  Object.keys(perDag).forEach(function(k){
+    var x = perDag[k], vrij = x.l.slice();
+    x.p.sort(function(a, b){ return String(a.dd).localeCompare(String(b.dd)); });
+    x.p.forEach(function(p){
+      var past = function(t){ return !!t.cat && (t.cat === p.cat || p.cat === 'overig'); };   /* soort onbekend: niet koppelen (zoals het dashboard) */
+      var kand = vrij.filter(past), j = -1;
+      if (p.dd) kand.forEach(function(t){ if (j < 0 && t.dd === p.dd) j = vrij.indexOf(t); });
+      if (j < 0 && kand.length) j = vrij.indexOf(kand[0]);
+      p.log = j >= 0 ? vrij.splice(j, 1)[0] : null;
+      if (p.log){ p.log.p = p; p.log.b = belasting(p.log, p);
+        p.log.dRpe = p.log.rpeN != null && p.rpeExp != null ? p.log.rpeN - p.rpeExp : null; }
+      p.st = status(p, vand);
+    });
+    vrij.forEach(function(t){ t.p = null; t.b = belasting(t, null); t.dRpe = null; });
+    x.extra = vrij;
+  });
+  return perDag;
+}
+function cat(t){
+  t = String(t || '').toLowerCase();
+  if (/kayak|kajak|kano|k1|k2|k4|varen|water|wedstrijd|leie/.test(t)) return 'water';
+  if (/lopen|loop|fiets|hometrainer|kracht|core|chup|zwem|wandel|ergo|houding|stretch|mobiliteit|rolschaats|land/.test(t)) return 'land';
+  return '';
+}
+function status(p, vand){
+  if (p.log){
+    var e = p.log, q = null, basis = '';
+    if (e.min && p.duur > 0){ q = e.min / p.duur; basis = 'duur'; } else if (e.km && e.kmOk && p.km){ q = e.km / p.km; basis = 'afstand'; }
+    if (q == null) return {c: 'c-groen', t: 'gedaan'};
+    var t = basis + ' ' + Math.round(q * 100) + ' % van het plan';
+    if (q >= 0.8 && q <= 1.2) return {c: 'c-groen', t: t};
+    if (q >= 0.5 && q <= 1.5) return {c: 'c-geel', t: t};
+    return {c: 'c-oranje', t: t};
+  }
+  if (p.dn >= vand) return {c: 'c-gepland', t: 'gepland'};
+  return {c: 'c-niet', t: 'niet ingevuld'};
+}
+function kort(p){ return p.duur ? Math.round(p.duur) + "'" : (p.km ? String(Math.round(p.km * 10) / 10).replace('.', ',') + ' km' : ''); }
+function kalender(){
+  var perDag = koppel(), vand = dnr(D.vandaag), van = dnr(D.kal_van || D.vandaag), tot = dnr(D.kal_tot || D.vandaag);
+  van -= wdag(van); tot += 6 - wdag(tot); KAL = [];
+  var h = '<div class="legende"><span><i style="border-color:var(--ok)"></i>80–120 % van het plan</span><span><i style="border-color:var(--warn)"></i>50–79 % of 121–150 %</span>' +
+    '<span><i style="border-color:var(--oranje)"></i>minder of meer</span><span><i style="border-color:var(--blauw)"></i>extra training</span>' +
+    '<span><i style="border-color:var(--mu)"></i>niet ingevuld</span><span><i style="border-color:var(--beige);border-style:dashed"></i>gepland</span></div>';
+  h += '<div class="kal">';
+  for (var ws = van; ws <= tot; ws += 7){
+    var wi = D.weekinfo[isoWeek(ws)] || {};
+    h += '<div class="wkk"><b>Week ' + isoWeek(ws) + '</b> · ' + ddmm(ws) + ' – ' + ddmm(ws + 6) + (wi.fase ? ' · ' + esc(wi.fase) : '') + '</div>';
+    if (ws === van) h += DK.map(function(d){ return '<div class="kh">' + d + '</div>'; }).join('');
+    for (var n = ws; n < ws + 7; n++){
+      var x = perDag[n] || {p: [], extra: []}, c = '<div class="kd' + (n === vand ? ' vandaag' : '') + '"><span class="dnr">' + ddmm(n) + '</span>';
+      x.p.forEach(function(p){
+        var k = KAL.push({p: p}) - 1;
+        c += '<button class="wo ' + p.st.c + '" onclick="kalDetail(' + k + ')" title="' + esc(p.st.t + ': ' + (p.inh || '')) + '"><b>' + esc(p.dd || (p.type || 'Training')) + ' ' + esc(kort(p)) + '</b>' +
+          (p.doel ? '<span class="dl" style="background:' + kleur(p.doel) + '"></span>' : '') + '<span class="lang">' + esc(p.inh || '') + '</span></button>';
+      });
+      (x.extra || []).forEach(function(t){
+        var k = KAL.push({t: t}) - 1;
+        c += '<button class="wo c-extra" onclick="kalDetail(' + k + ')" title="extra training"><b>' + esc(t.soort || 'extra') + '</b><span class="lang">' + esc([t.afstand, t.tijd].filter(Boolean).join(' · ')) + '</span></button>';
+      });
+      h += c + '</div>';
+    }
+  }
+  return h + '</div><p class="mu">Tik op een training om het plan te vergelijken met wat je invulde. De kleur zegt hoe dicht je bij de geplande duur (of afstand) zat.</p>';
+}
+function dRpePil(d){
+  if (d == null || !isFinite(d)) return '';
+  var g = T().delta_rpe, c = d >= g ? ['p-warn', 'zwaarder dan gepland'] : d <= -g ? ['p-grijs', 'lichter dan gepland'] : ['p-ok', '≈ plan'];
+  return '<span class="pil ' + c[0] + '">' + sgnN(d) + ' · ' + c[1] + '</span>';
+}
+function kmTxt(x){ return x ? fmt(x, 1) + ' km' : '–'; }
+function snel(km, mi){ return km && mi ? km / (mi / 60) : null; }
+/* Detail van één training. Regel: verwachte RPE en geplande belasting (TSS) pas tonen als de sporter de training invulde,
+   zodat de verwachting zijn eigen inschatting niet stuurt. Daarna de volledige vergelijking zoals in het dashboard. */
+function kalDetail(k){
+  var it = KAL[k], p = it.p || null, e = p ? p.log : it.t, h = '';
+  if (p){
+    h += '<h3>' + esc(datum(p.d)) + (p.dd ? ' · ' + esc(p.dd) : '') + '</h3><div class="mu">' + esc(p.type || '') + (p.type ? ' · ' : '') + esc(p.st.t) + '</div>' + chip(p.i);
+  } else h += '<h3>' + esc(datum(e.d)) + (e.dd ? ' · ' + esc(e.dd) : '') + '</h3><div class="mu">Extra training (niet gepland voor je groep op deze dag)</div>';
+  if (p && e){
+    var ok = e.kmOk !== false, rij = function(l, g, u, v){ return '<tr><th scope="row">' + l + '</th><td>' + g + '</td><td>' + u + '</td><td>' + (v || '') + '</td></tr>'; };
+    h += '<div class="blok"><table class="kd-t"><thead><tr><th></th><th>Gepland</th><th>Uitgevoerd</th><th>Verschil</th></tr></thead><tbody>' +
+      rij('Dagdeel', esc(p.dd || '–'), esc(e.dd || '–')) +
+      rij('Soort', esc(p.type || '–'), esc([e.soort, e.cat && '(' + e.cat + ')'].filter(Boolean).join(' ') || '–')) +
+      rij('Duur', p.duur ? fmt(p.duur, 0) + ' min' : '–', e.min ? Math.round(e.min) + ' min' : (e.tijd ? '<span class="mu">' + esc(e.tijd) + ' (niet leesbaar)</span>' : '–'), sgnPct(e.min, p.duur)) +
+      rij('Afstand', kmTxt(p.km), e.km ? kmTxt(e.km) + (ok ? '' : ' <span class="mu">(snelheid onlogisch)</span>') : '–', ok ? sgnPct(e.km, p.km) : '') +
+      rij('Gem. snelheid', snel(p.km, p.duur) ? fmt(snel(p.km, p.duur)) + ' km/u' : '–', ok && snel(e.km, e.min) ? fmt(snel(e.km, e.min)) + ' km/u' : '–') +
+      rij('Belasting', p.tss != null ? fmt(p.tss, 0) + ' TSS' : '–', e.b && e.b.l != null ? fmt(e.b.l, 0) + ' TSS <span class="mu">(' + esc(e.b.bron) + ')</span>' : '–', e.b && e.b.l != null ? sgnPct(e.b.l, p.tss) : '') +
+      rij('RPE', p.rpeExp != null ? '≈ ' + fmt(p.rpeExp, 1) + ' <span class="mu">(verwacht)</span>' : '–', e.rpeN != null ? fmt(e.rpeN, 0) : (e.rpe ? esc(e.rpe) : '–'), dRpePil(e.dRpe)) +
+      rij('Gevoel', '–', e.gevoel ? esc(e.gevoel) + (e.gevoelN != null ? ' <span class="mu">(' + fmt(e.gevoelN, 0) + '/5)</span>' : '') : '–') +
+      rij('Opmerking', '–', e.nota ? esc(e.nota) : '–') +
+      '</tbody></table></div>';
+    h += planBlok(p, true);
+    if (e.b && e.b.f) h += '<div class="mu">Belasting uitgevoerd: ' + esc(e.b.f) + '</div>';
+    h += '<div class="mu" style="margin-top:6px">Verwachte RPE = de RPE die past bij de geplande belasting per uur. ΔRPE vanaf ±' + fmt(T().delta_rpe, 1) + ' = duidelijk zwaarder of lichter dan gepland. 100 TSS = 1 uur op drempel.</div>';
+  } else if (p){
+    h += planBlok(p, false);
+    h += p.st.c === 'c-niet' ? '<div class="blok mu">Niets ingevuld voor deze training. Toch getraind? Vul ze nog in via het formulier; daarna zie je hier de vergelijking met het plan.</div>'
+                             : '<div class="blok mu">Na het invullen zie je hier de vergelijking met het plan (duur, afstand, belasting en RPE).</div>';
+  } else {
+    var rows = [['Soort', esc([e.soort, e.cat && '(' + e.cat + ')'].filter(Boolean).join(' '))], ['Afstand', e.afstand ? esc(e.afstand) : ''], ['Tijd', e.tijd ? esc(e.tijd) : ''],
+      ['Gem. snelheid', e.kmOk !== false && snel(e.km, e.min) ? fmt(snel(e.km, e.min)) + ' km/u' : ''], ['Belasting', e.b && e.b.l != null ? fmt(e.b.l, 0) + ' TSS <span class="mu">(' + esc(e.b.bron) + ')</span>' : ''],
+      ['RPE', e.rpe ? esc(e.rpe) : ''], ['Gevoel', e.gevoel ? esc(e.gevoel) : ''], ['Opmerking', e.nota ? esc(e.nota) : '']].filter(function(r){ return r[1]; });
+    h += '<div class="blok"><b>Ingevuld</b><table class="vgl"><tbody>' + rows.map(function(r){ return '<tr><th>' + r[0] + '</th><td>' + r[1] + '</td></tr>'; }).join('') + '</tbody></table></div>';
+    if (e.b && e.b.f) h += '<div class="mu">Belasting: ' + esc(e.b.f) + '</div>';
+  }
+  h += '<p><button class="knop" onclick="sluit()">Sluiten</button></p>';
+  popup(h);
+}
+/* geplande inhoud + zoneminuten; zonder invoer enkel het plan zelf (duur/afstand), geen verwachte belasting of RPE */
+/* v3: opwarming (uit het schema) en gekoppeld plan (bibliotheek trainersportaal) */
+function extraBlok(p){
+  var h = '', zn = R().zones || [];
+  if (p.ow){ var m = (p.ow.z || []).reduce(function(a, b){ return a + (b || 0); }, 0);
+    h += '<details class="ex"><summary>🔥 Opwarming' + (m ? ' · ' + fmt(m, 0) + ' min' : '') + '</summary><div class="inh">' + esc(p.ow.inh || 'Zie de opwarming van deze week.') + '</div>' +
+      '<div class="mu">' + (p.ow.z || []).map(function(v, i){ return v ? esc(zn[i] || '') + ' ' + fmt(v, 0) + "'" : ''; }).filter(Boolean).join(' · ') + (m ? ' (zit al in de minuten van deze training)' : '') + '</div></details>'; }
+  var pl = p.pl && D.plannen && D.plannen[p.pl];
+  if (pl){
+    h += '<details class="ex"><summary>📋 Plan: ' + esc(pl.titel) + (pl.duur ? ' · ' + esc(pl.duur) : '') + '</summary>' + (pl.intro ? '<div class="inh">' + esc(pl.intro) + '</div>' : '') +
+      pl.blokken.map(function(b){ return '<h4>' + esc(b.titel) + (b.duur ? ' <span class="mu">' + esc(b.duur) + '</span>' : '') + '</h4>' + (b.uitleg ? '<div class="inh">' + esc(b.uitleg) + '</div>' : '') +
+        (b.items.length ? '<ul>' + b.items.map(function(i){ return '<li><b style="display:inline">' + esc(i.naam) + '</b>' + (i.volume ? ' – ' + esc(i.volume) : '') + (i.opm ? '<div class="mu">' + esc(i.opm) + '</div>' : '') +
+          (i.uitleg ? '<details><summary class="mu">uitleg</summary><div class="inh">' + esc(i.uitleg) + '</div></details>' : '') + '</li>'; }).join('') + '</ul>' : ''); }).join('') +
+      (pl.materiaal && pl.materiaal.length ? '<div class="mu">Materiaal: ' + esc(pl.materiaal.join(', ')) + '</div>' : '') + '</details>';
+  }
+  return h;
+}
+function planBlok(p, ingevuld){
+  var h = '<div class="blok"><b>Geplande inhoud</b><div class="inh">' + esc(p.inh || '–') + (extraTekst(p) ? '\n' + esc(extraTekst(p)) : '') + '</div>' + extraBlok(p);
+  if (!ingevuld && (p.duur || p.km)) h += '<div class="mu">± ' + (p.duur ? Math.round(p.duur) + ' min' : '') + (p.duur && p.km ? ' · ' : '') + (p.km ? '± ' + fmt(p.km, 1) + ' km' : '') + '</div>';
+  var zn = R().zones || [];
+  if (p.z && p.z.some(function(v){ return v; }) && zn.length)
+    h += '<div class="scroll"><table class="kd-z"><thead><tr>' + zn.map(function(z){ return '<th>' + esc(z) + '</th>'; }).join('') + '<th>Totaal</th></tr></thead><tbody><tr>' +
+      zn.map(function(z, i){ return '<td>' + (p.z[i] ? fmt(p.z[i], 0) + "'" : '–') + '</td>'; }).join('') + '<td><b>' + fmt(p.z.reduce(function(a, b){ return a + (b || 0); }, 0), 0) + "'</b></td></tr></tbody></table></div>";
+  if (p.lm) h += '<div class="mu">Land: ' + fmt(p.lm, 0) + ' min ' + esc(p.lt || '') + '</div>';
+  return h + '</div>';
+}
+function lijst(){
+  var h = '<h2>Komende 2 weken</h2>', vand = D.vandaag, n = 0;
+  D.plan.forEach(function(p, i){
+    if (p.d < vand) return; n++;
+    h += '<div class="dag"><b>' + esc(datum(p.d)) + (p.dd ? ' · ' + esc(p.dd) : '') + '</b>' + chip(i) +
+      '<div class="inh">' + esc(p.inh) + (extraTekst(p) ? '<br>' + esc(extraTekst(p)) : '') + '</div>' + extraBlok(p) +
+      (p.duur ? '<div class="mu">± ' + Math.round(p.duur) + ' min' + (p.km ? ' · ± ' + String(Math.round(p.km * 10) / 10).replace('.', ',') + ' km' : '') + '</div>' : '') + '</div>';
+  });
+  if (!n) h += '<p class="mu">Er staat nog niets gepland voor jouw groep.</p>';
+  return h;
+}
+function kiesWeergave(w){ WEERGAVE = w; try { localStorage.setItem('kkykc-mt-weergave', w); } catch (e) {} teken(); }
+function teken(){
+  document.getElementById('wie').textContent = D.naam + ' · groep ' + D.groep + ' · ' + D.jaar;
+  var h = blokBoodschap() + '<div class="balk"><a class="knop" href="' + esc(D.form_url) + '" target="_blank" rel="noopener">Training invullen</a>' +
+    '<div class="weergave" role="group" aria-label="Weergave"><button type="button" aria-pressed="' + (WEERGAVE === 'kalender') + '" onclick="kiesWeergave(\'kalender\')">&#128197; Kalender</button>' +
+    '<button type="button" aria-pressed="' + (WEERGAVE === 'lijst') + '" onclick="kiesWeergave(\'lijst\')">&#9776; Lijst</button></div></div>';
+  if (WEERGAVE === 'kalender' && D.kal_van) h += '<h2>Kalender</h2>' + kalender();
+  else h += lijst();
+  h += '<h2>Mijn laatste trainingen</h2>';
+  if (!D.laatste.length) h += '<p class="mu">Nog niets ingevuld.</p>';
+  else h += '<div class="scroll"><table><thead><tr><th>Datum</th><th>Soort</th><th>km</th><th>Tijd</th><th>Gevoel</th><th>RPE</th></tr></thead><tbody>' +
+    D.laatste.map(function(t){ return '<tr><td>' + esc(datum(t.d)) + (t.dd ? ' ' + esc(t.dd) : '') + '</td><td>' + esc(t.soort) + (t.nota ? '<div class="mu">' + esc(t.nota) + '</div>' : '') +
+      '</td><td>' + esc(t.afstand) + '</td><td>' + esc(t.tijd) + '</td><td>' + esc(t.gevoel) + '</td><td>' + esc(t.rpe) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  h += blokVorm() + blokWeken() + blokTesten() + blokWedstrijden();   /* v8 */
+  h += '<p class="mu">Je ziet hier enkel je eigen gegevens. Iets niet juist? Pas het aan in je logboek of vraag het aan je trainer.</p>';
+  document.getElementById('inhoud').innerHTML = h;
+}
+/* ---------- v8 (11/11/2026): extra blokken uit de personenpagina van de Trainingscoach ----------
+   Mijn vorm (fitheid/vermoeidheid/vorm uit je eigen logboek), Gepland en gedaan per week, Mijn testen, Mijn wedstrijden en de boodschap
+   van je trainer. Alles enkel van jezelf; de backend stuurt nooit gegevens van andere sporters mee. */
+var WSEIZOEN = null;
+function wft(s){ if (s == null || !isFinite(s)) return '–'; s = Math.round(s * 100) / 100;
+  if (s >= 3600){ var h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), r = Math.round(s - 3600 * h - 60 * m); return h + ':' + twee(m) + ':' + twee(r); }
+  var mi = Math.floor(s / 60), rr = s - 60 * mi, t = rr.toFixed(2); if (mi && rr < 10) t = '0' + t; return (mi ? mi + ':' + t : t).replace('.', ','); }
+function wfs(s){ if (s == null || !isFinite(s)) return '–'; var t = Math.round(s); return Math.floor(t / 60) + ':' + twee(t % 60); }
+function wpct(g){ return g == null || !isFinite(g) ? '–' : (Math.abs(g) < 0.05 ? '0,0 %' : (g > 0 ? '+' : '') + g.toFixed(1).replace('.', ',') + ' %'); }
+function wheat(g){ return g == null ? '' : g < 4 ? 'p-ok' : g < 10 ? 'p-blauw' : g < 18 ? 'p-warn' : 'p-bad'; }
+function dmy(d){ var p = String(d || '').split('-'); return p.length === 3 ? (+p[2]) + '/' + (+p[1]) + '/' + p[0].slice(2) : ''; }
+
+/* belasting per dag uit het volledige logboek (zelfde regels als het dashboard; gekoppeld plan enkel binnen de kalender) */
+function dagBelasting(){
+  var hist = (D.hist || []).map(function(t){ return {d: t.d, dd: t.dd, soort: t.soort, afstand: t.afstand, tijd: t.tijd, rpe: t.rpe}; });
+  var bewaar = D.logboek; D.logboek = hist; bereidLogboek(); D.logboek = bewaar;
+  var kal = {}; (D.logboek || []).forEach(function(t){ if (t.b && t.b.l != null) kal[t.d + '|' + (t.dd || '') + '|' + t.soort] = t.b.l; });
+  var dag = {};
+  hist.forEach(function(e){ var k = e.d + '|' + (e.dd || '') + '|' + e.soort, l = kal[k] != null ? kal[k] : belasting(e, null).l; if (l != null) dag[dnr(e.d)] = (dag[dnr(e.d)] || 0) + l; });
+  return dag;
+}
+function vormReeks(){
+  var dag = dagBelasting(), ks = Object.keys(dag).map(Number); if (!ks.length) return null;
+  var vand = dnr(D.vandaag), start = Math.min.apply(null, ks), plan = {};
+  D.plan.forEach(function(p){ var n = dnr(p.d); if (n > vand && p.tss != null) plan[n] = (plan[n] || 0) + p.tss; });
+  var eind = vand + 14, ctl = 0, atl = 0, uit = [];
+  for (var n = start; n <= eind; n++){
+    var tsb = ctl - atl, l = n <= vand ? (dag[n] || 0) : (plan[n] || 0);
+    ctl += (l - ctl) / 42; atl += (l - atl) / 7;
+    uit.push({n: n, ctl: ctl, atl: atl, tsb: tsb, l: l, toek: n > vand});
+  }
+  return uit;
+}
+function tsbTxt(t){ return t > 25 ? ['p-grijs', 'lang rustig (transitie)'] : t > 5 ? ['p-ok', 'fris'] : t > -10 ? ['p-grijs', 'neutraal'] : t > -30 ? ['p-warn', 'goed aan het trainen'] : ['p-bad', 'erg vermoeid']; }
+function blokVorm(){
+  var r = vormReeks(); if (!r) return '';
+  var vand = dnr(D.vandaag), nu = r.filter(function(x){ return x.n === vand; })[0] || r[r.length - 1], van = vand - 56, z = r.filter(function(x){ return x.n >= van; });
+  var W0 = 640, H = 200, L = 34, Rr = 10, T0 = 10, B = 26, mx = Math.max(10, Math.max.apply(null, z.map(function(x){ return Math.max(x.ctl, x.atl); }))), mn = Math.min(0, Math.min.apply(null, z.map(function(x){ return x.tsb; })));
+  var x = function(n){ return L + (n - z[0].n) / Math.max(1, z[z.length - 1].n - z[0].n) * (W0 - L - Rr); }, y = function(v){ return T0 + (mx - v) / (mx - mn) * (H - T0 - B); };
+  var lijn = function(k, kl, toek){ return '<polyline fill="none" stroke="' + kl + '" stroke-width="2"' + (toek ? ' stroke-dasharray="4 3"' : '') + ' points="' + z.filter(function(p){ return toek ? p.n >= vand : p.n <= vand; }).map(function(p){ return x(p.n).toFixed(1) + ',' + y(p[k]).toFixed(1); }).join(' ') + '"/>'; };
+  var s = '<svg viewBox="0 0 ' + W0 + ' ' + H + '" width="100%" role="img" aria-label="Fitheid, vermoeidheid en vorm">';
+  s += '<line x1="' + L + '" x2="' + (W0 - Rr) + '" y1="' + y(0) + '" y2="' + y(0) + '" stroke="var(--ln)"/><text x="' + (L - 4) + '" y="' + (y(0) + 4) + '" text-anchor="end" font-size="10" fill="var(--mu)">0</text>';
+  s += '<text x="' + (L - 4) + '" y="' + (y(mx) + 8) + '" text-anchor="end" font-size="10" fill="var(--mu)">' + Math.round(mx) + '</text>';
+  s += '<line x1="' + x(vand) + '" x2="' + x(vand) + '" y1="' + T0 + '" y2="' + (H - B) + '" stroke="var(--or)" stroke-dasharray="2 3"/><text x="' + x(vand) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10" fill="var(--or-ink)">vandaag</text>';
+  s += '<text x="' + L + '" y="' + (H - 8) + '" font-size="10" fill="var(--mu)">' + ddmm(z[0].n) + '</text>';
+  ['ctl', 'atl', 'tsb'].forEach(function(k){ var kl = {ctl: 'var(--blauw)', atl: '#C2185B', tsb: 'var(--or)'}[k]; s += lijn(k, kl, false) + lijn(k, kl, true); });
+  s += '</svg>';
+  var tt = tsbTxt(nu.tsb);
+  return '<h2>Mijn vorm</h2><p>Vorm vandaag: <span class="pil ' + tt[0] + '">' + fmt(nu.tsb, 0) + ' · ' + tt[1] + '</span> <span class="mu">fitheid ' + fmt(nu.ctl, 0) + ' · vermoeidheid ' + fmt(nu.atl, 0) + '</span></p>' +
+    '<div class="scroll">' + s + '</div><div class="legende"><span><i style="border-color:var(--blauw)"></i>fitheid (6 weken)</span><span><i style="border-color:#C2185B"></i>vermoeidheid (1 week)</span><span><i style="border-color:var(--or)"></i>vorm = fitheid − vermoeidheid</span><span>stippellijn = de komende 2 weken als je het plan volgt</span></div>' +
+    '<p class="mu">Berekend uit je eigen logboek (duur × RPE). Hoe vollediger je invult, hoe juister. Positieve vorm = fris (goed voor een test of wedstrijd); sterk negatief = veel vermoeidheid, plan rust in.</p>';
+}
+function blokWeken(){
+  var perDag = koppel(), vand = dnr(D.vandaag), wk = {};
+  Object.keys(perDag).forEach(function(k){ var n = Number(k); if (n > vand) return; var w = n - wdag(n), x = perDag[k], o = wk[w] = wk[w] || {gp: 0, gd: 0, tp: 0, tu: 0, dr: []};
+    x.p.forEach(function(p){ o.gp++; if (p.log) o.gd++; if (p.tss != null) o.tp += p.tss; if (p.log && p.log.b && p.log.b.l != null) o.tu += p.log.b.l; if (p.log && p.log.dRpe != null) o.dr.push(p.log.dRpe); });
+    (x.extra || []).forEach(function(t){ if (t.b && t.b.l != null) o.tu += t.b.l; o.ex = (o.ex || 0) + 1; }); });
+  var ws = Object.keys(wk).map(Number).sort(function(a, b){ return b - a; }).slice(0, 5);
+  if (!ws.length) return '';
+  return '<h2>Gepland en gedaan per week</h2><div class="scroll"><table><thead><tr><th>Week</th><th>Trainingen</th><th>Belasting</th><th>Zwaarte t.o.v. plan</th></tr></thead><tbody>' +
+    ws.map(function(w){ var o = wk[w], q = o.tp ? o.tu / o.tp : null, dr = o.dr.length ? o.dr.reduce(function(a, b){ return a + b; }, 0) / o.dr.length : null;
+      return '<tr><td>W' + isoWeek(w) + ' <span class="mu">' + ddmm(w) + '</span>' + (w + 6 >= vand ? ' <span class="mu">(lopend)</span>' : '') + '</td><td>' + o.gd + ' van ' + o.gp + (o.ex ? ' <span class="mu">+ ' + o.ex + ' extra</span>' : '') + '</td>' +
+        '<td>' + (q == null ? '<span class="mu">–</span>' : '<span class="pil ' + (q >= 0.8 && q <= 1.2 ? 'p-ok' : q >= 0.5 && q <= 1.5 ? 'p-warn' : 'p-bad') + '">' + Math.round(q * 100) + ' % van het plan</span>') + '</td>' +
+        '<td>' + (dr == null ? '<span class="mu">–</span>' : dRpePil(dr)) + '</td></tr>'; }).join('') + '</tbody></table></div>' +
+    '<p class="mu">Enkel de dagen tot vandaag. Belasting = wat je deed (incl. extra trainingen) tegenover wat gepland was. Zwaarte = je RPE tegenover de verwachte RPE van de geplande trainingen.</p>';
+}
+function blokTesten(){
+  var P = D.prest || {}, t = P.testen || [];
+  if (!t.length) return P.testFout ? '<h2>Mijn testen</h2><p class="mu">' + esc(P.testFout) + '</p>' : '';
+  var h = '<h2>Mijn testen</h2>', dists = [2000, 200];
+  dists.forEach(function(ds){
+    var l = t.filter(function(x){ return x.dist === ds; }); if (!l.length) return;
+    var pr = Math.min.apply(null, l.map(function(x){ return x.s; })), marge = ds === 200 ? 0.5 : 10;
+    h += '<div class="scroll"><table><thead><tr><th>' + (ds === 200 ? '200 m-test' : '2 km-test') + '</th><th>Tijd</th><th>t.o.v. vorige</th></tr></thead><tbody>' +
+      l.slice().reverse().map(function(x, i, a){ var v = a[i + 1], d = v ? x.s - v.s : null;
+        return '<tr><td>' + (x.maand ? MT_MAANDEN[+x.d.slice(5, 7) - 1] + ' ' + x.d.slice(0, 4) : dmy(x.d)) + '</td><td><b>' + (ds === 200 ? wft(x.s) : wfs(x.s)) + '</b>' + (x.s === pr && l.length > 1 ? ' <span class="pil p-ok">beste tijd</span>' : '') + '</td>' +
+          '<td>' + (d == null ? '<span class="mu">–</span>' : '<span class="pil ' + (d <= -marge ? 'p-ok' : d >= marge ? 'p-bad' : 'p-warn') + '">' + (d > 0 ? '+' : '−') + (ds === 200 ? fmt(Math.abs(d), 1) : Math.round(Math.abs(d))) + ' s</span>') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  });
+  var l2 = t.filter(function(x){ return x.dist === 2000; }), last = l2[l2.length - 1];
+  if (P.a_grens && last) h += '<p>' + (last.s <= P.a_grens ? 'Je laatste 2 km-tijd (' + wfs(last.s) + ') is <b>sneller dan de A-grens</b> van ' + wfs(P.a_grens) + '.' : 'Nog <b>' + Math.round(last.s - P.a_grens) + ' s</b> tot de A-grens van ' + wfs(P.a_grens) + ' (laatste tijd ' + wfs(last.s) + ').') + '</p>';
+  return h + '<p class="mu">Groen = sneller dan de vorige test (2 km: meer dan 10 s, 200 m: meer dan 0,5 s), rood = trager.</p>';
+}
+var MT_MAANDEN = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+function wedSeizoenen(){ var W = (D.prest || {}).wed; if (!W) return []; var s = {}; Object.keys(W.wed).forEach(function(c){ if (W.wed[c].s) s[W.wed[c].s] = 1; }); return Object.keys(s).map(Number).sort(function(a, b){ return b - a; }); }
+function kiesSeizoen(s){ WSEIZOEN = Number(s); teken(); var e = document.getElementById('mijnwed'); if (e) e.scrollIntoView(); }
+function blokWedstrijden(){
+  var W = (D.prest || {}).wed; if (!W || (!W.rij.length && !W.jeugd.length)) return '';
+  var lijst = wedSeizoenen(); if (!lijst.length) return '';
+  var s = lijst.indexOf(WSEIZOEN) >= 0 ? WSEIZOEN : lijst[0], vorig = lijst.filter(function(x){ return x < s; })[0];
+  var C = W.wed, vanS = function(r){ return C[r.w] && C[r.w].s === s; };
+  var rij = W.rij.filter(vanS).sort(function(a, b){ var x = (C[a.w].van || ''), y = (C[b.w].van || ''); return x < y ? -1 : x > y ? 1 : (a.afst || 0) - (b.afst || 0); });
+  var h = '<h2 id="mijnwed">Mijn wedstrijden</h2>';
+  if (lijst.length > 1) h += '<div class="weergave" role="group" aria-label="Seizoen">' + lijst.map(function(x){ return '<button type="button" aria-pressed="' + (x === s) + '" onclick="kiesSeizoen(' + x + ')">' + x + '</button>'; }).join('') + '</div>';
+  /* beste K1-tijd per afstand, t.o.v. het vorige seizoen */
+  var best = function(sz){ var o = {}; W.rij.forEach(function(r){ if (!C[r.w] || C[r.w].s !== sz || r.boot !== 'K1' || !r.t || r.st || !r.afst || (r.soort !== 'sprint' && r.soort !== 'lang')) return; if (!o[r.afst] || r.t < o[r.afst].t) o[r.afst] = r; }); return o; };
+  var b1 = best(s), b0 = vorig ? best(vorig) : {}, ds = Object.keys(b1).map(Number).sort(function(a, b){ return a - b; });
+  if (ds.length) h += '<div class="scroll"><table><thead><tr><th>Beste K1-tijd</th><th>' + s + '</th>' + (vorig ? '<th>' + vorig + '</th>' : '') + '</tr></thead><tbody>' +
+    ds.map(function(d){ var a = b1[d], b = b0[d]; return '<tr><td>' + (d >= 4000 ? (d / 1000) + ' km' : d + ' m') + '</td><td><b>' + wft(a.t) + '</b> <span class="mu">' + esc(C[a.w].plaats || C[a.w].reeks) + '</span>' + (b && a.t < b.t ? ' <span class="pil p-ok">' + (b.t - a.t >= 60 ? wfs(b.t - a.t) : fmt(b.t - a.t, 1) + ' s') + ' sneller</span>' : '') + '</td>' +
+      (vorig ? '<td>' + (b ? wft(b.t) + ' <span class="mu">' + esc(C[b.w].plaats || C[b.w].reeks) + '</span>' : '<span class="mu">–</span>') + '</td>' : '') + '</tr>'; }).join('') + '</tbody></table></div><p class="mu">Banen, wind en stroming verschillen; vergelijk dus vooral op dezelfde wedstrijd.</p>';
+  if (rij.length){
+    var last = null;
+    h += '<div class="scroll"><table><thead><tr><th>Race</th><th>Ronde</th><th>Plaats</th><th>Tijd</th><th>Op winnaar</th></tr></thead><tbody>' + rij.map(function(r){
+      var w = C[r.w] || {}, kop = '';
+      if (r.w !== last){ kop = '<tr><td colspan="5" style="background:var(--grijs);font-weight:bold">' + esc(w.plaats || w.reeks || r.w) + ' <span class="mu">· ' + esc(w.naam || '') + ' · ' + dmy(w.van) + '</span></td></tr>'; last = r.w; }
+      var st = r.st === 'DNS' ? 'niet gestart' : r.st === 'DNF' ? 'niet aangekomen' : r.st === 'DSQ' ? 'gediskwalificeerd' : r.st;
+      return kop + '<tr><td>' + esc([r.boot && r.boot !== '-' ? r.boot : '', r.afst ? r.afst + ' m' : '', r.cat].filter(Boolean).join(' ')) + (r.ploeg.length ? '<div class="mu">met ' + esc(r.ploeg.join(', ')) + '</div>' : '') + (r.hist ? '<div class="mu">beste race</div>' : '') + '</td>' +
+        '<td>' + esc(r.ronde) + '</td><td>' + (r.rank ? '<b>' + r.rank + '</b><span class="mu">/' + (r.nf || '?') + '</span>' : '–') + '</td><td>' + (r.t ? wft(r.t) : (st ? '<span class="mu">' + esc(st) + '</span>' : '–')) + '</td>' +
+        '<td>' + (r.gap == null ? '<span class="mu">–</span>' : '<span class="pil ' + wheat(r.gap) + '">' + wpct(r.gap) + '</span>') + '</td></tr>'; }).join('') + '</tbody></table></div>' +
+      '<p class="mu">Op winnaar = hoeveel trager dan de winnaar van die race (in %). Handicap, estafette en jeugdspelen krijgen geen percentage.</p>';
+  }
+  var jg = W.jeugd.filter(vanS);
+  if (jg.length) h += '<h3 style="font-size:15px">Jeugdspelen</h3><div class="scroll"><table><thead><tr><th>Wedstrijd</th><th>Plaats</th><th>Lopen</th><th>Parcours</th><th>Varen</th><th>Totaal</th></tr></thead><tbody>' +
+    jg.map(function(y){ var w = C[y.w] || {}; return '<tr><td>' + esc(w.plaats || y.w) + ' <span class="mu">' + esc(y.cat) + '</span></td><td><b>' + (y.rank || '–') + '</b>/' + (y.n || '?') + '</td><td>' + (y.pl == null ? '–' : y.pl + ' pt') + '</td><td>' + (y.pp == null ? '–' : y.pp + ' pt') + '</td><td>' + (y.pv == null ? '–' : y.pv + ' pt') + (y.t100 ? ' <span class="mu">' + wft(y.t100) + '</span>' : '') + '</td><td>' + (y.tot == null ? '–' : y.tot + ' pt') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  return h;
+}
+function blokBoodschap(){
+  var W = (D.prest || {}).wed; if (!W || !W.teksten.length) return '';
+  return W.teksten.slice().sort(function(a, b){ return (b.s || 0) - (a.s || 0); }).map(function(t){
+    return '<div class="dag" style="border-left:4px solid var(--ok)"><b>' + esc(t.titel || 'Van je trainer') + (t.s ? ' <span class="mu">· ' + t.s + '</span>' : '') + '</b><div class="inh">' + esc(t.tekst) + '</div></div>'; }).join('');
+}
+
+/* ---------- laden: v8 (11/11/2026) eerst de laatst geladen gegevens, dan de nieuwe op de achtergrond ----------
+   De ophaling langs de backend duurt enkele seconden. Daarom: bewaarde gegevens (per account, deze browser) meteen tonen,
+   intussen opnieuw ophalen; verschillen ze, dan bovenaan 'Nieuwe gegevens beschikbaar' + Vernieuwen. */
+var MT_WIE = '';   /* KKYKC-app: niets bewaren op het toestel */   /* ingevuld door doGet (Front_Code.gs) */
+var MT_SLEUTEL = MT_WIE.indexOf('@') > 0 ? 'kkykc-mt-cache|' + MT_WIE.toLowerCase() + '|c1' : null;
+var MT_CACHE = null, MT_NIEUW = null;
+function twee(n){ return (n < 10 ? '0' : '') + n; }
+function lokaalVandaag(){ var d = new Date(); return d.getFullYear() + '-' + twee(d.getMonth() + 1) + '-' + twee(d.getDate()); }
+function wanneer(t){
+  var d = new Date(t), nu = new Date(), u = twee(d.getHours()) + ':' + twee(d.getMinutes());
+  var v = Math.round((new Date(nu.getFullYear(), nu.getMonth(), nu.getDate()) - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 864e5);
+  return v === 0 ? 'vandaag ' + u : v === 1 ? 'gisteren ' + u : d.getDate() + '/' + (d.getMonth() + 1) + ' ' + u;
+}
+function mtLees(){ if (!MT_SLEUTEL) return null; try { var c = JSON.parse(localStorage.getItem(MT_SLEUTEL) || 'null'); return c && c.t && c.d && Date.now() - c.t < 14 * 864e5 ? c : null; } catch (e) { return null; } }
+function mtBewaar(t){ if (!MT_SLEUTEL) return; try { localStorage.setItem(MT_SLEUTEL, JSON.stringify({ t: Date.now(), d: t })); MT_CACHE = { t: Date.now(), d: t }; } catch (e) {} }
+function mtWis(){ if (!MT_SLEUTEL) return; try { localStorage.removeItem(MT_SLEUTEL); } catch (e) {} }
+function balk(h, soort){ var b = document.getElementById('mtbalk'); if (!h){ b.hidden = true; b.innerHTML = ''; return; } b.className = soort || ''; b.innerHTML = h; b.hidden = false; }
+/* geeft een foutboodschap terug, of null als het getoond is */
+function toonData(t, uitCache){
+  var x; try { x = JSON.parse(t); } catch (e) { return 'Onverwacht antwoord van de server.'; }
+  if (x.fout) return x.fout;
+  D = x; D.logboek = D.logboek || []; D.rek = D.rek || {};
+  if (uitCache && D.vandaag && D.vandaag < lokaalVandaag()) D.vandaag = lokaalVandaag();   /* 'vandaag' van de bewaarde gegevens kan voorbij zijn */
+  bereidPlan(); bereidLogboek(); teken();
+  return null;
+}
+function toonNieuw(){
+  var f = toonData(MT_NIEUW, false); if (f) return toonFout(f);
+  mtBewaar(MT_NIEUW); MT_NIEUW = null;
+  balk('Gegevens bijgewerkt.', 'ok'); setTimeout(function(){ balk(null); }, 4000);
+}
+MT_CACHE = mtLees();
+if (MT_CACHE){
+  try { if (toonData(MT_CACHE.d, true)) MT_CACHE = null; } catch (e) { MT_CACHE = null; }
+  if (MT_CACHE) balk('<span>Getoond: je gegevens van <b>' + wanneer(MT_CACHE.t) + '</b> · nagaan of er nieuwe zijn…</span>');
+  else mtWis();
+}
+/* F1 (14/11/2026): tijdslimiet + opnieuw proberen, zoals dashboard en portaal (soms start Google de aanroep niet en bleef de pagina hangen).
+   Lezen mag veilig herhaald worden: max. 3 pogingen van 60 s. */
+var MT_LIMIET = 60000, MT_POGINGEN = 3;
+function mtHaal(n){
+  var klaar = false;
+  var t = setTimeout(function(){
+    if (klaar) return; klaar = true;
+    if (n < MT_POGINGEN){
+      if (!MT_CACHE) balk('<span>De server antwoordt traag, opnieuw proberen (' + (n + 1) + '/' + MT_POGINGEN + ')…</span>');
+      return mtHaal(n + 1);
+    }
+    mtNietGelukt('geen antwoord van de server na ' + (MT_LIMIET / 1000) + ' s');
+  }, MT_LIMIET);
+  KKYKC.gs('mijnData').then(function(r){ if (klaar) return; klaar = true; clearTimeout(t); mtOntvangen(JSON.stringify(r)); },
+    function(e){ if (klaar) return; klaar = true; clearTimeout(t); if (appFoutAanmelden(e)) return; mtNietGelukt(e && e.message ? e.message : e); });
+}
+function mtOntvangen(t){
+  var x = null; try { x = JSON.parse(t); } catch (e) {}
+  if (!MT_CACHE || (x && x.fout)){   /* geen bewaarde gegevens, of geen toegang meer → gewoon tonen wat de server zegt */
+    balk(null); var f = toonData(t, false);
+    if (f){ mtWis(); return toonFout(f); }
+    return mtBewaar(t);
+  }
+  if (!x){ return balk('<span>Kon niet nagaan of er nieuwe gegevens zijn. Getoond: je gegevens van <b>' + wanneer(MT_CACHE.t) + '</b>.</span><button type="button" onclick="location.reload()">Opnieuw proberen</button>', 'nieuw'); }
+  if (t === MT_CACHE.d){ mtBewaar(t); balk('Je gegevens zijn up-to-date.', 'ok'); return setTimeout(function(){ balk(null); }, 4000); }
+  MT_NIEUW = t;
+  balk('<span><b>Nieuwe gegevens beschikbaar.</b> Getoond: je gegevens van <b>' + wanneer(MT_CACHE.t) + '</b>.</span><button type="button" onclick="toonNieuw()">Vernieuwen</button>', 'nieuw');
+}
+function mtNietGelukt(m){
+  if (!MT_CACHE){ balk(null); return toonFout('Laden mislukt: ' + m); }
+  balk('<span>Kon niet nagaan of er nieuwe gegevens zijn (' + esc(m) + '). Getoond: je gegevens van <b>' + wanneer(MT_CACHE.t) + '</b>.</span><button type="button" onclick="location.reload()">Opnieuw proberen</button>', 'nieuw');
+}
+/* ---------- KKYKC-app (B1, 18/11/2026 – ingevoegd door bouw_app.py, bron: app/bron_b1/mijn_app.js) ----------
+   Aanmelden met Google (api.js) en de API (mijnData) i.p.v. de Apps Script-aanroep. Niets van de gegevens wordt op het toestel bewaard. */
+function appAanmeldKaart(melding){
+  document.getElementById('wie').textContent = '';
+  document.getElementById('btnAf').hidden = true;
+  document.getElementById('inhoud').innerHTML = '<h2>Aanmelden</h2><p>Meld je aan met het Google-account waarmee je het trainingsformulier invult.</p>' +
+    '<p class="mu">De app ziet enkel je naam en e-mailadres, geen bestanden.</p><div id="gknop" style="min-height:44px;margin:12px 0"></div>' +
+    (melding ? '<p id="appmelding" style="color:var(--oranje)">' + esc(melding) + '</p>' : '') +
+    '<p class="mu"><a href="index.html" style="color:inherit">Start</a> · <a href="privacy.html" style="color:inherit">Privacy</a></p>';
+  KKYKC.knop(document.getElementById('gknop'));
+}
+function appFoutAanmelden(e){
+  if (e && (e.code === 'token' || e.code === 'verlopen' || e.code === 'aud')) { balk(null); appAanmeldKaart(e.message); return true; }
+  return false;
+}
+function appAfmelden(){ KKYKC.afmelden(); D = null; balk(null); appAanmeldKaart(''); }
+function appLaad(){
+  document.getElementById('btnAf').hidden = false;
+  document.getElementById('wie').textContent = 'Laden…';
+  document.getElementById('inhoud').innerHTML = '<p class="mu">Je gegevens worden geladen…</p>';
+  mtHaal(1);
+}
+function appStart(){
+  if (!KKYKC.ingesteld()) return toonFout('De app is nog niet ingesteld.');
+  KKYKC.opAanmelden(appLaad);
+  if (KKYKC.aangemeld()) appLaad(); else appAanmeldKaart('');
+}
+appStart();
+</script>
+</body></html>
