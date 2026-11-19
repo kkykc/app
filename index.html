@@ -10,6 +10,7 @@
   :root { --oranje: #e8630a; --tekst: #1f2328; --zacht: #6a737d; --bg: #fff; --kader: #e5e7eb; }
   @media (prefers-color-scheme: dark) { :root { --tekst: #e6e6e6; --zacht: #9aa4ae; --bg: #16181c; --kader: #2c3036; } }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }   /* B2: ook voor a.hoofd (inline-block) */
   body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: var(--tekst); background: var(--bg); }
   header { background: var(--oranje); color: #fff; padding: 14px 18px; font-weight: bold; font-size: 20px; letter-spacing: .5px; }
   main { max-width: 520px; margin: 0 auto; padding: 24px 18px; }
@@ -37,7 +38,7 @@
     <div id="in" hidden>
       <p id="wie">Even geduld…</p>
       <p id="rollen"></p>
-      <p id="paginas" hidden><a class="hoofd" href="mijn.html">Mijn trainingen</a></p>
+      <p id="paginas" hidden><a class="hoofd" id="naarMijn" href="mijn.html" hidden>Mijn trainingen</a> <a class="hoofd" id="naarPortaal" href="trainers.html" hidden>Trainersportaal</a></p>
       <p class="zacht" id="tijd"></p>
       <button class="lijn" id="opnieuw">Opnieuw meten</button>
       <button class="lijn" id="afmelden">Afmelden</button>
@@ -59,8 +60,10 @@
       var el = $('rollen'); el.textContent = '';
       if (!d.rollen.length) el.textContent = 'Nog geen rol gekoppeld aan dit account.';
       else { el.appendChild(document.createTextNode('Rol: ')); d.rollen.forEach(function (x) { var s = document.createElement('span'); s.className = 'chip'; s.textContent = NAMEN[x] || x; el.appendChild(s); }); }
-      /* B1: Mijn trainingen voor sporters en hoofdtrainers (de API controleert dit opnieuw) */
-      $('paginas').hidden = !d.rollen.some(function (x) { return x === 'sporter' || x === 'hoofdtrainer'; });
+      /* B1: Mijn trainingen voor sporters en hoofdtrainers · B2: Trainersportaal voor trainers en hoofdtrainers (de API controleert dit opnieuw) */
+      var heeft = function (l) { return d.rollen.some(function (x) { return l.indexOf(x) >= 0; }); };
+      $('naarMijn').hidden = !heeft(['sporter', 'hoofdtrainer']); $('naarPortaal').hidden = !heeft(['trainer', 'hoofdtrainer']);
+      $('paginas').hidden = $('naarMijn').hidden && $('naarPortaal').hidden;
       $('tijd').textContent = 'Aanroep: ' + (r.ms / 1000).toFixed(1).replace('.', ',') + ' s (server ' + ((r.serverMs || 0) / 1000).toFixed(1).replace('.', ',') + ' s)';
     }, function (e) {
       if (e.code === 'token' || e.code === 'verlopen' || e.code === 'aud') { toon(false); $('knop').textContent = ''; KKYKC.knop($('knop')); tekst($('melding'), e.message, true); }
