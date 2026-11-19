@@ -23,7 +23,7 @@
     },
     afmelden: function () {
       token = null; VOOR = {}; try { sessionStorage.removeItem(SLEUTEL); sessionStorage.removeItem(ROL); } catch (e) {}
-      var b = document.getElementById('kkykcBalk'); if (b) b.remove();
+      var b = document.getElementById('kkykcBalk'), bl = document.getElementById('kkykcBalkL'); if (bl) bl.textContent = ''; if (b) b.removeAttribute('data-links');
       try { google.accounts.id.disableAutoSelect(); } catch (e) {}
     },
     /* api('wieBenIk') → Promise met data; fout: Error met .code (token, verlopen, aud, test, rol, fn, net …) en .ms */
@@ -67,37 +67,65 @@
     zetRollen: function (r) { try { if (token) sessionStorage.setItem(ROL, JSON.stringify({ t: token.slice(-24), r: r })); } catch (e) {} },
     /* B3c: startpagina per rol – Mijn trainingen (Koppeling) → anders hoofdtrainer: dashboard → trainer: trainersportaal */
     startpagina: function (r) { return r.indexOf('sporter') >= 0 ? 'mijn.html' : r.indexOf('hoofdtrainer') >= 0 ? 'dashboard.html' : r.indexOf('trainer') >= 0 ? 'trainers.html' : ''; },
-    /* B3c: navigatiebalk bovenaan elke pagina, enkel met de pagina's die jouw rollen toelaten (vanaf 2 pagina's) */
-    balk: function () {
-      if (!geldig(token) || document.getElementById('kkykcBalk')) return;
+    /* B3c/B3e: navigatiebalk bovenaan elke pagina. Altijd: de knop licht/donker (één instelling voor alle pagina's). Aangemeld met een rol: ook de
+       pagina's die je rollen toelaten + Account (afmelden). opties.zonderLinks: enkel de themaknop (startpagina vóór wieBenIk). */
+    balk: function (opties) {
+      if (!document.body) return;
+      var n = document.getElementById('kkykcBalk');
+      if (!n) {
+        n = document.createElement('nav'); n.id = 'kkykcBalk'; n.setAttribute('aria-label', 'KKYKC-app');
+        n.style.cssText = 'display:flex;gap:6px;align-items:center;overflow-x:auto;padding:6px 10px;background:#1f2328;font:13px Arial,Helvetica,sans-serif;position:relative;z-index:50;min-height:30px';
+        var L = document.createElement('span'); L.id = 'kkykcBalkL'; L.style.cssText = 'display:flex;gap:6px;align-items:center;flex:1;min-width:0';
+        var k = document.createElement('button'); k.type = 'button'; k.id = 'kkykcThema';
+        k.style.cssText = 'margin-left:auto;flex:none;width:32px;height:30px;border-radius:15px;border:1px solid #444c56;background:#30363d;color:#fff;font-size:16px;line-height:1;cursor:pointer';
+        k.onclick = function () { zetThema(huidigThema() === 'dark' ? 'light' : 'dark'); };
+        n.appendChild(L); n.appendChild(k);
+        document.body.insertBefore(n, document.body.firstChild);
+        themaKnopBalk();
+      }
+      if ((opties && opties.zonderLinks) || !geldig(token) || n.getAttribute('data-links')) return;
+      n.setAttribute('data-links', 'bezig');
       KKYKC.rollen().then(function (r) {
-        if (document.getElementById('kkykcBalk') || !document.body) return;
         var heeft = function (l) { return r.some(function (x) { return l.indexOf(x) >= 0; }); };
-        var L = [['mijn.html', 'Mijn trainingen', ['sporter']], ['trainers.html', 'Trainersportaal', ['trainer', 'hoofdtrainer']], ['dashboard.html', 'Dashboard', ['hoofdtrainer']],
+        var P = [['mijn.html', 'Mijn trainingen', ['sporter']], ['trainers.html', 'Trainersportaal', ['trainer', 'hoofdtrainer']], ['dashboard.html', 'Dashboard', ['hoofdtrainer']],
           ['planner.html', 'Planner', ['hoofdtrainer']]].filter(function (x) { return heeft(x[2]); });
-        if (!L.length) return;   /* B3d: ook bij 1 pagina (Account = afmelden); geen rol → geen balk */
+        var L = document.getElementById('kkykcBalkL'); if (!L) return;
+        L.textContent = ''; n.setAttribute('data-links', '1');
+        if (!P.length) return;   /* geen rol → enkel de themaknop */
         var hier = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
-        var n = document.createElement('nav'); n.id = 'kkykcBalk'; n.setAttribute('aria-label', 'KKYKC-app');
-        n.style.cssText = 'display:flex;gap:6px;align-items:center;overflow-x:auto;padding:6px 10px;background:#1f2328;font:13px Arial,Helvetica,sans-serif;position:relative;z-index:50';
-        L.forEach(function (x) {
+        P.forEach(function (x) {
           var a = document.createElement('a'); a.href = x[0]; a.textContent = x[1];
           var actief = hier === x[0]; if (actief) a.setAttribute('aria-current', 'page');
           a.style.cssText = 'white-space:nowrap;text-decoration:none;padding:5px 12px;border-radius:14px;color:#fff;' + (actief ? 'background:#c96008;font-weight:bold' : 'background:#30363d');
-          n.appendChild(a);
+          L.appendChild(a);
         });
         var s = document.createElement('a'); s.href = 'index.html?blijf=1'; s.textContent = 'Account';
         var opAccount = /^(index\.html)?$/.test(hier); if (opAccount) s.setAttribute('aria-current', 'page');
-        s.style.cssText = 'margin-left:auto;white-space:nowrap;text-decoration:none;padding:5px 10px;border-radius:14px;' + (opAccount ? 'background:#c96008;color:#fff;font-weight:bold' : 'color:#c9d1d9'); n.appendChild(s);
-        document.body.insertBefore(n, document.body.firstChild);
-      }, function () {});
+        s.style.cssText = 'margin-left:auto;white-space:nowrap;text-decoration:none;padding:5px 10px;border-radius:14px;' + (opAccount ? 'background:#c96008;color:#fff;font-weight:bold' : 'color:#c9d1d9');
+        L.appendChild(s);
+      }, function () { n.removeAttribute('data-links'); });
     }
   };
-  /* B3c: balk zodra de pagina geladen is (als al aangemeld) en na elke aanmelding */
-  var opIndex = /^(index\.html)?$/i.test(location.pathname.split('/').pop() || '');   /* de startpagina doet het zelf (na wieBenIk) */
-  if (!opIndex) {
-    bijAanmelden.push(function () { KKYKC.balk(); });
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { KKYKC.balk(); }); else KKYKC.balk();
+  /* B3e: één thema voor alle pagina's. Bron = localStorage 'kkykc-thema'; de pagina's lezen bij het laden elk hun eigen sleutel
+     (dashboard/portaal: kkykc-thema · planner: kkykc-pl-thema · Mijn trainingen: kkykc-mt-thema) → api.js houdt ze gelijk. */
+  var THEMA_SL = ['kkykc-thema', 'kkykc-pl-thema', 'kkykc-mt-thema'];
+  function huidigThema() { var t = document.documentElement.getAttribute('data-theme'); if (t === 'dark' || t === 'light') return t;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+  function themaKnopBalk() { var k = document.getElementById('kkykcThema'); if (!k) return; var d = huidigThema() === 'dark';
+    k.textContent = d ? '☀' : '☾'; k.title = d ? 'Lichte modus' : 'Donkere modus'; k.setAttribute('aria-label', k.title); k.setAttribute('aria-pressed', d ? 'true' : 'false'); }
+  function zetThema(v) {
+    document.documentElement.setAttribute('data-theme', v);
+    try { THEMA_SL.forEach(function (k) { localStorage.setItem(k, v); }); } catch (e) {}
+    themaKnopBalk(); try { if (typeof window.themaKnop === 'function') window.themaKnop(); } catch (e) {}
   }
+  (function () {   /* bij het laden: gekozen thema meteen toepassen en de sleutels van de pagina's gelijkzetten (vóór hun eigen code) */
+    try { var v = localStorage.getItem('kkykc-thema'); if (v === 'dark' || v === 'light') { document.documentElement.setAttribute('data-theme', v); THEMA_SL.forEach(function (k) { localStorage.setItem(k, v); }); } } catch (e) {}
+  })();
+  /* balk zodra de pagina geladen is en na elke aanmelding; op de startpagina eerst enkel de themaknop (de pagina vult de rest na wieBenIk) */
+  var opIndex = /^(index\.html)?$/i.test(location.pathname.split('/').pop() || '');
+  var auto = function () { KKYKC.balk(opIndex ? { zonderLinks: true } : null); };
+  bijAanmelden.push(auto);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', auto); else auto();
 
   /* B4: service worker (sw.js) bewaart enkel de app-bestanden, nooit gegevens. Nieuwe versie online → melding met knop Vernieuwen.
      Herladen enkel in het tabblad waar op Vernieuwen geklikt werd (geen verlies van werk in een ander tabblad, bv. de planner). */

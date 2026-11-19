@@ -10,8 +10,10 @@
   header { background: #e8630a; color: #fff; padding: 14px 18px; font-weight: bold; font-size: 20px; }
   main { max-width: 720px; margin: 0 auto; padding: 20px 18px 40px; }
   h2 { font-size: 17px; margin-top: 24px; }
-  @media (prefers-color-scheme: dark) { body { color: #e6e6e6; background: #16181c; } }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) body { color: #e6e6e6; background: #16181c; } }
+  :root[data-theme="dark"] body { color: #e6e6e6; background: #16181c; }
 </style>
+<script src="api.js"></script>
 </head>
 <body>
 <header>KKYKC</header>

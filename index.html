@@ -15,7 +15,8 @@
 <meta name="apple-mobile-web-app-title" content="KKYKC">
 <style>
   :root { --oranje: #e8630a; --tekst: #1f2328; --zacht: #6a737d; --bg: #fff; --kader: #e5e7eb; }
-  @media (prefers-color-scheme: dark) { :root { --tekst: #e6e6e6; --zacht: #9aa4ae; --bg: #16181c; --kader: #2c3036; } }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --tekst: #e6e6e6; --zacht: #9aa4ae; --bg: #16181c; --kader: #2c3036; } }
+  :root[data-theme="dark"] { --tekst: #e6e6e6; --zacht: #9aa4ae; --bg: #16181c; --kader: #2c3036; }   /* B3e: themaknop in de balk */
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }   /* B2: ook voor a.hoofd (inline-block) */
   body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: var(--tekst); background: var(--bg); }
@@ -50,7 +51,7 @@
       <button class="lijn" id="afmelden">Afmelden</button>
     </div>
   </div>
-  <p class="zacht" style="margin-top:18px">Testversie – nog niet verspreiden. · <a href="privacy.html" style="color:inherit">Privacy</a> · versie <span id="versie">64f8e8df16</span></p>
+  <p class="zacht" style="margin-top:18px">Testversie – nog niet verspreiden. · <a href="privacy.html" style="color:inherit">Privacy</a> · versie <span id="versie">936b9d4cc6</span></p>
 </main>
 <script>
 (function () {

@@ -3,7 +3,7 @@
    en worden niet bewaard (andere oorsprong → deze service worker komt er niet aan).
    VERSIE en BESTANDEN vult bouw_app.py in: elke wijziging aan een app-bestand geeft een nieuwe versie → melding "Nieuwe versie beschikbaar". */
 'use strict';
-var VERSIE = '64f8e8df16', CACHE = 'kkykc-app-' + VERSIE, BESTANDEN = ["api.js", "apple-touch-icon.png", "dashboard.html", "icon-192.png", "icon-512.png", "icon-maskable-512.png", "index.html", "manifest.webmanifest", "mijn.html", "planner.html", "privacy.html", "trainers.html", "xlsx.full.min.js"];
+var VERSIE = '936b9d4cc6', CACHE = 'kkykc-app-' + VERSIE, BESTANDEN = ["api.js", "apple-touch-icon.png", "dashboard.html", "icon-192.png", "icon-512.png", "icon-maskable-512.png", "index.html", "manifest.webmanifest", "mijn.html", "planner.html", "privacy.html", "trainers.html", "xlsx.full.min.js"];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(BESTANDEN.map(function (f) { return new Request(f, { cache: 'reload' }); })); }));
 });
