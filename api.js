@@ -29,6 +29,7 @@
     /* api('wieBenIk') → Promise met data; fout: Error met .code (token, verlopen, aud, test, rol, fn, net …) en .ms */
     api: function (fn, args) {
       var t0 = performance.now();
+      if (!/^(get|bundel$|wieBenIk$|mijnData$|mijnToegang$)/.test(fn)) VOOR = {};   /* B3d: na een wijziging geen voorgeladen (mogelijk verouderde) gegevens meer */
       if (!geldig(token)) { var e0 = new Error('Je aanmelding is verlopen. Meld je opnieuw aan.'); e0.code = 'verlopen'; KKYKC.afmelden(); return Promise.reject(e0); }
       /* text/plain = "eenvoudige" aanvraag → geen CORS-voorcontrole, die Apps Script niet beantwoordt */
       return fetch(CFG.apiUrl, { method: 'POST', body: JSON.stringify({ fn: fn, args: args || [], token: token }), redirect: 'follow' })
@@ -45,7 +46,8 @@
     /* Voor de gebouwde pagina's (B1+): zelfde vorm als gs() in de huidige webapps */
     gs: function (fn) {
       var a = Array.prototype.slice.call(arguments, 1), k = fn + JSON.stringify(a), v = VOOR[k];
-      if (v) { delete VOOR[k];   /* B3c: al opgehaald in de gebundelde aanroep */
+      if (v && Date.now() - v.t > 60000) v = null;   /* B3d: voorgeladen gegevens max. 1 min gebruiken */
+      if (v) { delete VOOR[k]; v = v.p;   /* B3c: al opgehaald in de gebundelde aanroep */
         return v.then(function (x) { if (!x) return KKYKC.api(fn, a).then(function (r) { return r.data; });
           if (x.ok) return x.data; throw Object.assign(new Error(x.tekst || 'Fout'), { code: x.code }); }); }
       return KKYKC.api(fn, a).then(function (r) { return r.data; });
@@ -55,7 +57,7 @@
     voorladen: function (calls) {
       if (!geldig(token)) return;
       var p = KKYKC.api('bundel', [calls]).then(function (r) { return r.data; }, function () { return null; });
-      calls.forEach(function (c, i) { VOOR[c[0] + JSON.stringify(c[1])] = p.then(function (d) { return d && d[i] ? d[i] : null; }); });
+      var t = Date.now(); calls.forEach(function (c, i) { VOOR[c[0] + JSON.stringify(c[1])] = { t: t, p: p.then(function (d) { return d && d[i] ? d[i] : null; }) }; });
     },
     /* B3c: rollen van dit account (1× per tabblad opgevraagd, daarna uit sessionStorage) */
     rollen: function () {
@@ -73,7 +75,7 @@
         var heeft = function (l) { return r.some(function (x) { return l.indexOf(x) >= 0; }); };
         var L = [['mijn.html', 'Mijn trainingen', ['sporter']], ['trainers.html', 'Trainersportaal', ['trainer', 'hoofdtrainer']], ['dashboard.html', 'Dashboard', ['hoofdtrainer']],
           ['planner.html', 'Planner', ['hoofdtrainer']]].filter(function (x) { return heeft(x[2]); });
-        if (L.length < 2) return;
+        if (!L.length) return;   /* B3d: ook bij 1 pagina (Account = afmelden); geen rol → geen balk */
         var hier = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
         var n = document.createElement('nav'); n.id = 'kkykcBalk'; n.setAttribute('aria-label', 'KKYKC-app');
         n.style.cssText = 'display:flex;gap:6px;align-items:center;overflow-x:auto;padding:6px 10px;background:#1f2328;font:13px Arial,Helvetica,sans-serif;position:relative;z-index:50';
@@ -84,7 +86,8 @@
           n.appendChild(a);
         });
         var s = document.createElement('a'); s.href = 'index.html?blijf=1'; s.textContent = 'Account';
-        s.style.cssText = 'margin-left:auto;white-space:nowrap;color:#c9d1d9;text-decoration:none;padding:5px 8px'; n.appendChild(s);
+        var opAccount = /^(index\.html)?$/.test(hier); if (opAccount) s.setAttribute('aria-current', 'page');
+        s.style.cssText = 'margin-left:auto;white-space:nowrap;text-decoration:none;padding:5px 10px;border-radius:14px;' + (opAccount ? 'background:#c96008;color:#fff;font-weight:bold' : 'color:#c9d1d9'); n.appendChild(s);
         document.body.insertBefore(n, document.body.firstChild);
       }, function () {});
     }

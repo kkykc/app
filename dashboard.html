@@ -224,8 +224,6 @@ function themaWissel(){ var n=themaHuidig()==="dark"?"light":"dark";
   <div class="acties">
     <button class="btn-wit" id="btnLog" type="button">Logboek vernieuwen</button>
     <button class="btn-rand" id="btnXlsx" type="button">Excel met tabellen</button>
-    <button class="btn-rand" id="btnTrainers" type="button">Trainersportaal</button>
-    <button class="btn-rand" id="btnPlanner" type="button">Planner</button>
     <button class="btn-rand" id="btnToegang" type="button">Toegangsbeheer</button>
     <button class="btn-rand" id="btnThema" type="button" onclick="themaWissel()" aria-pressed="false">&#9790; Donkere modus</button>
     <script>themaKnop();</script>
@@ -2878,8 +2876,6 @@ WEBAPP_URL = "planner.html";   /* KKYKC-app: links naar de planner van de app */
 const appOpslag = () => gs("getOpslag").then(m => { if (m && m.kb >= m.waarschuw_kb) melding(`Opslag van de webapp: ${m.kb} kB van ${m.limiet_kb} kB gebruikt. Vraag de beheerder om op te ruimen (editor: opslagRapport), anders mislukt binnenkort elke bewaaractie.`, "fout"); }).catch(() => {});
 $("#btnLog").onclick = vernieuwLogboek;
 $("#btnXlsx").onclick = downloadExcel;
-$("#btnTrainers").onclick = () => { location.href = "trainers.html"; };   /* KKYKC-app */
-$("#btnPlanner").onclick = () => { location.href = "planner.html"; };   /* KKYKC-app */
 /* ---------- KKYKC-app (B3, 19/11/2026 – ingevoegd door bouw_app.py, bron: app/bron_b3/app_pagina.js) ----------
    Dashboard en planner (enkel hoofdtrainers): aanmelden met Google (api.js) en de API i.p.v. de Apps Script-aanroep.
    Niets van de gegevens wordt op het toestel bewaard (geen browsercache: PAGINA_WIE is leeg). Enkel thema/jaar/periode blijven in de browser.
@@ -2919,11 +2915,6 @@ function appFoutAanmelden(code, tekst){
   return false;
 }
 function appAfmelden(){ KKYKC.afmelden(); location.replace("index.html"); }
-function appAfknop(naastId, klasse){
-  var n = document.getElementById(naastId); if (!n) return;
-  var b = document.createElement("button"); b.type = "button"; b.id = "appAf"; b.className = klasse; b.textContent = "Afmelden"; b.onclick = appAfmelden;
-  n.parentNode.insertBefore(b, n.nextSibling);
-}
 function appStart(f){
   if (!KKYKC.ingesteld()){ appGeenToegang("De app is nog niet ingesteld."); return; }
   KKYKC.opAanmelden(function(){ var k = document.getElementById("appKaart"); if (k) k.remove(); if (!APP_PAGINA.gestart){ APP_PAGINA.gestart = true; f(); } });
@@ -2963,7 +2954,6 @@ toegangTeken = function(o, t){
   };
   h.parentNode.insertBefore(b, h);
 };
-appAfknop("btnThema", "btn-rand");
 /* B3c: sneller openen – alle leesaanroepen van de start in twee gebundelde aanroepen (planning-deel en logboek-deel tegelijk) i.p.v. drie rondes na elkaar */
 function appVoorladen(){
   var j = null; try { j = Number(JSON.parse(localStorage.getItem("kkykc-jaar"))) || null; } catch(e){}

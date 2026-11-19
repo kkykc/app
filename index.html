@@ -45,14 +45,12 @@
     <div id="in" hidden>
       <p id="wie">Even geduld…</p>
       <p id="rollen"></p>
-      <p id="paginas" hidden><a class="hoofd" id="naarMijn" href="mijn.html" hidden>Mijn trainingen</a> <a class="hoofd" id="naarPortaal" href="trainers.html" hidden>Trainersportaal</a> <a class="hoofd" id="naarDashboard" href="dashboard.html" hidden>Dashboard</a> <a class="hoofd" id="naarPlanner" href="planner.html" hidden>Planner</a></p>
+      <p class="zacht">Wissel van pagina met de balk bovenaan.</p>
       <div id="aanvraag" hidden><p id="aanvraagTekst" class="zacht"></p><p id="aanvraagForm" hidden><input id="aanvraagNaam" maxlength="60" placeholder="Je naam" style="padding:9px;border-radius:8px;border:1px solid var(--kader);width:100%;max-width:320px"> <button class="lijn" id="aanvraagKnop" style="margin-top:8px">Toegang aanvragen als trainer</button></p></div>
-      <p class="zacht" id="tijd"></p>
-      <button class="lijn" id="opnieuw">Opnieuw meten</button>
       <button class="lijn" id="afmelden">Afmelden</button>
     </div>
   </div>
-  <p class="zacht" style="margin-top:18px">Testversie – nog niet verspreiden. · <a href="privacy.html" style="color:inherit">Privacy</a> · versie <span id="versie">eb76dfe7bf</span></p>
+  <p class="zacht" style="margin-top:18px">Testversie – nog niet verspreiden. · <a href="privacy.html" style="color:inherit">Privacy</a> · versie <span id="versie">64f8e8df16</span></p>
 </main>
 <script>
 (function () {
@@ -61,7 +59,7 @@
   function tekst(el, t, fout) { el.textContent = t; el.className = fout ? 'fout' : ''; }
   function toon(aan) { $('uit').hidden = aan; $('in').hidden = !aan; }
   function laad() {
-    toon(true); $('paginas').hidden = true; tekst($('wie'), 'Even geduld…'); $('rollen').textContent = ''; $('tijd').textContent = '';
+    toon(true); tekst($('wie'), 'Even geduld…'); $('rollen').textContent = '';
     KKYKC.api('wieBenIk').then(function (r) {
       var d = r.data;
       tekst($('wie'), 'Je bent ' + (d.naam || d.email) + (d.naam ? ' (' + d.email + ')' : '') + '.');
@@ -70,20 +68,14 @@
       else { el.appendChild(document.createTextNode('Rol: ')); d.rollen.forEach(function (x) { var s = document.createElement('span'); s.className = 'chip'; s.textContent = NAMEN[x] || x; el.appendChild(s); }); }
       /* B3: Mijn trainingen enkel met een Koppeling (rol sporter), ook voor hoofdtrainers · Trainersportaal: trainers en hoofdtrainers ·
          Dashboard en Planner: enkel hoofdtrainers. De API controleert dit bij elke aanroep opnieuw. */
-      var heeft = function (l) { return d.rollen.some(function (x) { return l.indexOf(x) >= 0; }); };
-      $('naarMijn').hidden = !heeft(['sporter']); $('naarPortaal').hidden = !heeft(['trainer', 'hoofdtrainer']);
-      $('naarDashboard').hidden = $('naarPlanner').hidden = !heeft(['hoofdtrainer']);
-      $('paginas').hidden = $('naarMijn').hidden && $('naarPortaal').hidden && $('naarDashboard').hidden;
       /* B5: geen rol → eigen aanvraagstatus en toegang aanvragen als trainer (een hoofdtrainer keurt goed in Toegangsbeheer) */
       $('aanvraag').hidden = d.rollen.length > 0; if (!d.rollen.length) aanvraagToon();
       /* B3c: na het aanmelden meteen naar de startpagina van je rol (Mijn trainingen → dashboard → trainersportaal). Via 'Account' (?blijf=1) blijf je hier. */
       KKYKC.zetRollen(d.rollen);
       var start = KKYKC.startpagina(d.rollen); if (start && !/[?&]blijf=1/.test(location.search)) { location.replace(start); return; }
       KKYKC.balk();
-      $('tijd').textContent = 'Aanroep: ' + (r.ms / 1000).toFixed(1).replace('.', ',') + ' s (server ' + ((r.serverMs || 0) / 1000).toFixed(1).replace('.', ',') + ' s)';
     }, function (e) {
       if (e.code === 'token' || e.code === 'verlopen' || e.code === 'aud') { toon(false); $('knop').textContent = ''; KKYKC.knop($('knop')); tekst($('melding'), e.message, true); }
-      else tekst($('wie'), e.message, true); $('tijd').textContent = e.ms ? 'Aanroep: ' + (e.ms / 1000).toFixed(1).replace('.', ',') + ' s' : '';
     });
   }
   var STATUS = { open: 'Je aanvraag is ontvangen. Een hoofdtrainer keurt ze goed of af; kom later terug.', afgewezen: 'Je aanvraag werd niet goedgekeurd. Contacteer een hoofdtrainer.' };
@@ -100,7 +92,6 @@
   if (!KKYKC.ingesteld()) { tekst($('uit').firstElementChild, 'De app is nog niet ingesteld (client-ID of API-adres ontbreekt).', true); return; }
   KKYKC.opAanmelden(function () { $('melding').textContent = ''; laad(); });
   $('afmelden').onclick = function () { KKYKC.afmelden(); toon(false); $('knop').textContent = ''; KKYKC.knop($('knop')); };
-  $('opnieuw').onclick = laad;
   if (KKYKC.aangemeld()) laad(); else KKYKC.knop($('knop'));
 })();
 </script>
