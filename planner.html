@@ -1,0 +1,1424 @@
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<script src="https://accounts.google.com/gsi/client" async></script>
+<script src="api.js"></script>
+<title>KKYKC Planner</title>
+<style>
+:root{--or:#C96008;--or-ink:#9A4700;--geel:#FDE68A;--licht:#FFF3E0;--bg:#FFFFFF;--panel:#FFFBF6;--fg:#1C1712;--muted:#6E6257;--line:#E8DDD0;
+  --ok:#2F7D3B;--ok-bg:#DCEFDD;--warn:#9A6A00;--warn-bg:#FCEBB6;--bad:#A32A1E;--bad-bg:#F8D7D2;--grijs-bg:#EEE8E1;--info:#2B5C8A;--info-bg:#DCE9F5;
+  --z0:#B9B2AA;--z1:#7FB77E;--z2:#E3C14B;--z3:#E8893A;--z4:#D2483C;--z5:#8E2A6B;
+  --font:Arial,"Helvetica Neue",Helvetica,sans-serif;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17130F;--panel:#211B15;--fg:#F3ECE4;--muted:#B2A595;--line:#3A3027;--licht:#2A2018;
+  --ok:#7FCB8A;--ok-bg:#1F3A24;--warn:#E9C25A;--warn-bg:#3D3112;--bad:#F08A7E;--bad-bg:#47201B;--grijs-bg:#2C2620;--or-ink:#F0A060;--info:#8DB8E2;--info-bg:#1C2C3C;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17130F;--panel:#211B15;--fg:#F3ECE4;--muted:#B2A595;--line:#3A3027;--licht:#2A2018;
+  --ok:#7FCB8A;--ok-bg:#1F3A24;--warn:#E9C25A;--warn-bg:#3D3112;--bad:#F08A7E;--bad-bg:#47201B;--grijs-bg:#2C2620;--or-ink:#F0A060;--info:#8DB8E2;--info-bg:#1C2C3C;color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.4}
+.band{background:var(--or);color:#fff}
+.band-in{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:14px;padding:10px 16px}
+.logo{height:44px;width:auto}.titel{flex:1;min-width:0}
+.eyebrow{color:var(--geel);font-weight:bold;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase}
+.titel h1{margin:2px 0;font-size:20px}.wie{font-size:12px;opacity:.9}
+.band-in .tknop+.tknop{margin-left:-6px}
+.tknop{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.7);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12.5px}
+.wrap{max-width:1400px;margin:0 auto;padding:10px 16px 60px}
+button,select,textarea,input{font:inherit;color:inherit}
+.btn{border:1px solid var(--or);background:var(--or);color:#fff;border-radius:8px;padding:8px 13px;cursor:pointer;min-height:38px}
+.btn.rand{background:transparent;color:var(--or-ink)}.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.klein{padding:5px 9px;min-height:30px;font-size:13px}.btn.gevaar{background:var(--bad);border-color:var(--bad)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.bar select{padding:7px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+.weekkop{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0 4px}
+.weekkop h2{margin:0;font-size:18px}
+.pil{display:inline-block;padding:2px 9px;border-radius:10px;font-size:12px;font-weight:bold;white-space:nowrap}
+.p-ok{background:var(--ok-bg);color:var(--ok)}.p-warn{background:var(--warn-bg);color:var(--warn)}.p-bad{background:var(--bad-bg);color:var(--bad)}
+.p-grijs{background:var(--grijs-bg);color:var(--muted)}.p-info{background:var(--info-bg);color:var(--info)}
+.melding{padding:9px 12px;border-radius:8px;background:var(--warn-bg);color:var(--warn);margin:8px 0}.melding.fout{background:var(--bad-bg);color:var(--bad)}
+.melding.ok{background:var(--ok-bg);color:var(--ok)}.melding.info{background:var(--info-bg);color:var(--info)}
+.groepknop{display:flex;gap:4px}.groepknop button{border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:5px 13px;cursor:pointer}
+.groepknop button[aria-pressed="true"]{background:var(--or);color:#fff;border-color:var(--or)}
+.indeling{display:grid;grid-template-columns:1fr;gap:14px}
+.indeling.metbib{grid-template-columns:minmax(0,1fr) 340px}
+.groep{border:1px solid var(--line);border-radius:12px;margin:12px 0;background:var(--bg)}
+.groep>header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--panel);border-radius:12px 12px 0 0}
+.groep>header h3{margin:0;font-size:16px}
+.tot{display:flex;flex-wrap:wrap;gap:10px;font-size:13px;color:var(--muted)}.tot b{color:var(--fg)}
+.zbalk{display:flex;height:10px;width:160px;border-radius:5px;overflow:hidden;background:var(--grijs-bg)}
+.zbalk span{display:block;height:100%}
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:0}
+.dag{border-right:1px solid var(--line);min-height:120px;padding:6px}.dag:last-child{border-right:0}
+.dag.bevr{background:repeating-linear-gradient(45deg,transparent,transparent 8px,var(--grijs-bg) 8px,var(--grijs-bg) 9px)}
+.dag.vandaag .dagkop{color:var(--or-ink)}
+.dagkop{font-weight:bold;font-size:13px;margin-bottom:4px;display:flex;justify-content:space-between;gap:4px}
+.dagkop .kal{font-weight:normal;font-size:11px;color:var(--info);text-align:right}
+.slot{border:1px dashed transparent;border-radius:8px;padding:3px;margin:3px 0;min-height:34px}
+.slot.drop{border-color:var(--or);background:var(--licht)}
+.slotlabel{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:flex;justify-content:space-between;align-items:center}
+.sjab{font-size:11.5px;color:var(--muted);border:1px dashed var(--line);border-radius:6px;padding:4px 6px;cursor:pointer;background:transparent;width:100%;text-align:left}
+.sjab:hover{border-color:var(--or)}
+.plus{border:0;background:transparent;color:var(--or-ink);cursor:pointer;font-size:15px;line-height:1;padding:0 4px}
+.kaart{border:1px solid var(--line);border-left:5px solid var(--z1);background:var(--panel);border-radius:8px;padding:5px 7px;margin:3px 0;cursor:pointer;font-size:12.5px}
+.kaart:hover{border-color:var(--or)}.kaart.concept{border-style:dashed;opacity:.92}.kaart.telt-niet{opacity:.55}
+.kaart .inh{margin:3px 0;word-break:break-word;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.kaart .m{color:var(--muted);font-size:11.5px}
+.doelchip{display:inline-block;padding:0 7px;border-radius:9px;font-size:11px;font-weight:bold;color:#222;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+.ow{font-size:12px;color:var(--muted);cursor:pointer;border:1px dashed var(--line);border-radius:8px;padding:4px 8px;max-width:100%;text-align:left;background:transparent}
+.eval{border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:12px 0;background:var(--panel)}
+.eval h3{margin:0 0 6px;font-size:15px}.eval ul{margin:0;padding-left:18px}.eval li{margin:3px 0;font-size:13.5px}
+.bib{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:10px;position:sticky;top:8px;max-height:calc(100vh - 16px);overflow:auto}
+.bib h3{margin:0 0 6px;font-size:15px;display:flex;justify-content:space-between;align-items:center}
+.bib input,.bib select{width:100%;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--bg);margin:3px 0}
+.bibitem{border:1px solid var(--line);border-radius:8px;padding:6px 8px;margin:6px 0;background:var(--bg);font-size:12.5px;cursor:grab}
+.bibitem .acties{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap}
+.ovl{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-start;justify-content:center;padding:18px 10px;z-index:50;overflow:auto}
+.dlg{background:var(--bg);border:1px solid var(--line);border-top:4px solid var(--or);border-radius:10px;max-width:860px;width:100%;padding:12px 16px}
+.dlg.smal{max-width:520px}
+.dlg h2{margin:0 0 6px;font-size:17px}.dlg label{display:block;font-weight:bold;font-size:12.5px;margin:8px 0 3px}
+.dlg input[type=text],.dlg input[type=number],.dlg input[type=date],.dlg select,.dlg textarea{width:100%;padding:7px;border:1px solid var(--line);border-radius:7px;background:var(--panel)}
+.dlg textarea{min-height:56px;resize:vertical}
+.r3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.r4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.r2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.set{border:1px solid var(--line);border-radius:8px;padding:6px 8px;margin:8px 0;background:var(--panel)}
+.set .kop{display:flex;flex-wrap:wrap;gap:8px;align-items:end}
+.set .kop label{margin:0}.set .kop input[type=number]{width:70px}
+.deel{display:grid;grid-template-columns:62px 62px 88px 34px;gap:6px;align-items:center;margin:3px 0}
+.deel input,.deel select,.tijd input,.tijd select{padding:5px;border:1px solid var(--line);border-radius:6px;background:var(--bg);width:100%}
+.tijd{display:grid;grid-template-columns:62px 62px 88px;gap:6px;align-items:center}
+.klein:not(.btn){font-size:12px;color:var(--muted)}
+.prev{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:10px 0;background:var(--licht)}
+/* F5a: voorstel (generator) */
+.dlg.breed{max-width:980px;width:96vw}
+.vs-week{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:10px 0}
+.vs-week h3{margin:0 0 6px;font-size:15px}
+.vs-g{margin:6px 0 2px;font-weight:bold}
+.vs-tab{width:100%;border-collapse:collapse;font-size:13px}
+.vs-tab td{border-top:1px solid var(--line);padding:4px 6px;vertical-align:top}
+.vs-tab td.u{color:var(--muted,#666)}
+.vs-mel li{margin:2px 0}
+.kaart .uitl{font-size:11px;opacity:.8;margin-top:2px}
+@media (max-width:600px){.vs-tab td:nth-child(4){display:none}}
+.prev .tekst{font-weight:bold;word-break:break-word}
+.knoppen{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;justify-content:flex-end}
+.fout{color:var(--bad);font-weight:bold}
+.leeg{padding:30px;text-align:center;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 14px;border-radius:8px;z-index:80;font-size:14px}
+#print{display:none}
+body.jaarmodus .alleenweek{display:none!important}
+.chk{display:flex!important;gap:6px;align-items:center;font-weight:normal!important;font-size:13.5px!important;margin:4px 0!important}
+.jtab{width:100%;border-collapse:collapse;font-size:12.5px}
+.jtab th,.jtab td{border-bottom:1px solid var(--line);padding:3px 5px;text-align:left;vertical-align:middle}
+.jtab th{position:sticky;top:0;background:var(--panel);z-index:1;font-size:11.5px;color:var(--muted)}
+.jtab td.n{text-align:right;white-space:nowrap}
+.jtab select,.jtab input{padding:3px 4px;border:1px solid var(--line);border-radius:6px;background:var(--bg);font-size:12.5px;width:100%}
+.jtab input:disabled,.jtab select:disabled{border-color:transparent;background:transparent;opacity:1;color:var(--fg)}
+.jtab tr.vuil td{background:var(--licht)}.jtab tr.nu td{box-shadow:inset 0 2px 0 var(--or)}
+.jtab .wk{border:0;background:transparent;color:var(--or-ink);font-weight:bold;cursor:pointer;padding:0}
+.kchip{display:inline-block;border:1px solid var(--line);border-radius:9px;padding:0 6px;margin:1px 2px 1px 0;font-size:11px;cursor:pointer;background:var(--panel);white-space:nowrap}
+.kchip.wedstrijd{border-color:var(--info);color:var(--info)}.kchip.test{border-color:var(--ok);color:var(--ok)}.kchip.clubactiviteit{border-color:var(--or);color:var(--or-ink)}
+.kchip.afdrukopmerking{border-style:dashed}
+.jblok{border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:12px 0;background:var(--bg)}
+.jblok h3{margin:0 0 6px;font-size:15px}
+.jgraf{width:100%;height:auto;display:block}
+.jscroll{max-height:70vh;overflow:auto}
+.let{border:2px solid #C96008;border-radius:2mm;padding:1.5mm 3mm;margin:0 0 3mm;font-weight:bold}
+@media (max-width:1100px){.indeling.metbib{grid-template-columns:1fr}.bib{position:static;max-height:none}}
+@media (max-width:760px){.jtab .opt{display:none}.week{grid-template-columns:1fr}.dag{border-right:0;border-bottom:1px solid var(--line);min-height:0}.r4{grid-template-columns:1fr 1fr}.r3{grid-template-columns:1fr 1fr}
+  .titel h1{font-size:18px}.logo{height:36px}.zbalk{width:110px}.kaart .inh{-webkit-line-clamp:6}}
+@media print{
+  @page{size:A4 landscape;margin:10mm}
+  body{background:#fff;color:#000;font-size:10.5pt}
+  .band,.wrap,.ovl,.toast{display:none!important}
+  #print{display:block}
+  .pblad{page-break-after:always;break-after:page}
+  .pblad:last-child{page-break-after:auto;break-after:auto}
+  .pblad h1{font-size:14pt;margin:0 0 2mm}.pblad .sub{font-size:9.5pt;margin-bottom:3mm}
+  .pblad table{width:100%;border-collapse:collapse}
+  .pblad th,.pblad td{border:1px solid #888;padding:1.2mm 2mm;vertical-align:top;font-size:9.5pt}
+  .pblad th{background:#C96008;color:#fff;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .pblad .doelchip{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .pblad .leg{margin-top:3mm;font-size:8.5pt}.pblad .leg div{margin:.6mm 0}
+}
+</style></head>
+<body>
+<div class="band"><div class="band-in">
+  <img class="logo" alt="KKYKC" src="data:image/png;base64,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">
+  <div class="titel"><div class="eyebrow">Kayak Club Kortrijk</div><h1>Planner</h1><div class="wie" id="wie"></div></div>
+  <button class="tknop" id="naarDashboard">Dashboard</button>
+  <button class="tknop" id="thema" title="Licht of donker">◐</button>
+</div></div>
+<div class="wrap">
+  <div class="bar">
+    <select id="jaar" aria-label="Jaar"></select>
+    <button class="btn rand klein alleenweek" id="vorige" aria-label="Vorige week">◀</button>
+    <select id="weeksel" class="alleenweek" aria-label="Week"></select>
+    <button class="btn rand klein alleenweek" id="volgende" aria-label="Volgende week">▶</button>
+    <button class="btn rand klein" id="nu">Deze week</button>
+    <button class="btn rand klein" id="jaarknop" aria-pressed="false">Jaarplan</button>
+    <span style="flex:1"></span>
+    <div class="groepknop alleenweek" id="groepen" role="group" aria-label="Groepen"></div>
+    <button class="btn rand klein alleenweek" id="bibknop" aria-pressed="false">Bibliotheek</button>
+  </div>
+  <div id="meldingen"></div>
+  <div id="weekkop" class="alleenweek"></div>
+  <div class="indeling" id="indeling"><div id="hoofd"><div class="leeg">Planner laden…</div></div><aside id="bib" class="bib alleenweek" hidden></aside></div>
+  <footer class="klein" style="margin-top:20px">K.K.Y.K.C. — Planner — enkel hoofdtrainers · geen sportergegevens in de planning · planning ouder dan 7 dagen is bevroren</footer>
+</div>
+<div id="print"></div>
+<script>
+"use strict";
+/* ===================== KKYKC – gedeelde rekenkern (reken.js) =====================
+   Eén bron voor: zoneminuten uit de setbouwer (sets_json), auto-tekst (kolom Q/C), doel automatisch (KX), km, duur, TSS en verwachte RPE.
+   Gebruikt door Planning.gs (Apps Script, via bouw_reken.py als Reken.gs), de regressietest in node en (vanaf F2) de planner-pagina.
+   Regels: geen dubbele slash buiten commentaarblokken, geen backslash-aanhalingsteken (HtmlService). Versie F1 – 14/11/2026.
+   Bronformules (Schema 2026, geverifieerd op W47): D10 (zones), KL:KS (herhaalfactor), KD:KK (tekst per set), Q10, C10, C8, KX (Doelen.gs). */
+var RK = (function () {
+  'use strict';
+  var ZONES = ['T0', 'T1', 'T2', 'T3', 'T4', 'TMAX'];
+  var VERSIE = 'r1';
+
+  /* ---------- waarden zoals de spreadsheet ze ziet ---------- */
+  /* getal(): rekenen met + (leeg = 0, numerieke tekst telt mee, andere tekst = 0) */
+  function getal(v) {
+    if (v === null || v === undefined || v === '') return 0;
+    if (typeof v === 'number') return isFinite(v) ? v : 0;
+    if (typeof v === 'boolean') return v ? 1 : 0;
+    var s = String(v).trim().replace(',', '.');
+    if (s === '') return 0;
+    var x = Number(s);
+    return isFinite(x) ? x : 0;
+  }
+  /* N(): enkel echte getallen (tekst = 0) */
+  function N(v) { return typeof v === 'number' && isFinite(v) ? v : (v === true ? 1 : 0); }
+  function isJa(v) { return String(v === null || v === undefined ? '' : v).trim().toLowerCase() === 'ja'; }
+  function zoneGelijk(a, b) { return a !== null && a !== undefined && a !== '' && String(a).toLowerCase() === String(b).toLowerCase(); }
+  /* getal als tekst zoals in een formule (max. 15 beduidende cijfers) */
+  function numTekst(x) { var y = Number(Number(x).toPrecision(15)); return String(y); }
+  /* TRIM van Sheets: spaties vooraan/achteraan weg en herhaalde spaties samen */
+  function trimSheets(s) { return String(s).replace(/ {2,}/g, ' ').replace(/^ +| +$/g, ''); }
+
+  /* ---------- sets_json ---------- */
+  /* vorm: { invaren:{min,sec}, uitvaren:{min,sec}, sets:[{ herhaal, koppel, aantal, delen:[{min,sec,zone}], rust_tussen:{min,sec,zone}, rust_na:{min,sec,zone} }] }
+     herhaal en aantal = N() van de cel (0 = leeg), koppel = true als 'ja'. Lege sets tussenin blijven staan (koppel-ketting). */
+  function leeg_(o) { return !o || (!getal(o.min) && !getal(o.sec) && !o.zone); }
+  function tijdMin_(o) { return o ? getal(o.min) + getal(o.sec) / 60 : 0; }
+  function tijdSec_(o) { return o ? getal(o.min) * 60 + getal(o.sec) : 0; }
+
+  /* herhaalfactor per set (KL:KS): F1 = max(1, herhaal1); Fk = F(k-1) als koppel = ja, anders max(1, herhaalk) */
+  function factoren(sj) {
+    var sets = (sj && sj.sets) || [], F = [];
+    for (var k = 0; k < sets.length; k++) {
+      var s = sets[k] || {};
+      F.push(k > 0 && s.koppel ? F[k - 1] : Math.max(1, N(s.herhaal)));
+    }
+    return F;
+  }
+
+  /* zoneminuten (D:I) van één rij, zonder de opwarming. Zelfde volgorde van optellen als de formule. */
+  function zoneMin(sj) {
+    sj = sj || {};
+    var sets = sj.sets || [], F = factoren(sj), uit = [];
+    var inv = getal((sj.invaren || {}).min) + getal((sj.invaren || {}).sec) / 60 + getal((sj.uitvaren || {}).min) + getal((sj.uitvaren || {}).sec) / 60;
+    for (var zi = 0; zi < ZONES.length; zi++) {
+      var z = ZONES[zi], tot = inv * (z === 'T0' ? 1 : 0);
+      for (var k = 0; k < sets.length; k++) {
+        var s = sets[k] || {}, n = N(s.aantal), delen = s.delen || [], som = 0;
+        for (var p = 0; p < delen.length; p++) som += tijdMin_(delen[p]) * (zoneGelijk(delen[p] && delen[p].zone, z) ? 1 : 0);
+        var rt = s.rust_tussen || {}, rn = s.rust_na || {};
+        tot += F[k] * (n * som + tijdMin_(rt) * Math.max(0, n - 1) * (zoneGelijk(rt.zone, z) ? 1 : 0) + tijdMin_(rn) * (zoneGelijk(rn.zone, z) ? 1 : 0));
+      }
+      uit.push(tot);
+    }
+    return uit;
+  }
+
+  /* ---------- tekst ---------- */
+  /* tijd in seconden -> 45"  3'  1'30"  (zoals de formule) */
+  function tijdTekst(t) {
+    if (t < 60) return numTekst(t) + '"';
+    var m = Math.floor(t / 60), r = t - 60 * m;
+    if (r === 0) return m + "'";
+    var rr = Math.round(r);
+    return m + "'" + (rr < 10 ? '0' : '') + rr + '"';
+  }
+  /* tekst van set k (KD:KK) */
+  function setTekst(sj, k, F) {
+    var sets = sj.sets || [], s = sets[k] || {}, n = N(s.aantal), delen = s.delen || [];
+    var stukken = [];
+    for (var p = 0; p < delen.length; p++) {
+      var t = tijdSec_(delen[p]);
+      if (t > 0) stukken.push(tijdTekst(t) + ' ' + (delen[p].zone == null ? '' : String(delen[p].zone)));
+    }
+    if (n === 0 || stukken.length === 0) return '';
+    var volgende = sets[k + 1] || {}, laatste = k === 7;
+    var tekst = '';
+    if (F[k] > 1 && !s.koppel) tekst += numTekst(F[k]) + 'x (';
+    if (n > 1) tekst += numTekst(n) + 'x (';
+    tekst += stukken.join(' + ');
+    if (n > 1) tekst += ')';
+    var rt = s.rust_tussen || {}, trt = tijdSec_(rt);
+    if (trt > 0 && n > 1) tekst += ' met ' + tijdTekst(trt) + ' ' + (rt.zone == null ? '' : String(rt.zone)) + ' tussen';
+    var rn = s.rust_na || {}, trn = tijdSec_(rn);
+    if (trn > 0) tekst += ' + ' + tijdTekst(trn) + ' ' + (rn.zone == null ? '' : String(rn.zone));
+    /* set 8 sluit altijd (in het blad staat TRUE i.p.v. de koppel van set 9); daarna: sluiten als de volgende set niet gekoppeld is */
+    if (F[k] > 1 && (laatste || !volgende.koppel)) tekst += ')';
+    return tekst;
+  }
+  /* auto-tekst (kolom Q): invaren + opwarming + sets + uitvaren */
+  function autoTekst(sj, opwarming) {
+    sj = sj || {};
+    var F = factoren(sj), delen = [], ti = tijdSec_(sj.invaren), tu = tijdSec_(sj.uitvaren);
+    if (ti > 0) delen.push(tijdTekst(ti) + ' invaren');
+    if (opwarming) delen.push('opwarming');
+    for (var k = 0; k < (sj.sets || []).length; k++) { var t = setTekst(sj, k, F); if (t !== '') delen.push(t); }
+    if (tu > 0) delen.push(tijdTekst(tu) + ' uitvaren');
+    return delen.join(' + ');
+  }
+  /* inhoud (kolom C): auto-tekst | extra tekst (KA), getrimd zoals TRIM() */
+  function inhoud(q, extra) {
+    q = q || ''; extra = extra || '';
+    if (q === '' && extra === '') return '';
+    return trimSheets(q + (q !== '' && extra !== '' ? ' | ' : '') + extra);
+  }
+  /* inhoud van de opwarmingsrij (C8/C26): + ' (= 11'40")' met de totale duur */
+  function inhoudOpwarming(q, extra, totMin) {
+    var c = inhoud(q, extra);
+    if (c === '') return '';
+    var sec = Math.round(totMin * 60);
+    return totMin > 0 ? c + ' (= ' + tijdTekst(sec) + ')' : c;
+  }
+
+  /* ---------- doel automatisch (KX, Doelen.gs) ---------- */
+  var DREMPELS_STD = { DOEL_T3_MIN: 5, DOEL_T2_MIN: 8, DOEL_SNEL_MIN: 1.5, DOEL_OU_T2_MIN: 6, DOEL_OU_T3_MIN: 4 };
+  var LANDDOEL = { 'kracht zaal': 'Kracht', 'core-stability': 'Core & stabiliteit', 'core': 'Core & stabiliteit', 'loop tempo': 'Tempo', 'loop rustig': 'Alternatieve duur', 'fietsen': 'Alternatieve duur' };
+  /* o = { keuze, inh (kolom C), z (zoneminuten van de rij zonder opwarming), lm (KT), lt (KU), groep } */
+  function doelAuto(o, dr) {
+    dr = dr || DREMPELS_STD;
+    var d = function (k) { return dr[k] === undefined || dr[k] === null || dr[k] === '' ? DREMPELS_STD[k] : Number(dr[k]); };
+    var keuze = String(o.keuze || '');
+    if (keuze !== '') return keuze;
+    var C = String(o.inh || ''), L = C.toLowerCase();
+    var t = function (re) { return re.test(L); };
+    if (o.groep === 'C') {
+      if (C === '' || t(/^geen training|^rust$/)) return '';
+      if (t(/km-test|m-test/)) return 'Test';
+      if (t(/wedstrijd/)) return 'Wedstrijd';
+      if (t(/leie|toer/)) return 'Aerobe basis';
+      if (t(/met rem/)) return 'Krachtuithouding (rem)';
+      if (t(/over-under|over\/under|overunder/)) return 'Over-under';
+      if (t(/racetempo|race pace|verzuring/)) return 'Racetempo';
+      if (t(/startladder|starts/)) return 'Starts & techniek';
+      if (t(/techniek/)) return 'Starts & techniek';
+      if (t(/herstel|recuperatie/)) return 'Herstel';
+      return '';
+    }
+    var z = o.z || [0, 0, 0, 0, 0, 0], som = z[0] + z[1] + z[2] + z[3] + z[4] + z[5];
+    if (t(/^geen training|^rust$/) || (som === 0 && N(o.lm) === 0 && C === '')) return '';
+    if (t(/km-test|m-test/)) return 'Test';
+    if (t(/wedstrijd/)) return 'Wedstrijd';
+    if (t(/leie|toer/)) return 'Aerobe basis';
+    if (t(/met rem/)) return 'Krachtuithouding (rem)';
+    if (t(/over-under|over\/under|overunder/) || (z[2] >= d('DOEL_OU_T2_MIN') && z[3] >= d('DOEL_OU_T3_MIN') && /T2 \+ [^()]*T3|T3 \+ [^()]*T2/.test(C))) return 'Over-under';
+    if (t(/racetempo|race pace|verzuring/)) return 'Racetempo';
+    if (t(/startladder|starts/)) return 'Starts & techniek';
+    if (som === 0) return LANDDOEL[String(o.lt || '').toLowerCase()] || '';
+    if (z[3] >= d('DOEL_T3_MIN')) return 'VO2max';
+    if (z[2] >= d('DOEL_T2_MIN')) return 'Tempo';
+    if (z[4] + z[5] >= d('DOEL_SNEL_MIN')) return 'Snelheid';
+    if (t(/techniek/)) return 'Starts & techniek';
+    if (t(/herstel|recuperatie/)) return 'Herstel';
+    return 'Aerobe basis';
+  }
+
+  /* ---------- km, belasting, TSS ---------- */
+  var SNELHEID_STD = { T0: 7, T1: 10.5, T2: 12, T3: 13, T4: 14, TMAX: 16 };
+  function km(z, snelheid) {
+    snelheid = snelheid || SNELHEID_STD;
+    var s = 0; for (var i = 0; i < ZONES.length; i++) s += (z[i] || 0) * snelheid[ZONES[i]] / 60;
+    return s;
+  }
+  /* oude AU-belasting (enkel nog voor het veld 'load' van het plan-object; de planner rekent in TSS) */
+  function belastingAU(z, lm, lt, weging, landweging, kv) {
+    var w = 0; for (var i = 0; i < ZONES.length; i++) w += (z[i] || 0) * (ZONES[i] in (weging || {}) ? weging[ZONES[i]] : 1);
+    var l = kv !== null && kv !== undefined ? kv : (lm || 0) * (lt in (landweging || {}) ? landweging[lt] : 1);
+    return w + l;
+  }
+  var TSS_STD = {
+    rpe_per_uur: { '0': 0, '1': 20, '2': 30, '3': 40, '4': 50, '5': 60, '6': 70, '7': 80, '8': 100, '9': 120, '10': 140 },
+    zone_rpe: { T0: 1, T1: 2.5, T2: 5, T3: 6, T4: 7.5, TMAX: 9 },
+    land_rpe: { 'Loop rustig': 3, 'Loop tempo': 6, 'Fietsen': 2.5, 'Core-stability': 3, 'Kracht zaal': 5, 'Overig': 3 },
+    rem_rpe: 1.0, rem_zones: ['T1', 'T2', 'T3', 'T4', 'TMAX']
+  };
+  function tssCfg_(t) { var o = {}, k; for (k in TSS_STD) o[k] = TSS_STD[k]; for (k in (t || {})) o[k] = t[k]; return o; }
+  function tssUur(rpe, t) {
+    var tab = tssCfg_(t).rpe_per_uur, r = Math.max(0, Math.min(10, rpe)), a = Math.floor(r), b = Math.min(10, a + 1);
+    return tab[a] + (tab[b] - tab[a]) * (r - a);
+  }
+  function rpeVanTssUur(x, t) {
+    var tab = tssCfg_(t).rpe_per_uur;
+    for (var r = 0; r < 10; r++) if (x <= tab[r + 1]) return r + (x - tab[r]) / ((tab[r + 1] - tab[r]) || 1);
+    return 10;
+  }
+  function metRem(inh, ext) { return /\bmet\s+rem\b/i.test((inh || '') + ' ' + (ext || '')); }
+  /* zelfde als planTss() in het dashboard: z = zoneminuten mét opwarming */
+  function tss(p, t) {
+    var c = tssCfg_(t), rem = metRem(p.inh, p.ext) ? (c.rem_rpe || 0) : 0, s = 0;
+    for (var i = 0; i < ZONES.length; i++) {
+      var z = ZONES[i], r = (c.zone_rpe[z] !== undefined ? c.zone_rpe[z] : 3) + ((c.rem_zones || []).indexOf(z) >= 0 ? rem : 0);
+      s += ((p.z && p.z[i]) || 0) / 60 * tssUur(r, t);
+    }
+    if (p.lm) { var lr = c.land_rpe[p.lt]; if (lr === undefined) lr = c.land_rpe.Overig !== undefined ? c.land_rpe.Overig : 3; s += p.lm / 60 * tssUur(lr, t); }
+    return s;
+  }
+  function rpeVerwacht(p, t) { return p.duur > 0 && p.cat !== 'overig' ? rpeVanTssUur(tss(p, t) / (p.duur / 60), t) : null; }
+
+  /* ---------- setbouwer lezen (blad -> sets_json) ----------
+     get(kolomletters) geeft de ruwe celwaarde van de rij. Kolommen: R:S invaren · U + 33 per set (8 sets) · JY:JZ uitvaren. */
+  var SET_START = ['U', 'BB', 'CI', 'DP', 'EW', 'GD', 'HK', 'IR'];
+  function kolNr(l) { var n = 0; for (var i = 0; i < l.length; i++) n = n * 26 + l.charCodeAt(i) - 64; return n; }
+  function kolLetter(n) { var s = ''; while (n > 0) { var r = (n - 1) % 26; s = String.fromCharCode(65 + r) + s; n = Math.floor((n - 1) / 26); } return s; }
+  function cel_(v) { return v === undefined ? null : v; }
+  function tijdUit_(get, cMin, cSec, cZone) {
+    var o = { min: getal(get(kolLetter(cMin))), sec: getal(get(kolLetter(cSec))) };
+    if (cZone) { var z = get(kolLetter(cZone)); o.zone = z === null || z === undefined ? '' : String(z); }
+    return o;
+  }
+  function leesSetbouwer(get) {
+    var sj = { invaren: tijdUit_(get, kolNr('R'), kolNr('S')), uitvaren: tijdUit_(get, kolNr('JY'), kolNr('JZ')), sets: [] };
+    for (var k = 0; k < SET_START.length; k++) {
+      var c0 = kolNr(SET_START[k]), s = { herhaal: N(cel_(get(kolLetter(c0)))), koppel: isJa(get(kolLetter(c0 + 1))), aantal: N(cel_(get(kolLetter(c0 + 2)))), delen: [] };
+      for (var p = 0; p < 8; p++) s.delen.push(tijdUit_(get, c0 + 3 + 3 * p, c0 + 4 + 3 * p, c0 + 5 + 3 * p));
+      s.rust_tussen = tijdUit_(get, c0 + 27, c0 + 28, c0 + 29);
+      s.rust_na = tijdUit_(get, c0 + 30, c0 + 31, c0 + 32);
+      /* ruwe tekst-aantal bewaren voor de waarschuwing (N() = 0, maar de trainer bedoelde iets) */
+      var ruw = get(kolLetter(c0 + 2)); if (typeof ruw === 'string' && ruw.trim() !== '') s.aantal_tekst = ruw;
+      sj.sets.push(s);
+    }
+    return compact(sj);
+  }
+  /* lege delen achteraan en lege sets achteraan weglaten (posities binnenin blijven) */
+  function compact(sj) {
+    var o = { invaren: { min: getal((sj.invaren || {}).min), sec: getal((sj.invaren || {}).sec) }, uitvaren: { min: getal((sj.uitvaren || {}).min), sec: getal((sj.uitvaren || {}).sec) }, sets: [] };
+    var sets = (sj.sets || []).map(function (s) {
+      s = s || {};
+      var d = (s.delen || []).map(function (x) { return { min: getal(x && x.min), sec: getal(x && x.sec), zone: (x && x.zone) ? String(x.zone) : '' }; });
+      while (d.length && leeg_(d[d.length - 1])) d.pop();
+      var r = { herhaal: N(s.herhaal), koppel: !!s.koppel, aantal: N(s.aantal), delen: d };
+      var rt = s.rust_tussen || {}, rn = s.rust_na || {};
+      if (!leeg_(rt)) r.rust_tussen = { min: getal(rt.min), sec: getal(rt.sec), zone: rt.zone ? String(rt.zone) : '' };
+      if (!leeg_(rn)) r.rust_na = { min: getal(rn.min), sec: getal(rn.sec), zone: rn.zone ? String(rn.zone) : '' };
+      if (s.aantal_tekst) r.aantal_tekst = String(s.aantal_tekst);
+      return r;
+    });
+    var isLeeg = function (s) { return !s.herhaal && !s.koppel && !s.aantal && !s.delen.length && !s.rust_tussen && !s.rust_na && !s.aantal_tekst; };
+    while (sets.length && isLeeg(sets[sets.length - 1])) sets.pop();
+    o.sets = sets;
+    return o;
+  }
+  function isLeegSj(sj) { var c = compact(sj || {}); return !c.sets.length && !tijdSec_(c.invaren) && !tijdSec_(c.uitvaren); }
+
+  /* waarschuwingen bij het bouwen van een sessie (eigenaardigheden van de setbouwer, voor de planner) */
+  function waarschuwingen(sj) {
+    var w = [], sets = (sj && sj.sets) || [];
+    sets.forEach(function (s, k) {
+      var heeftDelen = (s.delen || []).some(function (d) { return tijdSec_(d) > 0; });
+      if (N(s.aantal) === 0 && s.rust_na && tijdSec_(s.rust_na) > 0) w.push('Set ' + (k + 1) + ': aantal 0, maar de rust na telt mee (' + tijdTekst(tijdSec_(s.rust_na)) + ').');
+      if (N(s.aantal) === 0 && heeftDelen) w.push('Set ' + (k + 1) + ': delen ingevuld maar aantal leeg of 0 – de set telt niet mee.');
+      if (s.aantal_tekst) w.push('Set ' + (k + 1) + ': aantal "' + s.aantal_tekst + '" is tekst, geen getal.');
+      (s.delen || []).forEach(function (d, p) { if (tijdSec_(d) > 0 && ZONES.indexOf(String(d.zone || '').toUpperCase()) < 0) w.push('Set ' + (k + 1) + ', deel ' + (p + 1) + ': geen geldige zone.'); });
+      if (k === 0 && s.koppel) w.push('Set 1 kan niet gekoppeld worden.');
+    });
+    return w;
+  }
+
+  return {
+    VERSIE: VERSIE, ZONES: ZONES, getal: getal, N: N, factoren: factoren, zoneMin: zoneMin, tijdTekst: tijdTekst, setTekst: setTekst,
+    autoTekst: autoTekst, inhoud: inhoud, inhoudOpwarming: inhoudOpwarming, trimSheets: trimSheets, doelAuto: doelAuto,
+    DREMPELS_STD: DREMPELS_STD, SNELHEID_STD: SNELHEID_STD, TSS_STD: TSS_STD, km: km, belastingAU: belastingAU,
+    tssUur: tssUur, rpeVanTssUur: rpeVanTssUur, metRem: metRem, tss: tss, rpeVerwacht: rpeVerwacht,
+    leesSetbouwer: leesSetbouwer, compact: compact, isLeegSj: isLeegSj, waarschuwingen: waarschuwingen, kolNr: kolNr, kolLetter: kolLetter
+  };
+})();
+if (typeof module !== 'undefined' && module.exports) module.exports = RK;
+
+</script>
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const DAGK = ["ma","di","wo","do","vr","za","zo"], DAGL = ["maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag","zondag"];
+const ZONES = RK.ZONES, ZKLEUR = ["var(--z0)","var(--z1)","var(--z2)","var(--z3)","var(--z4)","var(--z5)"];
+const fmt = (x, nd) => x == null || !isFinite(x) ? "–" : Number(x).toFixed(nd || 0).replace(".", ",");
+const dnIso = s => { const p = String(s).split("-").map(Number); return Math.round(Date.UTC(p[0], p[1]-1, p[2]) / 864e5); };
+const isoDn = n => new Date(n * 864e5).toISOString().slice(0, 10);
+const ddmm = s => s.slice(8, 10) + "/" + s.slice(5, 7);
+const uurMin = m => { m = Math.round(m || 0); return Math.floor(m / 60) + "u" + String(m % 60).padStart(2, "0"); };
+const PAGINA_WIE = "";   /* KKYKC-app */
+/* 15/11/2026: link uit het dashboard (…?pagina=planner&jaar=&week=&groep=&sessie=) → "jaar|week|groep|sessie", ingevuld door doGet */
+const PAGINA_START = (function () { var q = new URLSearchParams(location.search), g = function (k, re) { var v = q.get(k) || ""; return re.test(v) ? v : ""; };   /* KKYKC-app: zoals plannerStart_ */
+  var t = [g("jaar", /^\d{4}$/), g("week", /^\d{1,2}$/), g("groep", /^[ABC]$/), g("sessie", /^[A-Za-z0-9_-]{1,60}$/)]; return t.length === 4 ? { jaar: Number(t[0]) || null, week: Number(t[1]) || null, groep: t[2], sessie: t[3] } : {}; })();
+const EV_STD = {
+  S3:{ernst:"middel", oms:"Landminuten zonder landtype of zonder inhoud"},
+  S5:{ernst:"middel", oms:"Werk en rust in dezelfde zone binnen een set"},
+  Z1:{ernst:"middel", waarde:45, oms:"T4-blok langer dan de grens (seconden)"},
+  Z3:{ernst:"laag", oms:"Aandeel T3+ van de zonetijd hoger dan het maximum van de fase"},
+  B1:{ernst:"laag", waarde:15, oms:"Geplande TSS week-op-week (% stijging)"},
+  B3:{ernst:"middel", waarde:1.5, oms:"Geplande ACWR te hoog"},
+  B4:{ernst:"middel", waarde:60, oms:"Zware training de dag vóór een test of wedstrijd (TSS-grens)"},
+  B5:{ernst:"laag", oms:"Twee zware dagen na elkaar"},
+  B6:{ernst:"info", waarde:55, oms:"TSS B / TSS A per week buiten 55–85 %"}
+};
+const EV_FASEN = [
+  {fase:"Overgang", max_t3:5}, {fase:"Basis 1", max_t3:10}, {fase:"Basis 2", max_t3:20}, {fase:"Basis 3", max_t3:25}, {fase:"P-n", max_t3:30},
+  {fase:"Specifiek (P-n)", max_t3:30}, {fase:"Taper (P-1)", max_t3:30}, {fase:"Wedstrijdblok", max_t3:25}, {fase:"Piek", max_t3:25}, {fase:"Uitloop", max_t3:10}, {fase:"Kerst", max_t3:5}
+];
+const EV_ZWAAR = ["VO2max","Over-under","Racetempo","Snelheid","Krachtuithouding (rem)","Tempo","Test","Wedstrijd"];
+const FASEN_LIJST = ["Overgang","Basis 1","Basis 2","Basis 3","Specifiek (P-n)","Taper (P-1)","Wedstrijdblok","Piek","Uitloop","Kerst"];
+const S = { jaar:null, week:null, d:null, bib:[], sjablonen:[], groepen:{A:true,B:true,C:false}, bibOpen:false, pick:null, inst:null, view:"week", jd:null, jp:null, jdirty:{}, kfilter:"" };
+try { const t = localStorage.getItem("kkykc-pl-thema"); if (t) document.documentElement.dataset.theme = t; const g = JSON.parse(localStorage.getItem("kkykc-pl-groepen") || "null"); if (g) S.groepen = g; } catch (e) {}
+
+/* ---------------- server ---------------- */
+const GS_LIMIET = { getPlannerData: 90000, plannerNeemOver: 90000, plannerBewaarMeer: 60000, plannerStelVoor: 90000 }, GS_STANDAARD = 45000, GS_POGINGEN = 3;
+function gsEenmaal(fn, args, ok, nok){
+  let klaar = false;
+  const t = setTimeout(() => { if (!klaar){ klaar = true; nok({code:"timeout", message:"geen antwoord van de server na " + Math.round((GS_LIMIET[fn] || GS_STANDAARD)/1000) + " s"}); } }, GS_LIMIET[fn] || GS_STANDAARD);
+  KKYKC.gs(fn, ...args).then(r => { if (!klaar){ klaar = true; clearTimeout(t); ok(r); } },
+    e => { if (!klaar){ klaar = true; clearTimeout(t); appFoutAanmelden(e && e.code, e && e.message); nok({code:"server", message:(e && e.message) || String(e)}); } });   /* KKYKC-app: API */
+}
+const gs = (fn, ...args) => new Promise((ok, nok) => {
+  if (!KKYKC.aangemeld()){ appFoutAanmelden("verlopen", "Je aanmelding is verlopen. Meld je opnieuw aan."); return nok(new Error("Meld je opnieuw aan.")); }   /* KKYKC-app */
+  const lees = /^get/.test(fn);
+  const poging = n => gsEenmaal(fn, args, ok, e => {
+    if (lees && e.code === "timeout" && n < GS_POGINGEN) return poging(n + 1);
+    let m = e.message;
+    if (e.code === "timeout" && !lees) m += " – herlaad de week en kijk na of het bewaard is voor je het opnieuw probeert.";
+    const x = new Error(m); x.conflict = /Conflict/.test(m); nok(x);
+  });
+  poging(1);
+});
+function toast(t){ const d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 3500); }
+function melding(t, soort){ $("#meldingen").innerHTML = t ? `<div class="melding ${soort || ""}" role="alert">${t}</div>` : ""; }
+
+/* ---------------- gegevens ---------------- */
+function weekRij(){ return (S.d.weken || []).find(w => w.week === S.week) || null; }
+function bewerkbaar(){ const w = weekRij(); return !!w && w.eigenaar === "webapp"; }
+function bevroren(datum){ return datum < S.d.grens; }
+function maandag(){ const w = weekRij(); return w ? w.maandag : isoDn(dnIso(S.jaar + "-01-04") - ((new Date(Date.UTC(S.jaar,0,4)).getUTCDay() + 6) % 7) + (S.week - 1) * 7); }
+function datums(){ const m = dnIso(maandag()); return DAGK.map((_, i) => isoDn(m + i)); }
+function sj(s){ try { return s && s.sets_json ? (typeof s.sets_json === "string" ? JSON.parse(s.sets_json) : s.sets_json) : {}; } catch (e) { return {}; } }
+function owVan(groep, lijst){ const o = (lijst || S.d.sessies).find(s => s.groep === groep && s.categorie === "opwarming"); return o ? RK.zoneMin(sj(o)) : [0,0,0,0,0,0]; }
+function owTekst(o){ if (!o) return ""; const z = RK.zoneMin(sj(o)); return o.tekst_vast || RK.inhoudOpwarming(RK.autoTekst(sj(o), false), o.inhoud_extra || "", z.reduce((a, b) => a + b, 0)); }
+/* één sessie → zelfde getallen als het plan-object (Planning.gs pItem_) */
+function bereken(s, lijst){
+  const I = S.inst, L = I.woorden || {geen:[], water:["wedstrijd"]};
+  const x = sj(s), opw = s.opwarming === "ja" || s.opwarming === true, zr = RK.zoneMin(x), owz = opw ? owVan(s.groep, lijst) : [0,0,0,0,0,0];
+  const z = zr.map((v, i) => v + owz[i]);
+  const extra = s.inhoud_extra || "", inhVol = s.tekst_vast ? s.tekst_vast : RK.inhoud(RK.autoTekst(x, opw), extra);
+  const lm = Number(String(s.land_min || "").replace(",", ".")) || 0, lt = s.land_type || "";
+  const water = z.reduce((a, b) => a + b, 0), laag = inhVol.trim().toLowerCase();
+  let cat = null, telt = true;
+  if (s.categorie === "geen" || (!inhVol.trim() && water === 0 && lm === 0)) telt = false;
+  else if (water === 0 && lm === 0 && L.geen.some(w => laag === w || laag.indexOf(w) === 0)) telt = false;
+  if (water > 0) cat = "water"; else if (lm > 0) cat = "land"; else if (L.water.some(w => laag.indexOf(w) >= 0)) cat = "water"; else cat = "overig";
+  const km = water > 0 ? RK.km(z, I.snelheid) : null;
+  const p = { z: z, lm: lm, lt: lt, inh: inhVol, ext: extra, duur: water + lm, cat: cat };
+  const tss = telt ? RK.tss(p, I.tss) : 0, rpe = telt ? RK.rpeVerwacht(p, I.tss) : null;
+  const doel = s.groep === "C" ? RK.doelAuto({ keuze: s.doel_keuze || "", inh: inhVol, groep: "C" }) : RK.doelAuto({ keuze: s.doel_keuze || "", inh: inhVol, z: zr, lm: lm, lt: lt, groep: s.groep }, I.drempels);
+  return { z: z, zr: zr, inh: inhVol, duur: telt ? water + lm : 0, km: telt ? km : null, tss: tss, rpe: rpe, doel: telt ? doel : "", cat: cat, telt: telt, water: water, lm: lm, sets: x };
+}
+function doelKleur(d){ const m = (S.inst.doelen || {})[d]; return m && m.kleur ? m.kleur : "#eeeeee"; }
+function doelChip(d){ return d ? `<span class="doelchip" style="background:${esc(doelKleur(d))}">${esc(d)}</span>` : ""; }
+function weekTot(groep, lijst){
+  const t = { tss:0, duur:0, km:0, z:[0,0,0,0,0,0], n:0, items:[] };
+  (lijst || S.d.sessies).forEach(s => { if (s.groep !== groep || s.categorie === "opwarming") return; const b = bereken(s, lijst); if (!b.telt) return;
+    t.tss += b.tss; t.duur += b.duur; t.km += b.km || 0; b.z.forEach((v, i) => t.z[i] += v); t.n++; t.items.push({ s: s, b: b }); });
+  return t;
+}
+function vorigeTot(w, g){ const T = S.d.totalen || {}; if (w >= 1) return T[w] ? T[w][g] : null; const vj = S.jaar - 1, aw = w + 52 + (vjWeken(vj) - 52); return T[vj + "-" + aw] ? T[vj + "-" + aw][g] : null; }
+function vjWeken(j){ const d = new Date(Date.UTC(j, 11, 28)); d.setUTCDate(d.getUTCDate() + 3 - ((d.getUTCDay() + 6) % 7)); const y0 = Date.UTC(d.getUTCFullYear(), 0, 1); return Math.ceil(((d - y0) / 864e5 + 1) / 7); }
+
+/* ---------------- sjablonen (tab Sjablonen, beslissingen 14/11) ---------------- */
+function inWeken(spec, w){
+  if (!spec) return true;
+  const m = /^W?(\d+)\s*-\s*W?(\d+)$/i.exec(String(spec).trim()); if (!m) return true;
+  const a = Number(m[1]), b = Number(m[2]);
+  return a <= b ? (w >= a && w <= b) : (w >= a || w <= b);
+}
+function wedstrijdWeek(){
+  const w = weekRij(); if (w && w.wedstrijd) return w.wedstrijd;
+  const d = datums(), za = d[5], zo = d[6];
+  const k = (S.d.kalender || []).find(x => /wedstrijd/i.test(x.soort) && x.van <= zo && x.tot >= za && !/toertocht|test/i.test(x.type));
+  return k ? k.naam : "";
+}
+function sjabloonSlots(){
+  const w = weekRij(), fase = w ? (w.fase_analyse || w.fase) : "", rijen = S.sjablonen || [], uit = {};
+  const zet = r => { const k = r.groep + "|" + r.dag + "|" + r.dagdeel; if (r.vast_flex === "geen") delete uit[k]; else uit[k] = r; };
+  if (/kerst/i.test(fase)) rijen.filter(r => r.fase === "Kerst").forEach(zet);
+  else {
+    rijen.filter(r => (r.fase === "Winter" || r.fase === "Zomer") && inWeken(r.weken, S.week)).forEach(zet);
+    if (wedstrijdWeek()) rijen.filter(r => r.fase === "Wedstrijdweek").forEach(zet);
+  }
+  return uit;
+}
+
+/* ---------------- laden ---------------- */
+async function laad(jaar, week, volledig){
+  melding("");
+  $("#hoofd").innerHTML = '<div class="leeg">Week laden…</div>';
+  try {
+    const d = await gs("getPlannerData", jaar || null, week || null, volledig ? "" : "zonderBib");
+    if (d.bib) S.bib = d.bib; if (d.sjablonen) S.sjablonen = d.sjablonen; if (d.heeft_bib != null) S.heeftBib = d.heeft_bib; if (d.jp) S.jp = d.jp;
+    S.view = "week"; document.body.classList.remove("jaarmodus"); $("#jaarknop").setAttribute("aria-pressed", "false");
+    S.d = d; S.inst = d.inst; S.jaar = d.jaar; S.week = d.week;
+    $("#wie").textContent = d.wie + (PAGINA_WIE && PAGINA_WIE !== d.wie && PAGINA_WIE.indexOf("__") !== 0 ? " (pagina geladen als " + PAGINA_WIE + ")" : "");
+    vulKeuzes(); toon();
+  } catch (e) { $("#hoofd").innerHTML = `<div class="melding fout">${esc(e.message)}</div>`; }
+}
+function vulKeuzes(){
+  const jr = new Set((S.d.jaren || []).concat([S.jaar, S.jaar + 1]));
+  $("#jaar").innerHTML = Array.from(jr).sort().map(j => `<option ${j === S.jaar ? "selected" : ""}>${j}</option>`).join("");
+  const w = S.d.weken || [];
+  let h = ""; for (let i = 1; i <= S.d.aantal_weken; i++){ const r = w.find(x => x.week === i); h += `<option value="${i}" ${i === S.week ? "selected" : ""}>W${i}${r ? " · " + esc(ddmm(r.maandag)) + (r.eigenaar === "webapp" ? " · planner" : "") : ""}</option>`; }
+  $("#weeksel").innerHTML = h;
+  $("#groepen").innerHTML = ["A","B","C"].map(g => `<button data-g="${g}" aria-pressed="${!!S.groepen[g]}">${g}</button>`).join("");
+}
+function naWijziging(sessies, week){ if (sessies) S.d.sessies = sessies; if (week){ const i = S.d.weken.findIndex(x => x.week === week.week); if (i >= 0) S.d.weken[i] = week; } toon(); }
+
+/* ---------------- weergave ---------------- */
+function toon(){ toonWeekkop(); toonHoofd(); toonBib(); }
+function toonWeekkop(){
+  const w = weekRij(), d = datums(), kal = (S.d.kalender || []).filter(k => k.van <= d[6] && k.tot >= d[0]);
+  const conc = S.d.sessies.filter(s => s.status === "concept").length;
+  let h = `<div class="weekkop"><h2>W${S.week} · ${ddmm(d[0])} – ${ddmm(d[6])}/${d[6].slice(0,4)}</h2>`;
+  if (w){
+    h += w.fase ? `<span class="pil p-info">fase ${esc(w.fase)}${w.fase_analyse && w.fase_analyse !== w.fase ? " (" + esc(w.fase_analyse) + ")" : ""}</span>` : "";
+    h += w.belastingdoel ? `<span class="pil p-grijs">belasting ${esc(w.belastingdoel.replace("-", "−"))}</span>` : "";
+    h += w.focus ? `<span class="pil p-grijs">focus: ${esc(w.focus)}</span>` : "";
+    h += w.eigenaar === "webapp" ? `<span class="pil p-ok">beheerd in de planner</span>` : `<span class="pil p-warn">beheerd in Schema ${S.jaar} (enkel lezen)</span>`;
+    h += w.eigenaar === "webapp" ? (w.gepubliceerd ? `<span class="pil p-ok">gepubliceerd</span>` : `<span class="pil p-bad">niet gepubliceerd (onzichtbaar)</span>`) : "";
+    if (conc) h += `<span class="pil p-warn">${conc} concept${conc > 1 ? "en" : ""}</span>`;
+  } else h += `<span class="pil p-bad">week bestaat nog niet in Planning KKYKC</span> <button class="btn klein" id="weekmaak">Week aanmaken in de planner</button>`;
+  h += `</div>`;
+  const kalG = kal.filter(k => k.soort !== "afdrukopmerking"), kalP = kal.filter(k => k.soort === "afdrukopmerking");
+  if (kalG.length) h += `<div class="klein">📅 ${kalG.map(k => esc(k.naam) + (k.groepen ? " [" + esc(k.groepen) + "]" : "") + " (" + ddmm(k.van) + (k.tot !== k.van ? "–" + ddmm(k.tot) : "") + (k.prio ? ", " + esc(k.prio) : "") + ")").join(" · ")}</div>`;
+  if (kalP.length) h += `<div class="klein">🖨 op de afdruk: ${kalP.map(k => esc(k.naam) + (k.groepen ? " [" + esc(k.groepen) + "]" : "")).join(" · ")}</div>`;
+  if (w && w.notitie) h += `<div class="klein">📝 ${esc(w.notitie)}</div>`;
+  (S.d.s7 || []).forEach(m => { h += `<div class="melding fout">S7 – ${esc(m.tekst)} <button class="btn klein rand" data-s7="${m.week}">Gezien</button></div>`; });
+  h += `<div class="bar">`;
+  if (w && w.eigenaar === "sheet"){
+    const vol = d[6] < S.d.grens;
+    h += `<button class="btn" id="overnemen" ${vol ? "disabled" : ""}>Week overnemen in de planner</button><span class="klein">${vol ? "Volledig bevroren." : "Daarna bewerk je deze week enkel nog hier; het weekblad krijgt een markering in C3."}</span>`;
+  }
+  if (bewerkbaar()){
+    h += `<button class="btn" id="publiceer" ${!conc && w.gepubliceerd ? "disabled" : ""}>Publiceren${conc ? " (" + conc + ")" : ""}</button>`;
+    h += `<button class="btn rand" id="weekgeg">Weekgegevens</button>`;
+    h += `<button class="btn rand" id="kopweek">Week kopiëren naar hier…</button>`;
+    h += `<button class="btn rand" id="voorstel1" title="Generator: concept voor deze week (A en B) volgens fase, belastingdoel, sjablonen en slotdoelen">⚙ Week voorstellen</button>`;
+    h += `<button class="btn rand" id="voorstel4" title="Generator: deze week en de 3 volgende weken">⚙ Mesocyclus voorstellen</button>`;
+  }
+  h += `<button class="btn rand" id="afdruk">Afdrukken</button>`;
+  h += `<a class="btn rand klein" style="text-decoration:none;display:inline-flex;align-items:center" target="_blank" rel="noopener" href="${esc(S.d.planning_url)}">Planning KKYKC</a>`;
+  h += `</div>`;
+  $("#weekkop").innerHTML = h;
+}
+function zoneBalk(z){
+  const tot = z.slice(1).reduce((a, b) => a + b, 0) || 1;
+  return `<span class="zbalk" title="${ZONES.slice(1).map((n, i) => n + " " + fmt(z[i+1], 0) + "'").join(" · ")}">${z.slice(1).map((v, i) => `<span style="width:${v / tot * 100}%;background:${ZKLEUR[i+1]}"></span>`).join("")}</span>`;
+}
+function toonHoofd(){
+  const d = datums(), slots = sjabloonSlots(), ed = bewerkbaar(), vandaag = S.d.vandaag;
+  let h = "";
+  ["A","B","C"].filter(g => S.groepen[g]).forEach(g => {
+    const t = weekTot(g), vt = vorigeTot(S.week - 1, g), owS = S.d.sessies.find(s => s.groep === g && s.categorie === "opwarming");
+    const d1 = vt && vt.tss > 0 && t.tss > 0 ? (t.tss / vt.tss - 1) * 100 : null;
+    h += `<section class="groep"><header><h3>Groep ${g}</h3>`;
+    const dt = doelTss(weekRij(), g, S.d.kalender);
+    if (g !== "C") h += `<span class="tot"><span>TSS <b>${fmt(t.tss, 0)}</b>${d1 != null ? " (" + (d1 >= 0 ? "+" : "") + fmt(d1, 0) + " %)" : ""}${dt ? " " + doelPil(t.tss, dt) : ""}</span><span>duur <b>${uurMin(t.duur)}</b></span><span>km <b>${fmt(t.km, 1)}</b></span><span>${t.n} sessies</span></span>${zoneBalk(t.z)}`;
+    if (g !== "C") h += `<button class="ow" data-ow="${g}">${owS ? "Opwarming: " + esc(owTekst(owS)) : (ed ? "+ opwarming van de week" : "geen opwarming")}</button>`;
+    h += `</header><div class="week">`;
+    d.forEach((dat, i) => {
+      const bevr = bevroren(dat), kal = (S.d.kalender || []).filter(k => k.van <= dat && k.tot >= dat && DAG_SOORTEN.indexOf(k.soort) >= 0 && (!k.groepen || k.groepen.indexOf(g) >= 0)).map(k => esc(k.naam)).join(", ");
+      h += `<div class="dag ${bevr ? "bevr" : ""} ${dat === vandaag ? "vandaag" : ""}"><div class="dagkop"><span>${DAGK[i]} ${ddmm(dat)}</span><span class="kal">${kal}</span></div>`;
+      ["VM","NM"].forEach(dd => {
+        const ss = S.d.sessies.filter(s => s.groep === g && s.datum === dat && s.dagdeel === dd && s.categorie !== "opwarming");
+        const sl = slots[g + "|" + DAGK[i] + "|" + dd];
+        h += `<div class="slot" data-slot="${g}|${dat}|${dd}"><div class="slotlabel"><span>${dd}</span>${ed && !bevr ? `<button class="plus" data-nieuw="${g}|${dat}|${dd}" aria-label="Nieuwe sessie ${g} ${DAGK[i]} ${dd}">+</button>` : ""}</div>`;
+        ss.forEach(s => { h += kaartHtml(s); });
+        if (!ss.length && sl) h += `<button class="sjab" ${ed && !bevr ? `data-nieuw="${g}|${dat}|${dd}"` : "disabled"}>${sl.vast_flex === "flex" ? "⇄ " : ""}${esc(sl.doel_of_categorie)}${sl.opmerking ? " · " + esc(sl.opmerking) : ""}</button>`;
+        h += `</div>`;
+      });
+      const zonder = S.d.sessies.filter(s => s.groep === g && s.datum === dat && !s.dagdeel && s.categorie !== "opwarming");
+      zonder.forEach(s => { h += kaartHtml(s); });
+      h += `</div>`;
+    });
+    h += `</div></section>`;
+  });
+  if (!h) h = '<div class="leeg">Kies minstens één groep.</div>';
+  h += evalHtml();
+  $("#hoofd").innerHTML = h;
+}
+function genConcept(s){ return s && s.status === "concept" && String(s.gewijzigd_door || "").indexOf("generator") === 0; }
+/* ---------------- F5a: generator (weekvoorstel / mesocyclus) – rekent op de server (Generator.gs), hier enkel voorbeeld + bewaren ---------------- */
+async function openVoorstel(n){
+  const titel = n > 1 ? "Mesocyclus voorstellen (W" + S.week + "–W" + Math.min(S.week + n - 1, S.d.aantal_weken) + ")" : "Week voorstellen (W" + S.week + ")";
+  const o = dlg(`<h2>${titel}</h2><div class="klein">Concept voor groep A en B volgens fase, belastingdoel, sjablonen, slotdoelen en de bibliotheek. Groep C: geen voorstel.
+    Bestaande en gepubliceerde sessies en bevroren dagen blijven ongewijzigd; enkel eerdere voorstellen die je niet aanpaste worden vervangen.</div>
+    <div id="v-inh" class="prev">Voorstel berekenen…</div><div class="fout" id="v-fout"></div>
+    <div class="knoppen"><button class="btn rand" data-sluit>Annuleren</button><button class="btn rand" id="v-opn" hidden>Opnieuw berekenen</button><button class="btn" id="v-ok" disabled>Bewaren als concept</button></div>`);
+  o.querySelector(".dlg").classList.add("breed");
+  const q = id => o.querySelector(id); let V = null;
+  const DG = ["ma","di","wo","do","vr","za","zo"];
+  const melPil = e => e === "hoog" || e === "middel" ? "p-bad" : e === "laag" ? "p-warn" : "p-info";
+  const tssPil = gi => { const r = gi.doel ? gi.tss / gi.doel : 0, kl = r >= 0.9 && r <= 1.1 ? "p-ok" : r >= 0.8 && r <= 1.2 ? "p-warn" : "p-bad"; return `<span class="pil ${kl}">TSS ${fmt(gi.tss,0)} / doel ${fmt(gi.doel,0)} (${fmt(r * 100,0)} %)</span>`; };
+  const toonV = () => {
+    let h = "", nieuw = 0, weg = 0;
+    V.weken.forEach(r => {
+      if (r.overgeslagen_week){ h += `<div class="vs-week"><h3>W${r.week}</h3><div class="klein">${esc(r.overgeslagen_week)}</div></div>`; return; }
+      nieuw += r.nieuw.length; weg += r.vervangen.length;
+      h += `<div class="vs-week"><h3>W${r.week} · ${esc(r.fase)} · belasting ${esc(String(r.belastingdoel).replace("-", "−"))}</h3>`;
+      ["A","B"].forEach(g => {
+        const gi = r.groepen[g]; if (!gi) return;
+        const ss = r.nieuw.filter(s => s.groep === g);
+        h += `<div class="vs-g">Groep ${g} ${tssPil(gi)} <span class="pil p-grijs">T3+ ${fmt(gi.t3plus,0)} % (max ${fmt(gi.max_t3plus,0)})</span> <span class="pil p-grijs">zwaar ${gi.zwaar}</span></div>`;
+        h += `<table class="vs-tab"><tbody>${ss.map(s => `<tr><td>${s.categorie === "opwarming" ? "opwarming" : DG[(new Date(dnIso(s.datum) * 864e5).getUTCDay() + 6) % 7] + " " + ddmm(s.datum) + " " + esc(s.dagdeel)}</td><td>${s.categorie === "opwarming" ? "" : doelChip(s.doel_keuze)}</td><td>${s.gen && s.gen.duur ? uurMin(s.gen.duur) : ""}${s.gen && s.gen.tss ? " · TSS " + fmt(s.gen.tss,0) : ""}</td><td class="u">${esc(s.waarom_nu || "")}</td></tr>`).join("") || '<tr><td colspan="4" class="u">Geen nieuwe sessies (alles bezet, bevroren of gepubliceerd).</td></tr>'}</tbody></table>`;
+      });
+      if (r.vervangen.length) h += `<div class="klein">Vervangt ${r.vervangen.length} eerder${r.vervangen.length > 1 ? "e voorstellen" : " voorstel"} (niet aangepast).</div>`;
+      if (r.overgeslagen.length) h += `<details class="klein"><summary>${r.overgeslagen.length} slot(s) niet aangeraakt</summary>${r.overgeslagen.map(esc).join("<br>")}</details>`;
+      if (r.meldingen.length) h += `<ul class="vs-mel">${r.meldingen.map(m => `<li><span class="pil ${melPil(m.ernst)}">${esc(m.id)}</span> ${esc(m.tekst)}</li>`).join("")}</ul>`;
+      h += `</div>`;
+    });
+    if (V.meso && V.meso.length) h += `<div class="vs-week"><h3>Over de weken heen (D1)</h3><ul class="vs-mel">${V.meso.map(m => `<li><span class="pil p-warn">${esc(m.id)}</span> ${esc(m.tekst)}</li>`).join("")}</ul></div>`;
+    q("#v-inh").innerHTML = h || "Niets voor te stellen.";
+    q("#v-ok").disabled = !nieuw && !weg;
+    q("#v-ok").textContent = nieuw ? "Bewaren als concept (" + nieuw + ")" : "Bewaren";
+  };
+  const reken = async () => {
+    q("#v-fout").textContent = ""; q("#v-inh").textContent = "Voorstel berekenen…"; q("#v-ok").disabled = true; q("#v-opn").hidden = true;
+    try { V = await gs("plannerStelVoor", S.jaar, S.week, n, false); toonV(); } catch (e) { q("#v-inh").textContent = ""; q("#v-fout").textContent = e.message; }
+  };
+  q("#v-opn").onclick = reken;
+  q("#v-ok").onclick = async () => {
+    q("#v-ok").disabled = true; q("#v-ok").textContent = "Bewaren…";
+    try {
+      const r = await gs("plannerStelVoor", S.jaar, S.week, n, true, V.controle);
+      o.remove(); await laad(S.jaar, S.week);
+      toast(r.bewaard + " sessie(s) als concept bewaard" + (r.verwijderd ? ", " + r.verwijderd + " oud voorstel vervangen" : "") + ". Pas aan waar nodig en publiceer daarna.");
+    } catch (e) { q("#v-fout").textContent = e.message; q("#v-opn").hidden = false; q("#v-ok").textContent = "Bewaren als concept"; }
+  };
+  await reken();
+}
+function kaartHtml(s){
+  const b = bereken(s), z = b.z, tot = z.slice(1).reduce((a, c) => a + c, 0), hoogste = tot ? z.slice(1).reduce((m, v, i) => v > 0 ? i + 1 : m, 1) : 1;
+  const kl = s.groep === "C" ? "var(--line)" : (b.cat === "land" ? "var(--info)" : ZKLEUR[hoogste]);
+  const tekst = b.inh || s.inhoud_extra || (b.lm ? b.lm + "' " + s.land_type : "");
+  const flex = s.venster_van ? `<span class="pil p-info" title="flexibel ${esc(ddmm(s.venster_van))}–${esc(ddmm(s.venster_tot || s.venster_van))}">⇄ ${esc(ddmm(s.venster_van))}–${esc(ddmm(s.venster_tot || s.venster_van))}</span> ` : "";
+  return `<div class="kaart ${s.status === "concept" ? "concept" : ""} ${b.telt ? "" : "telt-niet"}" style="border-left-color:${kl}" data-id="${esc(s.id)}" tabindex="0" role="button" aria-label="Sessie bewerken">
+    ${doelChip(b.doel)} ${s.status === "concept" ? '<span class="pil p-warn">concept</span>' : ""} ${genConcept(s) ? '<span class="pil p-info" title="Voorstel van de generator (nog niet aangepast)">⚙ voorstel</span>' : ""} ${flex}
+    <div class="inh">${esc(tekst) || '<i>leeg</i>'}</div>
+    ${genConcept(s) && s.waarom_nu ? `<div class="uitl">${esc(s.waarom_nu.length > 140 ? s.waarom_nu.slice(0, 139) + "…" : s.waarom_nu)}</div>` : ""}
+    ${b.telt && s.groep !== "C" ? `<div class="m">${uurMin(b.duur)}${b.km ? " · " + fmt(b.km, 1) + " km" : ""} · TSS ${fmt(b.tss, 0)}${b.rpe != null ? " · RPE " + fmt(b.rpe, 1) : ""}</div>` : (b.telt ? "" : '<div class="m">telt niet mee</div>')}</div>`;
+}
+
+/* ---------------- evaluatie (live; regels uit Instellingen > Evaluatieregels, standaardwaarden hierboven) ---------------- */
+function evRegel(id){ const m = (S.inst.regels || {})[id] || {}, s = EV_STD[id] || {}; return { aan: m.aan !== false, waarde: m.waarde != null ? m.waarde : s.waarde, ernst: m.ernst || s.ernst, oms: m.omschrijving || s.oms }; }
+function faseMax(){
+  const w = weekRij(); if (!w) return null;
+  const rw = jpRw(w.fase_analyse || w.fase); if (rw && rw.max_T3plus != null) return { fase: rw.fase, max_t3: rw.max_T3plus };
+  const lijst = (S.inst.fasen && S.inst.fasen.length) ? S.inst.fasen : EV_FASEN;
+  const kand = [w.fase_analyse, w.fase].filter(Boolean).map(f => /^p-\d+$/i.test(f) ? "P-n" : /^piek/i.test(f) ? "Piek" : f);
+  for (const f of kand){ const x = lijst.find(y => y.fase.toLowerCase() === f.toLowerCase()); if (x && x.max_t3 != null) return x; }
+  return null;
+}
+function evalueer(lijst){
+  lijst = lijst || S.d.sessies;
+  const F = [], act = id => evRegel(id).aan, add = (id, tekst, ernst, id2) => F.push({ id: id, tekst: tekst, ernst: ernst || evRegel(id).ernst, sid: id2 });
+  const d = datums(), evDag = new Set();
+  (S.d.kalender || []).forEach(k => { if (/wedstrijd|test/i.test(k.soort + " " + k.type)) for (let n = dnIso(k.van); n <= dnIso(k.tot); n++) evDag.add(isoDn(n)); });
+  const tots = {};
+  ["A","B","C"].forEach(g => {
+    const ss = lijst.filter(s => s.groep === g && s.categorie !== "opwarming");
+    ss.forEach(s => {
+      const b = bereken(s, lijst), plaats = g + " " + DAGK[(dnIso(s.datum) - dnIso(d[0]) + 7) % 7] + " " + (s.dagdeel || "");
+      if (b.doel === "Test" || b.doel === "Wedstrijd") evDag.add(s.datum);
+      RK.waarschuwingen(b.sets).forEach(t => add("SB", plaats + ": " + t, "laag", s.id));
+      if (act("S5")) (b.sets.sets || []).forEach((st, k) => { const dl = (st.delen || []).filter(x => x && (Number(x.min) || Number(x.sec))); if (dl.length >= 2 && st.aantal > 1 && dl[0].zone && dl[0].zone === dl[1].zone && dl[0].zone !== "T0") add("S5", plaats + `: set ${k+1} werk en rust beide in ${dl[0].zone}.`, null, s.id); });
+      if (act("Z1") && b.doel !== "Test"){ const gr = Number(evRegel("Z1").waarde) || 45; (b.sets.sets || []).forEach((st, k) => (st.delen || []).forEach(x => { const sec = (Number(x.min) || 0) * 60 + (Number(x.sec) || 0); if (String(x.zone).toUpperCase() === "T4" && sec > gr) add("Z1", plaats + `: T4-blok van ${RK.tijdTekst(sec)} in set ${k+1} (> ${gr} s).`, null, s.id); })); }
+      if (act("S3") && b.lm > 0 && !s.land_type) add("S3", plaats + ": landminuten zonder landtype.", null, s.id);
+    });
+    if (g === "C") return;
+    const t = weekTot(g, lijst); tots[g] = t;
+    const vorige = [1,2,3].map(k => vorigeTot(S.week - k, g));
+    const tp = vorige[0] ? vorige[0].tss : 0;
+    if (act("B1") && t.tss > 0 && tp > 0){ const st = (t.tss / tp - 1) * 100, lim = Number(evRegel("B1").waarde) || 15; if (st >= lim) add("B1", `Groep ${g}: geplande TSS ${fmt(t.tss,0)} (+${fmt(st,0)} % t.o.v. W${S.week-1}).`, st >= 2 * lim ? "middel" : null); }
+    if (act("B3") && t.tss > 0 && vorige.every(v => v && v.tss > 0)){ const a = t.tss / ((t.tss + vorige.reduce((x, v) => x + v.tss, 0)) / 4), hoog = Number(evRegel("B3").waarde) || 1.5; if (a > hoog - 0.2) add("B3", `Groep ${g}: geplande ACWR ${fmt(a,2)}.`, a > hoog ? "hoog" : "middel"); }
+    const fm = faseMax();
+    if (act("Z3") && fm){ const tz = t.z[1] + t.z[2] + t.z[3] + t.z[4] + t.z[5]; if (tz > 0){ const hoog = (t.z[3] + t.z[4] + t.z[5]) / tz * 100; if (hoog > fm.max_t3) add("Z3", `Groep ${g}: ${fmt(hoog,0)} % T3+ van de zonetijd, maximum ${fm.max_t3} % (${fm.fase}).`); } }
+    const zwaar = it => EV_ZWAAR.indexOf(it.b.doel) >= 0 || it.b.tss > (Number(evRegel("B4").waarde) || 60);
+    const zDagen = new Set(t.items.filter(zwaar).map(it => it.s.datum));
+    if (act("B5")) zDagen.forEach(x => { if (zDagen.has(isoDn(dnIso(x) - 1))) add("B5", `Groep ${g}: twee zware dagen na elkaar (${ddmm(isoDn(dnIso(x) - 1))} en ${ddmm(x)}).`); });
+    if (act("B4")) t.items.filter(it => zwaar(it) && it.b.doel !== "Test" && it.b.doel !== "Wedstrijd" && evDag.has(isoDn(dnIso(it.s.datum) + 1))).forEach(it => add("B4", `Groep ${g}: zware training (${it.b.doel || "TSS " + fmt(it.b.tss,0)}) op ${ddmm(it.s.datum)}, de dag vóór een test of wedstrijd.`, null, it.s.id));
+  });
+  if (act("B6") && tots.A && tots.B && tots.A.tss > 0 && tots.B.tss > 0){ const r = tots.B.tss / tots.A.tss * 100; if (r < (Number(evRegel("B6").waarde) || 55) || r > 85) add("B6", `TSS B / TSS A = ${fmt(r,0)} % (bereik 55–85 %).`); }
+  return F;
+}
+function evalHtml(){
+  const F = evalueer(), ord = { hoog:0, middel:1, laag:2, info:3 };
+  F.sort((a, b) => (ord[a.ernst] ?? 4) - (ord[b.ernst] ?? 4));
+  const pil = e => e === "hoog" ? "p-bad" : e === "middel" ? "p-warn" : e === "info" ? "p-info" : "p-grijs";
+  return `<div class="eval"><h3>Evaluatie van deze week (${F.length})</h3>${F.length ? "<ul>" + F.map(f => `<li><span class="pil ${pil(f.ernst)}">${esc(f.id)} · ${esc(f.ernst)}</span> ${esc(f.tekst)}</li>`).join("") + "</ul>" : '<div class="klein">Geen opmerkingen voor de regels S3, S5, Z1, Z3, B1, B3–B6 en de setbouwer.</div>'}
+    <div class="klein" style="margin-top:6px">Z3 gebruikt het maximum T3+ uit de richtwaarden van de fase. Doel-TSS, zoneverdeling per fase en doelen per fase: zie Jaarplan. Concepten tellen hier mee.</div></div>`;
+}
+
+/* ---------------- sessie-editor ---------------- */
+const leegSet = () => ({ herhaal: 0, koppel: false, aantal: 1, delen: [{ min: 0, sec: 0, zone: "T1" }] });
+function nieuweSessie(g, dat, dd){
+  const sl = sjabloonSlots()[g + "|" + DAGK[(dnIso(dat) - dnIso(datums()[0]))] + "|" + dd], s = { jaar: S.jaar, week: S.week, groep: g, datum: dat, dagdeel: dd, categorie: "", status: "concept", sets_json: "", opwarming: "", land_min: "", land_type: "", inhoud_extra: "", doel_keuze: "", waarom_nu: "" };
+  if (g === "C") return s;
+  const doel = sl ? String(sl.doel_of_categorie) : "";
+  if (/^land/i.test(doel)){
+    s.land_min = /core/i.test(doel) ? 60 : 40; s.land_type = /core/i.test(doel) ? "Core-stability" : "Loop rustig";
+    s.inhoud_extra = /core/i.test(doel) ? "Core-stability (landtraining)" : "Cardio (lopen/fietsen)";
+  } else s.sets_json = JSON.stringify({ invaren: { min: 10, sec: 0 }, uitvaren: { min: 0, sec: 0 }, sets: [leegSet()] });
+  if (sl && sl.vast_flex === "flex"){ const d = datums(); s.venster_van = d[0]; s.venster_tot = d[3]; s.flex_doelgroep = "alle"; }
+  return s;
+}
+function zoneOpties(v){ return ["", ...ZONES].map(z => `<option ${String(v || "").toUpperCase() === z ? "selected" : ""} value="${z}">${z || "–"}</option>`).join(""); }
+function tijdVelden(pre, o, metZone){
+  o = o || {};
+  return `<div class="tijd"><input type="number" min="0" max="600" step="1" data-f="${pre}.min" value="${Number(o.min) || ""}" placeholder="min" aria-label="${pre} minuten"><input type="number" min="0" max="59" step="5" data-f="${pre}.sec" value="${Number(o.sec) || ""}" placeholder="sec" aria-label="${pre} seconden">${metZone ? `<select data-f="${pre}.zone" aria-label="${pre} zone">${zoneOpties(o.zone)}</select>` : ""}</div>`;
+}
+function setHtml(st, k, n){
+  let h = `<div class="set" data-set="${k}"><div class="kop"><b>Set ${k+1}</b>
+    <label>herhaal<br><input type="number" min="0" max="50" data-f="herhaal" value="${st.herhaal || ""}"></label>
+    <label title="herhaal = die van de vorige set">gekoppeld<br><input type="checkbox" data-f="koppel" ${st.koppel ? "checked" : ""} ${k === 0 ? "disabled" : ""}></label>
+    <label>aantal<br><input type="number" min="0" max="100" data-f="aantal" value="${st.aantal || ""}"></label>
+    <span style="flex:1"></span>
+    <button class="btn rand klein" data-setact="op" ${k === 0 ? "disabled" : ""} aria-label="Set omhoog">↑</button><button class="btn rand klein" data-setact="neer" ${k === n-1 ? "disabled" : ""} aria-label="Set omlaag">↓</button>
+    <button class="btn rand klein" data-setact="dup">Dupliceer</button><button class="btn rand klein" data-setact="weg" aria-label="Set verwijderen">✕</button></div>
+    <div class="klein" style="margin-top:4px">delen (min · sec · zone)</div>`;
+  (st.delen || []).forEach((dl, p) => {
+    h += `<div class="deel" data-deel="${p}"><input type="number" min="0" max="600" data-f="min" value="${Number(dl.min) || ""}" placeholder="min" aria-label="deel ${p+1} minuten"><input type="number" min="0" max="59" step="5" data-f="sec" value="${Number(dl.sec) || ""}" placeholder="sec" aria-label="deel ${p+1} seconden"><select data-f="zone" aria-label="deel ${p+1} zone">${zoneOpties(dl.zone)}</select><button class="btn rand klein" data-deelweg="${p}" aria-label="Deel verwijderen">✕</button></div>`;
+  });
+  h += `<button class="btn rand klein" data-deelbij="1">+ deel</button>
+    <div class="r2" style="margin-top:6px"><div><div class="klein">rust tussen de herhalingen</div>${tijdVelden("rust_tussen", st.rust_tussen, true)}</div><div><div class="klein">rust na de set</div>${tijdVelden("rust_na", st.rust_na, true)}</div></div></div>`;
+  return h;
+}
+function leesSets(root){
+  const sets = [];
+  root.querySelectorAll(".set").forEach(el => {
+    const g = f => el.querySelector(`.kop [data-f="${f}"]`);
+    const st = { herhaal: Number(g("herhaal").value) || 0, koppel: g("koppel").checked, aantal: Number(g("aantal").value) || 0, delen: [] };
+    el.querySelectorAll(".deel").forEach(dl => st.delen.push({ min: Number(dl.querySelector('[data-f="min"]').value) || 0, sec: Number(dl.querySelector('[data-f="sec"]').value) || 0, zone: dl.querySelector('[data-f="zone"]').value }));
+    ["rust_tussen","rust_na"].forEach(r => { const o = { min: Number(el.querySelector(`[data-f="${r}.min"]`).value) || 0, sec: Number(el.querySelector(`[data-f="${r}.sec"]`).value) || 0, zone: el.querySelector(`[data-f="${r}.zone"]`).value }; if (o.min || o.sec || o.zone) st[r] = o; });
+    sets.push(st);
+  });
+  return sets;
+}
+function openEditor(s0, opties){
+  opties = opties || {};
+  const s = JSON.parse(JSON.stringify(s0)), nieuw = !s.id, ow = s.categorie === "opwarming", d = datums();
+  const mag = bewerkbaar() && !bevroren(s.datum || d[0]);
+  const reden = !bewerkbaar() ? "Deze week wordt beheerd in Schema " + S.jaar + ". Neem de week over om te bewerken." : (bevroren(s.datum || d[0]) ? "Deze dag is bevroren (ouder dan 7 dagen)." : "");
+  let x = sj(s); if (!x.sets) x = { invaren: x.invaren || { min: 0, sec: 0 }, uitvaren: x.uitvaren || { min: 0, sec: 0 }, sets: [] };
+  const C = s.groep === "C";
+  const o = document.createElement("div"); o.className = "ovl"; o.setAttribute("role", "dialog"); o.setAttribute("aria-modal", "true");
+  const doelOpt = `<option value="">automatisch</option>` + Object.keys(S.inst.doelen || {}).map(n => `<option ${s.doel_keuze === n ? "selected" : ""}>${esc(n)}</option>`).join("");
+  const ltOpt = `<option value=""></option>` + (S.inst.landtypes || []).map(n => `<option ${s.land_type === n ? "selected" : ""}>${esc(n)}</option>`).join("");
+  o.innerHTML = `<div class="dlg"><h2>${ow ? "Opwarming groep " + esc(s.groep) + " – W" + S.week : (nieuw ? "Nieuwe sessie" : "Sessie") + " – groep " + esc(s.groep)}</h2>
+    ${reden ? `<div class="melding">${esc(reden)}</div>` : ""}
+    ${s.cel && !/^P!/.test(s.cel) ? `<div class="klein">Oorsprong: ${esc(s.cel)} (trainerslog en bevestigingen blijven eraan gekoppeld)</div>` : ""}
+    <fieldset ${mag ? "" : "disabled"} style="border:0;padding:0;margin:0">
+    ${ow ? "" : `<div class="r4"><div><label>Groep</label><select id="e-groep">${["A","B","C"].map(g => `<option ${g === s.groep ? "selected" : ""}>${g}</option>`).join("")}</select></div>
+      <div><label>Dag</label><select id="e-datum">${d.map((x, i) => `<option value="${x}" ${x === s.datum ? "selected" : ""} ${bevroren(x) ? "disabled" : ""}>${DAGL[i]} ${ddmm(x)}</option>`).join("")}</select></div>
+      <div><label>Dagdeel</label><select id="e-dd">${["VM","NM",""].map(v => `<option value="${v}" ${v === (s.dagdeel || "") ? "selected" : ""}>${v || "–"}</option>`).join("")}</select></div>
+      <div><label>Status</label><select id="e-status"><option value="concept" ${s.status !== "gepubliceerd" ? "selected" : ""}>concept</option><option value="gepubliceerd" ${s.status === "gepubliceerd" ? "selected" : ""}>gepubliceerd</option></select></div></div>`}
+    <div id="e-water" ${C ? "hidden" : ""}>
+      <div class="r3"><div><label>Invaren</label>${tijdVelden("invaren", x.invaren, false)}</div><div><label>Uitvaren</label>${tijdVelden("uitvaren", x.uitvaren, false)}</div>
+        ${ow ? "<div></div>" : `<div><label>Opwarming van de week</label><label style="font-weight:normal"><input type="checkbox" id="e-opw" ${s.opwarming === "ja" ? "checked" : ""}> meetellen</label></div>`}</div>
+      <div id="e-sets"></div>
+      <div class="bar"><button class="btn rand klein" id="e-setbij">+ set</button>${ow ? "" : `<button class="btn rand klein" id="e-uitbib">Uit bibliotheek…</button>`}</div>
+      ${ow ? "" : `<div class="r2"><div><label>Land (minuten)</label><input type="number" min="0" max="600" id="e-lm" value="${s.land_min === "" || s.land_min == null ? "" : s.land_min}"></div><div><label>Landtype</label><select id="e-lt">${ltOpt}</select></div></div>`}
+    </div>
+    <label>Extra tekst${C ? " (inhoud C-groep)" : ""}</label><textarea id="e-extra" maxlength="500">${esc(C ? (s.tekst_vast || s.inhoud_extra) : s.inhoud_extra)}</textarea>
+    ${s.tekst_vast && !C ? `<div class="melding info">Vaste tekst uit het schema: <i>${esc(s.tekst_vast)}</i> <button class="btn klein rand" id="e-wisvast">Vervangen door de automatische tekst</button></div>` : ""}
+    ${ow ? "" : `<div class="r2"><div><label>Doel</label><select id="e-doel">${doelOpt}</select></div><div><label>Waarom nu</label><input type="text" id="e-waarom" maxlength="300" value="${esc(s.waarom_nu)}"></div></div>
+    ${C ? "" : `<details ${s.venster_van ? "open" : ""}><summary class="klein" style="margin-top:8px;cursor:pointer">Flexibele sessie (sporter kiest zelf de dag)</summary>
+      <div class="r3"><div><label>Van</label><select id="e-vvan"><option value=""></option>${d.map(x => `<option ${x === s.venster_van ? "selected" : ""}>${x}</option>`).join("")}</select></div>
+      <div><label>Tot</label><select id="e-vtot"><option value=""></option>${d.map(x => `<option ${x === s.venster_tot ? "selected" : ""}>${x}</option>`).join("")}</select></div>
+      <div><label>Doelgroep</label><select id="e-vdg"><option value="alle" ${s.flex_doelgroep !== "volwassenen" ? "selected" : ""}>alle</option><option value="volwassenen" ${s.flex_doelgroep === "volwassenen" ? "selected" : ""}>volwassenen</option></select></div></div>
+      <div class="klein">Water-flex enkel voor volwassenen (beslissing 4). De koppeling met het logboek volgt in F4; tot dan telt de sessie op de gekozen dag.</div></details>`}`}
+    </fieldset>
+    <div class="prev" id="e-prev" aria-live="polite"></div>
+    <div class="fout" id="e-fout"></div>
+    <div class="knoppen">
+      ${!nieuw && mag ? `<button class="btn gevaar" id="e-weg">Verwijderen</button>` : ""}
+      <span style="flex:1"></span>
+      ${!ow && !C ? `<button class="btn rand" id="e-bib">In bibliotheek…</button>` : ""}
+      ${!nieuw && !ow && bewerkbaar() ? `<button class="btn rand" id="e-kop">Kopiëren naar…</button>` : ""}
+      <button class="btn rand" id="e-annul">${mag ? "Annuleren" : "Sluiten"}</button>
+      ${mag ? `<button class="btn" id="e-ok">Opslaan</button>` : ""}
+    </div></div>`;
+  document.body.appendChild(o);
+  const q = id => o.querySelector(id);
+  let sets = (x.sets || []).map(t => Object.assign({ delen: [] }, t));
+  const tekenSets = () => { q("#e-sets").innerHTML = sets.map((t, k) => setHtml(t, k, sets.length)).join(""); };
+  const verzamel = () => {
+    if (o.querySelector(".set")) sets = leesSets(q("#e-sets"));
+    const t = (sel) => { const e = q(sel); return e ? e.value : ""; };
+    const n = Object.assign({}, s);
+    if (!ow){ n.groep = t("#e-groep"); n.datum = t("#e-datum"); n.dagdeel = t("#e-dd"); n.status = t("#e-status"); }
+    const sjn = { invaren: { min: Number(o.querySelector('[data-f="invaren.min"]').value) || 0, sec: Number(o.querySelector('[data-f="invaren.sec"]').value) || 0 },
+                  uitvaren: { min: Number(o.querySelector('[data-f="uitvaren.min"]').value) || 0, sec: Number(o.querySelector('[data-f="uitvaren.sec"]').value) || 0 }, sets: sets };
+    if (n.groep === "C"){ n.sets_json = ""; n.tekst_vast = t("#e-extra"); n.inhoud_extra = ""; n.opwarming = ""; n.land_min = ""; n.land_type = ""; }
+    else { n.sets_json = RK.isLeegSj(sjn) ? "" : JSON.stringify(RK.compact(sjn)); n.inhoud_extra = t("#e-extra"); }
+    if (!ow && n.groep !== "C"){ n.opwarming = q("#e-opw") && q("#e-opw").checked ? "ja" : ""; n.land_min = t("#e-lm") === "" ? "" : Number(t("#e-lm")); n.land_type = t("#e-lt");
+      n.venster_van = t("#e-vvan"); n.venster_tot = t("#e-vtot") || (n.venster_van ? n.venster_van : ""); n.flex_doelgroep = n.venster_van ? t("#e-vdg") : ""; }
+    if (!ow){ n.doel_keuze = t("#e-doel"); n.waarom_nu = t("#e-waarom"); }
+    if (n.venster_van && n.venster_tot && n.venster_tot < n.venster_van){ const v = n.venster_van; n.venster_van = n.venster_tot; n.venster_tot = v; }
+    return n;
+  };
+  const preview = () => {
+    const n = verzamel(), lijst = S.d.sessies.filter(y => y.id !== n.id || !n.id).concat([n]);
+    let h = "";
+    if (ow){ const z = RK.zoneMin(sj(n)); h = `<div class="tekst">${esc(owTekst(n)) || "<i>leeg</i>"}</div><div class="klein">${ZONES.map((zn, i) => zn + " " + fmt(z[i], 2)).join(" · ")} · telt mee bij elke sessie met het vinkje "opwarming"</div>`; }
+    else {
+      const b = bereken(n, lijst), w = RK.waarschuwingen(b.sets);
+      const F = n.id ? evalueer(lijst).filter(f => f.sid === n.id && f.id !== "SB") : [];
+      h = `<div class="tekst">${esc(b.inh) || "<i>leeg</i>"}</div>
+        <div style="margin:4px 0">${doelChip(b.doel)} ${n.doel_keuze ? "" : '<span class="klein">automatisch</span>'} ${b.telt ? "" : '<span class="pil p-grijs">telt niet mee</span>'}</div>
+        ${n.groep !== "C" ? `<div class="klein">${ZONES.map((zn, i) => zn + " " + fmt(b.z[i], 1)).join(" · ")}</div>
+        <div>duur <b>${uurMin(b.duur)}</b> · km <b>${fmt(b.km, 2)}</b> · TSS <b>${fmt(b.tss, 1)}</b> · verwachte RPE <b>${fmt(b.rpe, 1)}</b> ${zoneBalk(b.z)}</div>` : ""}
+        ${w.length ? `<div class="melding" style="margin:6px 0 0">${w.map(esc).join("<br>")}</div>` : ""}
+        ${F.length ? `<div class="melding" style="margin:6px 0 0">${F.map(f => esc(f.id + ": " + f.tekst)).join("<br>")}</div>` : ""}`;
+    }
+    q("#e-prev").innerHTML = h;
+  };
+  tekenSets(); preview();
+  o.addEventListener("input", () => preview());
+  o.addEventListener("change", e => { if (e.target.id === "e-groep"){ const C2 = e.target.value === "C"; q("#e-water").hidden = C2; } preview(); });
+  o.addEventListener("click", e => {
+    const t = e.target, el = t.closest(".set");
+    if (t.dataset.setact && el){ sets = leesSets(q("#e-sets")); const k = Number(el.dataset.set);
+      if (t.dataset.setact === "weg") sets.splice(k, 1);
+      if (t.dataset.setact === "dup") sets.splice(k + 1, 0, JSON.parse(JSON.stringify(sets[k])));
+      if (t.dataset.setact === "op" && k > 0) sets.splice(k - 1, 0, sets.splice(k, 1)[0]);
+      if (t.dataset.setact === "neer" && k < sets.length - 1) sets.splice(k + 1, 0, sets.splice(k, 1)[0]);
+      if (sets[0]) sets[0].koppel = false; tekenSets(); preview(); }
+    if (t.dataset.deelbij && el){ sets = leesSets(q("#e-sets")); const k = Number(el.dataset.set); const v = sets[k].delen[sets[k].delen.length - 1]; sets[k].delen.push({ min: 0, sec: 0, zone: v && v.zone === "T0" ? "T1" : "T0" }); tekenSets(); preview(); }
+    if (t.dataset.deelweg != null && el){ sets = leesSets(q("#e-sets")); sets[Number(el.dataset.set)].delen.splice(Number(t.dataset.deelweg), 1); tekenSets(); preview(); }
+  });
+  const sluit = () => { o.remove(); document.removeEventListener("keydown", esc_); };
+  const esc_ = e => { if (e.key === "Escape") sluit(); };
+  document.addEventListener("keydown", esc_);
+  if (q("#e-setbij")) q("#e-setbij").onclick = () => { sets = leesSets(q("#e-sets")); sets.push(leegSet()); tekenSets(); preview(); };
+  if (q("#e-wisvast")) q("#e-wisvast").onclick = () => { s.tekst_vast = ""; q("#e-wisvast").parentNode.remove(); preview(); };
+  q("#e-annul").onclick = sluit;
+  if (q("#e-uitbib")) q("#e-uitbib").onclick = () => { S.pick = item => { const y = sj(item); x = y; sets = (y.sets || []).map(t2 => Object.assign({ delen: [] }, t2));
+      o.querySelector('[data-f="invaren.min"]').value = (y.invaren || {}).min || ""; o.querySelector('[data-f="invaren.sec"]').value = (y.invaren || {}).sec || "";
+      o.querySelector('[data-f="uitvaren.min"]').value = (y.uitvaren || {}).min || ""; o.querySelector('[data-f="uitvaren.sec"]').value = (y.uitvaren || {}).sec || "";
+      if (item.inhoud_extra) q("#e-extra").value = item.inhoud_extra; if (q("#e-opw")) q("#e-opw").checked = item.opwarming === "ja";
+      if (q("#e-lm")) { q("#e-lm").value = item.land_min || ""; q("#e-lt").value = item.land_type || ""; }
+      s.bib_id = item.id; s.bib_versie = String(item.versie || 1); tekenSets(); preview(); o.hidden = false; };
+    o.hidden = true; S.bibOpen = true; toonBib(true); };
+  if (q("#e-ok")) q("#e-ok").onclick = async () => {
+    const n = verzamel(); q("#e-fout").textContent = "";
+    if (!ow && n.groep !== "C" && !n.sets_json && !n.inhoud_extra && !(Number(n.land_min) > 0)) { q("#e-fout").textContent = "De sessie is leeg."; return; }
+    q("#e-ok").disabled = true; q("#e-ok").textContent = "Bewaren…";
+    try { const r = await gs("plannerBewaarMeer", [n]); naWijziging(r.sessies); sluit(); toast(n.status === "concept" ? "Bewaard als concept." : "Bewaard."); }
+    catch (er) { q("#e-fout").textContent = er.message; q("#e-ok").disabled = false; q("#e-ok").textContent = "Opslaan"; if (er.conflict) q("#e-fout").textContent += " (je wijziging is niet bewaard; sluit en herlaad)"; }
+  };
+  if (q("#e-weg")) q("#e-weg").onclick = async () => {
+    if (!confirmInline(q("#e-weg"), "Zeker verwijderen?")) return;
+    try { const r = await gs("plannerVerwijder", [{ id: s.id, gewijzigd_op: s.gewijzigd_op }]); naWijziging(r.sessies); sluit(); toast("Verwijderd."); }
+    catch (er) { q("#e-fout").textContent = er.message; }
+  };
+  if (q("#e-bib")) q("#e-bib").onclick = () => openBibItem(null, verzamel());
+  if (q("#e-kop")) q("#e-kop").onclick = () => { sluit(); openKopieSessie(verzamel()); };
+  setTimeout(() => { const f = o.querySelector("select,input,textarea,button"); if (f) f.focus(); }, 30);
+}
+/* tweede klik bevestigt (geen browserdialoog: die blokkeert de webapp) */
+function confirmInline(knop, tekst){ if (knop.dataset.zeker === "1") return true; knop.dataset.zeker = "1"; const oud = knop.textContent; knop.textContent = tekst; setTimeout(() => { knop.dataset.zeker = ""; knop.textContent = oud; }, 4000); return false; }
+
+/* ---------------- schalen (kopie naar een andere groep: herhalingen/duur kleiner, intensiteit gelijk) ---------------- */
+function schaal(x, f){
+  x = JSON.parse(JSON.stringify(x || {})); if (f === 1 || !x.sets) return x;
+  const r5 = s => Math.max(5, Math.round(s / 5) * 5);
+  x.sets.forEach(st => {
+    if (st.aantal >= 2) st.aantal = Math.max(1, Math.round(st.aantal * f));
+    else if (st.herhaal >= 2 && !st.koppel) st.herhaal = Math.max(1, Math.round(st.herhaal * f));
+    else (st.delen || []).forEach(d => { if (/^T[01]$/i.test(d.zone)){ const sec = r5(((Number(d.min) || 0) * 60 + (Number(d.sec) || 0)) * f); d.min = Math.floor(sec / 60); d.sec = sec % 60; } });
+  });
+  return x;
+}
+function kopieVan(s, doel, f){
+  const n = { jaar: S.jaar, week: S.week, groep: doel.groep, datum: doel.datum, dagdeel: doel.dagdeel != null ? doel.dagdeel : s.dagdeel, categorie: s.categorie === "opwarming" ? "opwarming" : (s.categorie === "geen" ? "" : ""),
+    status: "concept", sets_json: s.sets_json ? JSON.stringify(schaal(sj(s), f)) : "", opwarming: s.opwarming, land_min: s.land_min === "" ? "" : Math.round((Number(s.land_min) || 0) * f / 5) * 5 || "",
+    land_type: s.land_type, inhoud_extra: s.inhoud_extra, tekst_vast: f === 1 ? s.tekst_vast : "", doel_keuze: s.doel_keuze, waarom_nu: s.waarom_nu, bib_id: s.bib_id || "", bib_versie: s.bib_versie || "",
+    venster_van: "", venster_tot: "", flex_doelgroep: s.flex_doelgroep || "" };
+  if (s.venster_van){ const off = dnIso(doel.datum) - dnIso(s.datum); n.venster_van = isoDn(dnIso(s.venster_van) + off); n.venster_tot = isoDn(dnIso(s.venster_tot || s.venster_van) + off); }
+  if (doel.groep === "C"){ n.tekst_vast = s.tekst_vast || bereken(s).inh; n.sets_json = ""; n.land_min = ""; n.land_type = ""; n.opwarming = ""; n.categorie = ""; }
+  return n;
+}
+function openKopieSessie(s){
+  const d = datums(), o = dlg(`<h2>Sessie kopiëren (deze week)</h2>
+    <div class="r3"><div><label>Naar groep</label><select id="k-g">${["A","B","C"].map(g => `<option ${g === s.groep ? "" : (g === "B" ? "selected" : "")}>${g}</option>`).join("")}</select></div>
+    <div><label>Dag</label><select id="k-d">${d.map((x, i) => `<option value="${x}" ${x === s.datum ? "selected" : ""} ${bevroren(x) ? "disabled" : ""}>${DAGL[i]} ${ddmm(x)}</option>`).join("")}</select></div>
+    <div><label>Dagdeel</label><select id="k-dd">${["VM","NM",""].map(v => `<option value="${v}" ${v === s.dagdeel ? "selected" : ""}>${v || "–"}</option>`).join("")}</select></div></div>
+    <label>Schaal (herhalingen/duur, niet de intensiteit)</label><select id="k-f">${[100,90,80,75,70,60,50].map(p => `<option value="${p}" ${p === (s.groep === "A" ? 70 : 100) ? "selected" : ""}>${p} %</option>`).join("")}</select>
+    <div class="prev" id="k-prev"></div><div class="fout" id="k-fout"></div>
+    <div class="knoppen"><button class="btn rand" data-sluit>Annuleren</button><button class="btn" id="k-ok">Kopiëren als concept</button></div>`, true);
+  const q = id => o.querySelector(id);
+  const maak = () => kopieVan(s, { groep: q("#k-g").value, datum: q("#k-d").value, dagdeel: q("#k-dd").value }, Number(q("#k-f").value) / 100);
+  const pv = () => { const n = maak(), a = bereken(s), b = bereken(n); q("#k-prev").innerHTML = `<div class="tekst">${esc(b.inh)}</div><div class="klein">TSS ${fmt(a.tss,0)} → <b>${fmt(b.tss,0)}</b> (${a.tss ? fmt(b.tss / a.tss * 100, 0) : "–"} %)</div>`; };
+  o.addEventListener("change", pv); pv();
+  q("#k-ok").onclick = async () => { q("#k-ok").disabled = true; try { const r = await gs("plannerBewaarMeer", [maak()]); naWijziging(r.sessies); o.remove(); toast("Gekopieerd als concept."); } catch (e) { q("#k-fout").textContent = e.message; q("#k-ok").disabled = false; } };
+}
+function dlg(html, smal){
+  const o = document.createElement("div"); o.className = "ovl"; o.setAttribute("role", "dialog"); o.setAttribute("aria-modal", "true");
+  o.innerHTML = `<div class="dlg ${smal ? "smal" : ""}">${html}</div>`; document.body.appendChild(o);
+  o.addEventListener("click", e => { if (e.target.hasAttribute && e.target.hasAttribute("data-sluit")) o.remove(); });
+  o.addEventListener("keydown", e => { if (e.key === "Escape") o.remove(); });
+  setTimeout(() => { const f = o.querySelector("select,input,textarea,button"); if (f) f.focus(); }, 30);
+  return o;
+}
+function openKopieWeek(){
+  const o = dlg(`<h2>Week kopiëren naar W${S.week}</h2>
+    <div class="r3"><div><label>Van jaar</label><input type="number" id="w-j" value="${S.week > 1 ? S.jaar : S.jaar - 1}"></div><div><label>Van week</label><input type="number" id="w-w" min="1" max="53" value="${S.week > 1 ? S.week - 1 : 52}"></div>
+    <div><label>Van groep</label><select id="w-g"><option>A</option><option>B</option><option>C</option></select></div></div>
+    <div class="r2"><div><label>Naar groep</label><select id="w-n"><option>A</option><option>B</option><option>C</option></select></div>
+    <div><label>Schaal</label><select id="w-f">${[100,90,80,75,70,60,50].map(p => `<option value="${p}">${p} %</option>`).join("")}</select></div></div>
+    <label style="font-weight:normal"><input type="checkbox" id="w-ow" checked> opwarming meekopiëren (vervangt de opwarming van de doelgroep)</label>
+    <div class="klein">Elke sessie komt op dezelfde weekdag als concept. Bevroren dagen worden overgeslagen. Bestaande sessies blijven staan.</div>
+    <div class="prev" id="w-prev">Kies de bronweek en klik op Voorbeeld.</div><div class="fout" id="w-fout"></div>
+    <div class="knoppen"><button class="btn rand" data-sluit>Annuleren</button><button class="btn rand" id="w-vb">Voorbeeld</button><button class="btn" id="w-ok" disabled>Kopiëren als concept</button></div>`, true);
+  const q = id => o.querySelector(id); let lijst = [];
+  q("#w-vb").onclick = async () => {
+    q("#w-fout").textContent = ""; q("#w-prev").textContent = "Bronweek laden…"; q("#w-ok").disabled = true;
+    try {
+      const r = await gs("getPlannerData", Number(q("#w-j").value), Number(q("#w-w").value), true), g = q("#w-g").value, n = q("#w-n").value, f = Number(q("#w-f").value) / 100;
+      const d = datums(), m0 = r.sessies.length ? null : null;
+      const bron = r.sessies.filter(s => s.groep === g && s.categorie !== "geen" && (q("#w-ow").checked || s.categorie !== "opwarming"));
+      lijst = [];
+      bron.forEach(s => {
+        const wdag = (new Date(s.datum + "T00:00:00Z").getUTCDay() + 6) % 7, dat = s.categorie === "opwarming" ? d[0] : d[wdag];
+        if (s.categorie !== "opwarming" && bevroren(dat)) return;
+        lijst.push(kopieVan(s, { groep: n, datum: dat, dagdeel: s.dagdeel }, f));
+      });
+      const bestaandOw = S.d.sessies.find(s => s.groep === n && s.categorie === "opwarming");
+      lijst.forEach(x => { if (x.categorie === "opwarming" && bestaandOw){ x.id = bestaandOw.id; x.gewijzigd_op = bestaandOw.gewijzigd_op; x.status = bestaandOw.status; } });
+      const tssA = bron.reduce((a, s) => a + (Number(s.TSS) || 0), 0), tssB = lijst.reduce((a, s) => a + bereken(s, lijst).tss, 0);
+      q("#w-prev").innerHTML = `<b>${lijst.length}</b> sessies (W${r.week} groep ${g} → W${S.week} groep ${n}) · TSS bron ±${fmt(tssA,0)} → kopie ±${fmt(tssB,0)}<br>` + lijst.slice(0, 14).map(x => esc(DAGK[(dnIso(x.datum) - dnIso(d[0]))] + " " + (x.dagdeel || "") + ": " + bereken(x, lijst).inh.slice(0, 90))).join("<br>");
+      q("#w-ok").disabled = !lijst.length;
+    } catch (e) { q("#w-fout").textContent = e.message; q("#w-prev").textContent = ""; }
+  };
+  q("#w-ok").onclick = async () => { q("#w-ok").disabled = true; try { const r = await gs("plannerBewaarMeer", lijst); naWijziging(r.sessies); o.remove(); toast(lijst.length + " sessies gekopieerd als concept."); } catch (e) { q("#w-fout").textContent = e.message; q("#w-ok").disabled = false; } };
+}
+function openWeekGeg(){
+  const w = weekRij() || { fase: "", fase_analyse: "", belastingdoel: "", focus: "", wedstrijd: "", notitie: "", eigenaar: "webapp", gepubliceerd: "", gewijzigd_op: "" };
+  const o = dlg(`<h2>Weekgegevens W${S.week}</h2>
+    <div class="r2"><div><label>Fase</label><input type="text" id="g-fase" list="g-fl" maxlength="40" value="${esc(w.fase)}"><datalist id="g-fl">${FASEN_LIJST.map(f => `<option>${f}</option>`).join("")}</datalist></div>
+    <div><label>Fase voor de analyse</label><select id="g-fa"><option value=""></option>${FASEN_LIJST.map(f => `<option ${f === w.fase_analyse ? "selected" : ""}>${f}</option>`).join("")}</select></div></div>
+    <div class="r2"><div><label>Belastingdoel</label><select id="g-bd">${["","-","+","++","+++"].map(v => `<option value="${v}" ${v === w.belastingdoel ? "selected" : ""}>${v.replace("-", "−") || "–"}</option>`).join("")}</select></div>
+    <div><label>Wedstrijd</label><input type="text" id="g-wed" maxlength="120" value="${esc(w.wedstrijd)}"></div></div>
+    <label>Focus</label><input type="text" id="g-focus" maxlength="120" value="${esc(w.focus)}">
+    <label>Notitie</label><textarea id="g-not" maxlength="500">${esc(w.notitie)}</textarea>
+    <div class="fout" id="g-fout"></div>
+    <div class="knoppen"><button class="btn rand" data-sluit>Annuleren</button><button class="btn" id="g-ok">Opslaan</button></div>`, true);
+  const q = id => o.querySelector(id);
+  q("#g-ok").onclick = async () => {
+    q("#g-ok").disabled = true;
+    try { const r = await gs("plannerBewaarWeek", { jaar: S.jaar, week: S.week, fase: q("#g-fase").value, fase_analyse: q("#g-fa").value, belastingdoel: q("#g-bd").value, focus: q("#g-focus").value, wedstrijd: q("#g-wed").value, notitie: q("#g-not").value, eigenaar: w.eigenaar, gepubliceerd: !!w.gepubliceerd, gewijzigd_op: w.gewijzigd_op });
+      if (!weekRij()) S.d.weken.push(r); naWijziging(null, r); o.remove(); toast("Weekgegevens bewaard."); }
+    catch (e) { q("#g-fout").textContent = e.message; q("#g-ok").disabled = false; }
+  };
+}
+
+/* ---------------- bibliotheek ---------------- */
+const BF = { tekst: "", soort: "water", doel: "", groep: "", max: "" };
+function toonBib(pickModus){
+  const el = $("#bib");
+  $("#indeling").classList.toggle("metbib", S.bibOpen); el.hidden = !S.bibOpen; $("#bibknop").setAttribute("aria-pressed", String(S.bibOpen));
+  if (!S.bibOpen) return;
+  if (!S.heeftBib){ el.innerHTML = `<h3>Bibliotheek <button class="btn rand klein" data-bibsluit>✕</button></h3><div class="melding">De tab Bibliotheek bestaat nog niet. Voer <b>plannerInstalleren</b> uit in de editor (als kkykcclub).</div>`; return; }
+  const doelen = Object.keys(S.inst.doelen || {});
+  let lijst = S.bib.filter(b => (!BF.soort || b.soort === BF.soort) && (!BF.doel || b.doel === BF.doel) && (!BF.groep || String(b.groepen).indexOf(BF.groep) >= 0)
+    && (!BF.max || (Number(b.duur) || 0) <= Number(BF.max)) && (!BF.tekst || (b.naam + " " + b.inhoud_extra + " " + b.fasen).toLowerCase().indexOf(BF.tekst.toLowerCase()) >= 0));
+  lijst.sort((a, b) => (Number(b.gebruikt) || 0) - (Number(a.gebruikt) || 0));
+  const n = lijst.length; lijst = lijst.slice(0, 80);
+  el.innerHTML = `<h3>Bibliotheek <span class="klein">${n} items</span><button class="btn rand klein" data-bibsluit aria-label="Bibliotheek sluiten">✕</button></h3>
+    ${S.pick ? `<div class="melding info">Kies een sessie voor de editor. <button class="btn klein rand" data-pickstop>Annuleren</button></div>` : '<div class="klein">Sleep een sessie naar een dagdeel, of klik op Invoegen.</div>'}
+    <input type="search" id="bf-t" placeholder="zoeken…" value="${esc(BF.tekst)}" aria-label="Zoeken in de bibliotheek">
+    <div class="r2"><select id="bf-s" aria-label="Soort"><option value="">alle soorten</option>${["water","opwarming","land"].map(x => `<option ${x === BF.soort ? "selected" : ""}>${x}</option>`).join("")}</select>
+    <select id="bf-d" aria-label="Doel"><option value="">alle doelen</option>${doelen.map(x => `<option ${x === BF.doel ? "selected" : ""}>${esc(x)}</option>`).join("")}</select></div>
+    <div class="r2"><select id="bf-g" aria-label="Groep"><option value="">alle groepen</option>${["A","B"].map(x => `<option ${x === BF.groep ? "selected" : ""}>${x}</option>`).join("")}</select>
+    <select id="bf-m" aria-label="Maximale duur"><option value="">elke duur</option>${[45,60,75,90,120].map(x => `<option value="${x}" ${String(x) === String(BF.max) ? "selected" : ""}>≤ ${x}'</option>`).join("")}</select></div>
+    ${lijst.map(b => `<div class="bibitem" draggable="true" data-bib="${esc(b.id)}">${doelChip(b.doel)} <b>${esc(b.naam)}</b>
+      <div class="klein">${b.duur ? uurMin(b.duur) : ""}${b.TSS ? " · TSS " + fmt(b.TSS, 0) : ""}${b.groepen ? " · " + esc(b.groepen) : ""}${b.gebruikt ? " · " + b.gebruikt + "× gebruikt" : ""}${b.fasen ? " · " + esc(b.fasen) : ""}</div>
+      <div class="acties"><button class="btn klein" data-bibin="${esc(b.id)}">${S.pick ? "Kiezen" : "Invoegen"}</button><button class="btn klein rand" data-bibbew="${esc(b.id)}">Bewerken</button></div></div>`).join("")}
+    ${n > 80 ? '<div class="klein">Verfijn de zoekopdracht om meer te zien.</div>' : ""}`;
+  ["t","s","d","g","m"].forEach(k => { const e = $("#bf-" + k); e.addEventListener(k === "t" ? "input" : "change", () => { BF[{t:"tekst",s:"soort",d:"doel",g:"groep",m:"max"}[k]] = e.value; const pos = k === "t" ? e.selectionStart : null; toonBib(); if (k === "t"){ const n2 = $("#bf-t"); n2.focus(); n2.setSelectionRange(pos, pos); } }); });
+}
+function bibNaarSessie(b, g, dat, dd){
+  const s = nieuweSessie(g, dat, dd);
+  if (b.soort === "opwarming"){ s.categorie = "opwarming"; s.datum = datums()[0]; s.dagdeel = ""; const ex = S.d.sessies.find(x => x.groep === g && x.categorie === "opwarming"); if (ex){ s.id = ex.id; s.gewijzigd_op = ex.gewijzigd_op; s.cel = ex.cel; s.status = ex.status; } }
+  s.sets_json = b.sets_json; s.inhoud_extra = b.inhoud_extra; s.opwarming = b.opwarming; s.land_min = b.land_min; s.land_type = b.land_type; s.bib_id = b.id; s.bib_versie = String(b.versie || 1);
+  if (b.soort === "land"){ s.sets_json = ""; }
+  return s;
+}
+function openBibItem(b, vanSessie){
+  const nieuw = !b; b = b || { soort: vanSessie && vanSessie.categorie === "opwarming" ? "opwarming" : "water", naam: vanSessie ? bereken(vanSessie).inh.slice(0, 100) : "", doel: vanSessie ? bereken(vanSessie).doel : "", fasen: "", groepen: vanSessie ? vanSessie.groep : "",
+    sets_json: vanSessie ? vanSessie.sets_json : "", inhoud_extra: vanSessie ? vanSessie.inhoud_extra : "", opwarming: vanSessie ? vanSessie.opwarming : "", land_min: vanSessie ? vanSessie.land_min : "", land_type: vanSessie ? vanSessie.land_type : "" };
+  const o = dlg(`<h2>${nieuw ? "Opslaan in de bibliotheek" : "Bibliotheekitem"}</h2>
+    <label>Naam</label><input type="text" id="b-n" maxlength="120" value="${esc(b.naam)}">
+    <div class="r3"><div><label>Soort</label><select id="b-s">${["water","opwarming","land"].map(x => `<option ${x === b.soort ? "selected" : ""}>${x}</option>`).join("")}</select></div>
+    <div><label>Doel</label><select id="b-d"><option value=""></option>${Object.keys(S.inst.doelen || {}).map(x => `<option ${x === b.doel ? "selected" : ""}>${esc(x)}</option>`).join("")}</select></div>
+    <div><label>Groepen</label><input type="text" id="b-g" value="${esc(b.groepen)}" placeholder="A,B"></div></div>
+    <label>Fasen</label><input type="text" id="b-f" maxlength="200" value="${esc(b.fasen)}" placeholder="bv. Basis 2, Basis 3">
+    <div class="prev"><div class="tekst">${esc(RK.autoTekst(sj(b), b.opwarming === "ja"))}</div><div class="klein">${esc(b.inhoud_extra)}</div></div>
+    ${nieuw ? "" : `<div class="klein">Versie ${esc(b.versie)} · ${esc(b.bron)} · een wijziging verandert geen bestaande planning.</div>`}
+    <div class="fout" id="b-fout"></div>
+    <div class="knoppen">${nieuw ? "" : `<button class="btn gevaar" id="b-weg">Verwijderen</button>`}<span style="flex:1"></span><button class="btn rand" data-sluit>Annuleren</button><button class="btn" id="b-ok">Opslaan</button></div>`, true);
+  const q = id => o.querySelector(id);
+  q("#b-ok").onclick = async () => {
+    q("#b-ok").disabled = true;
+    const inv = Object.assign({}, b, { naam: q("#b-n").value, soort: q("#b-s").value, doel: q("#b-d").value, groepen: q("#b-g").value, fasen: q("#b-f").value });
+    if (vanSessie){ const x = bereken(vanSessie); inv.duur = Math.round(x.duur * 100) / 100; inv.TSS = Math.round(x.tss * 10) / 10; }
+    try { const r = await gs("plannerBewaarBib", inv); const i = S.bib.findIndex(y => y.id === r.id); if (i >= 0) S.bib[i] = r; else S.bib.unshift(r); o.remove(); toast("Bibliotheek bijgewerkt."); toonBib(); }
+    catch (e) { q("#b-fout").textContent = e.message; q("#b-ok").disabled = false; }
+  };
+  if (q("#b-weg")) q("#b-weg").onclick = async () => { if (!confirmInline(q("#b-weg"), "Zeker verwijderen?")) return; try { await gs("plannerVerwijderBib", b.id); S.bib = S.bib.filter(y => y.id !== b.id); o.remove(); toonBib(); } catch (e) { q("#b-fout").textContent = e.message; } };
+}
+
+/* ---------------- afdrukken: 1 groep = 1 A4 liggend, kolom Doel + legende ---------------- */
+function openAfdruk(){
+  const d = datums(), opm = (S.d.kalender || []).filter(k => k.soort === "afdrukopmerking" && k.van <= d[6] && k.tot >= d[0]);
+  const o = dlg(`<h2>Afdrukken W${S.week}</h2>
+    <label>Groepen (1 groep = 1 A4 liggend)</label><div class="bar">${["A","B","C"].map(g => `<label class="chk"><input type="checkbox" data-pg="${g}" checked> Groep ${g}</label>`).join("")}</div>
+    <label>Opmerkingen op het blad</label>${opm.length ? opm.map((k, i) => `<label class="chk"><input type="checkbox" data-po="${i}" checked> ${esc(k.naam)} <span class="klein">(${esc(k.groepen || "alle groepen")} · ${ddmm(k.van)}/${k.van.slice(2,4)}–${ddmm(k.tot)}/${k.tot.slice(2,4)})</span></label>`).join("") : '<div class="klein">Geen afdrukopmerkingen voor deze week. Toevoegen: Jaarplan → Kalender → soort afdrukopmerking (met een periode).</div>'}
+    <label>Extra tekst (enkel deze afdruk, alle gekozen groepen)</label><textarea id="p-extra" maxlength="400"></textarea>
+    <div class="knoppen"><button class="btn rand" data-sluit>Annuleren</button><button class="btn" id="p-ok">Afdrukken</button></div>`, true);
+  o.querySelector("#p-ok").onclick = () => {
+    const groepen = ["A","B","C"].filter(g => o.querySelector(`[data-pg="${g}"]`).checked);
+    const gekozen = opm.filter((k, i) => o.querySelector(`[data-po="${i}"]`).checked), extra = o.querySelector("#p-extra").value.trim();
+    o.remove(); afdrukken(groepen, gekozen, extra);
+  };
+}
+function afdrukken(groepen, opm, extra){
+  const w = weekRij(), d = datums(); let h = "";
+  (groepen || ["A","B","C"]).forEach(g => {
+    const let_ = (opm || []).filter(k => !k.groepen || k.groepen.indexOf(g) >= 0).map(k => k.naam).concat(extra ? [extra] : []);
+    const ss = S.d.sessies.filter(s => s.groep === g && s.categorie !== "opwarming").map(s => ({ s: s, b: bereken(s) })).filter(x => x.b.telt || x.b.inh)
+      .sort((a, b) => a.s.datum < b.s.datum ? -1 : a.s.datum > b.s.datum ? 1 : (a.s.dagdeel === "VM" ? -1 : 1));
+    const owS = S.d.sessies.find(s => s.groep === g && s.categorie === "opwarming"), doelen = new Set(ss.map(x => x.b.doel).filter(Boolean));
+    const t = weekTot(g);
+    h += `<div class="pblad"><h1>KKYKC – Groep ${g} – W${S.week} (${ddmm(d[0])} t/m ${ddmm(d[6])}/${d[6].slice(0,4)})</h1>
+      <div class="sub">${w && w.fase ? "Fase " + esc(w.fase) : ""}${w && w.focus ? " · focus: " + esc(w.focus) : ""}${g !== "C" ? " · TSS " + fmt(t.tss,0) + " · " + uurMin(t.duur) + " · " + fmt(t.km,1) + " km" : ""}</div>
+      ${let_.length ? `<div class="let">Let op: ${let_.map(esc).join(" · ")}</div>` : ""}
+      ${owS ? `<div class="sub"><b>Opwarming:</b> ${esc(owTekst(owS))}</div>` : ""}
+      <table><thead><tr><th style="width:13%">Dag</th><th style="width:7%">Dagdeel</th><th>Inhoud</th><th style="width:15%">Doel</th></tr></thead><tbody>
+      ${ss.length ? "" : `<tr><td colspan="4">Geen sessies gepland.</td></tr>`}${ss.map(x => `<tr><td>${DAGL[(dnIso(x.s.datum) - dnIso(d[0]))]} ${ddmm(x.s.datum)}</td><td>${esc(x.s.dagdeel)}</td><td>${esc(x.b.inh)}${x.s.status === "concept" ? " <i>(concept)</i>" : ""}${x.s.venster_van ? " <i>(flexibel " + ddmm(x.s.venster_van) + "–" + ddmm(x.s.venster_tot || x.s.venster_van) + ")</i>" : ""}${x.b.duur && g !== "C" ? ` <span style="color:#555">(${uurMin(x.b.duur)})</span>` : ""}</td><td>${doelChip(x.b.doel)}</td></tr>`).join("")}
+      </tbody></table>
+      <div class="leg">${Array.from(doelen).map(n => `<div>${doelChip(n)} ${esc(((S.inst.doelen || {})[n] || {}).wat || "")}</div>`).join("")}</div></div>`;
+  });
+  $("#print").innerHTML = h || "<p>Geen groep gekozen.</p>";
+  setTimeout(() => { try { window.print(); } catch (e) { toast("Afdrukken lukt niet in dit venster: gebruik Ctrl+P."); } }, 50);
+}
+
+/* ---------------- F3: richtwaarden, doel-TSS (Jaarplan.gs) ---------------- */
+const DAG_SOORTEN = ["wedstrijd","test","clubactiviteit"];
+const FASE_KLEUR = { "Overgang":"#B9B2AA", "Basis 1":"#9CC79B", "Basis 2":"#6FAE6E", "Basis 3":"#3F8A47", "Specifiek (P-n)":"#E3A33B", "Taper (P-1)":"#E07B39",
+  "Wedstrijdblok":"#C9502C", "Piek":"#8E2A6B", "Uitloop":"#7A9CC6", "Kerst":"#D8CFC4" };
+const KSOORT_L = { wedstrijd:"wedstrijd", test:"test", vakantie:"vakantie", examens:"examens", clubactiviteit:"clubactiviteit", afdrukopmerking:"afdrukopmerking" };
+function faseNorm(f){ return !f ? "" : /^p-\d+$/i.test(f) ? "Specifiek (P-n)" : /^piek/i.test(f) ? "Piek" : f; }
+function jpRw(fase){ const jp = S.jp, f = faseNorm(fase); if (!jp || !f) return null; return (jp.rw || []).find(r => r.fase.toLowerCase() === f.toLowerCase()) || null; }
+function heeftExamens(ma, kal){ if (!ma) return false; const zo = isoDn(dnIso(ma) + 6); return (kal || []).some(k => k.soort === "examens" && k.van <= zo && k.tot >= ma); }
+function doelTss(w, g, kal){
+  if (!S.jp || !w || g === "C") return null;
+  const r = jpRw(w.fase_analyse || w.fase); if (!r || r.index_min == null) return null;
+  const ji = S.jp.ji || {}, idx = (r.index_min + (r.index_max != null ? r.index_max : r.index_min)) / 2, bd = (w.belastingdoel || "++").replace("−", "-");
+  let f = r.zonder_factor ? 1 : (ji["factor_" + bd] != null ? ji["factor_" + bd] : 1);
+  if (heeftExamens(w.maandag, kal)) f *= ji.examenfactor || 1;
+  let t = (ji.ref_tss_A || 280) * idx / 100 * f; if (g === "B") t *= ji.verhouding_B || 0.7;
+  return t;
+}
+function doelPil(tss, doel){
+  if (!doel) return "";
+  const r = tss / doel, kl = !tss ? "p-grijs" : (r >= 0.9 && r <= 1.1) ? "p-ok" : (r >= 0.8 && r <= 1.2) ? "p-warn" : "p-bad";
+  return `<span class="pil ${kl}" title="Doel-TSS uit fase, belastingdoel en richtwaarden (±10 % = groen)">doel ${fmt(doel, 0)}${tss ? " · " + fmt(r * 100, 0) + " %" : ""}</span>`;
+}
+
+/* ---------------- F3: jaarplan ---------------- */
+function jMa(jaar, week){ const j4 = Date.UTC(jaar, 0, 4) / 864e5, dw = (new Date(Date.UTC(jaar, 0, 4)).getUTCDay() + 6) % 7; return isoDn(j4 - dw + (week - 1) * 7); }
+async function laadJaar(jaar){
+  S.view = "jaar"; document.body.classList.add("jaarmodus"); $("#jaarknop").setAttribute("aria-pressed", "true"); melding("");
+  $("#hoofd").innerHTML = '<div class="leeg">Jaarplan laden…</div>';
+  try {
+    const d = await gs("getJaarData", jaar || S.jaar);
+    S.jd = d; S.jdirty = {}; S.jp = { rw: d.rw, ji: d.ji }; S.jaar = d.jaar;
+    const jr = new Set((S.d && S.d.jaren || []).concat([d.jaar - 1, d.jaar, d.jaar + 1]));
+    $("#jaar").innerHTML = Array.from(jr).sort().map(j => `<option ${j === d.jaar ? "selected" : ""}>${j}</option>`).join("");
+    toonJaar();
+  } catch (e) { $("#hoofd").innerHTML = `<div class="melding fout">${esc(e.message)}</div>`; }
+}
+function jWeek(w){   /* weekrij met de niet-bewaarde wijzigingen */
+  const r = (S.jd.weken || []).find(x => x.week === w), ma = r ? r.maandag : jMa(S.jd.jaar, w);
+  return Object.assign({ week: w, maandag: ma, fase: "", fase_analyse: "", belastingdoel: "", focus: "", wedstrijd: "", eigenaar: "", gepubliceerd: "", gewijzigd_op: "", bestaat: !!r }, r || {}, S.jdirty[w] || {});
+}
+function jBewerkbaar(w){ const x = jWeek(w); return (!x.bestaat || x.eigenaar === "webapp") && isoDn(dnIso(x.maandag) + 6) >= S.jd.grens; }
+function jKal(ma){ const zo = isoDn(dnIso(ma) + 6); return (S.jd.kalender || []).filter(k => k.van <= zo && k.tot >= ma); }
+function jTot(w, g, vorig){ const T = (vorig ? S.jd.vorig : S.jd.totalen) || {}; return T[w] && T[w][g] ? T[w][g] : null; }
+function toonJaar(){
+  const scr = Array.from(document.querySelectorAll("#hoofd .jscroll")).map(x => x.scrollTop), wy = window.scrollY;
+  toonJaar_();
+  document.querySelectorAll("#hoofd .jscroll").forEach((x, i) => { if (scr[i]) x.scrollTop = scr[i]; }); if (wy) window.scrollTo(0, wy);
+}
+function toonJaar_(){
+  const d = S.jd, N = d.aantal_weken, nd = Object.keys(S.jdirty).length, vandaag = d.vandaag;
+  let h = `<div class="weekkop"><h2>Jaarplan ${d.jaar}</h2>
+    <button class="btn" id="j-bewaar" ${nd ? "" : "disabled"}>Bewaren${nd ? " (" + nd + " week" + (nd > 1 ? "en" : "") + ")" : ""}</button>
+    <button class="btn rand" id="j-kal">+ Kalenderitem</button>
+    <a class="btn rand klein" style="text-decoration:none;display:inline-flex;align-items:center" target="_blank" rel="noopener" href="${esc(d.planning_url)}">Planning KKYKC (Richtwaarden, Jaarinstellingen)</a>
+    ${d.rw_geinstalleerd ? "" : `<span class="pil p-warn">standaard-richtwaarden: voer jaarplanInstalleren uit</span>`}</div>
+    <div class="klein">Doel-TSS = ${fmt(d.ji.ref_tss_A, 0)} TSS × TSS-index van de fase × factor van het belastingdoel (− ${fmt(d.ji["factor_-"], 2)} · + ${fmt(d.ji["factor_+"], 2)} · ++ ${fmt(d.ji["factor_++"], 2)} · +++ ${fmt(d.ji["factor_+++"], 2)}; niet bij Taper, Piek, Kerst) × ${fmt(d.ji.examenfactor, 2)} in examenweken · B = ${fmt(d.ji.verhouding_B * 100, 0)} % van A. Gepland = gepubliceerd + concepten (c).</div>`;
+  h += `<div class="jblok"><h3>Belasting per week: gepland (staaf) en doel (streep)</h3>${jGrafiek()}</div>`;
+  h += `<div class="jblok"><h3>Weken</h3><div class="jscroll"><table class="jtab"><thead><tr><th>Week</th><th>Fase</th><th>Bel.</th><th class="opt">Focus</th><th class="opt">Wedstrijd (titel)</th><th>Kalender</th><th class="n">A gepland / doel</th><th class="n">B gepland / doel</th><th class="n opt">C</th><th class="opt">Status</th></tr></thead><tbody>`;
+  for (let w = 1; w <= N; w++){
+    const x = jWeek(w), ed = jBewerkbaar(w), zo = isoDn(dnIso(x.maandag) + 6), dis = ed ? "" : "disabled";
+    const cel = g => { const t = jTot(w, g), dt = doelTss(x, g, d.kalender); return `${t && t.n ? fmt(t.tss, 0) + (t.conc ? " (c)" : "") : "–"} ${dt ? doelPil(t ? t.tss : 0, dt) : ""}`; };
+    const tc = jTot(w, "C");
+    const st = !x.bestaat ? `<span class="pil p-grijs">nieuw</span>` : x.eigenaar === "sheet" ? `<span class="pil p-warn">Schema</span>` : x.gepubliceerd ? `<span class="pil p-ok">gepubliceerd</span>` : `<span class="pil p-bad">niet gepubl.</span>`;
+    h += `<tr class="${S.jdirty[w] ? "vuil" : ""} ${x.maandag <= vandaag && vandaag <= zo ? "nu" : ""}">
+      <td><button class="wk" data-jnaar="${w}" title="Open de week">W${w}</button> <span class="klein">${ddmm(x.maandag)}</span></td>
+      <td><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${FASE_KLEUR[faseNorm(x.fase_analyse || x.fase)] || "transparent"}"></span>
+        <select data-jw="${w}" data-veld="fase" ${dis} style="width:auto;max-width:150px"><option value=""></option>${d.fasen.concat(d.fasen.indexOf(x.fase) < 0 && x.fase ? [x.fase] : []).map(f => `<option ${f === x.fase ? "selected" : ""}>${esc(f)}</option>`).join("")}</select></td>
+      <td><select data-jw="${w}" data-veld="belastingdoel" ${dis} style="width:auto">${["","-","+","++","+++"].map(v => `<option value="${v}" ${v === (x.belastingdoel || "").replace("−", "-") ? "selected" : ""}>${v.replace("-", "−") || "–"}</option>`).join("")}</select></td>
+      <td class="opt"><input type="text" data-jw="${w}" data-veld="focus" maxlength="120" value="${esc(x.focus)}" ${dis}></td>
+      <td class="opt"><input type="text" data-jw="${w}" data-veld="wedstrijd" maxlength="120" value="${esc(x.wedstrijd)}" ${dis}></td>
+      <td>${jKal(x.maandag).map(k => `<span class="kchip ${esc(k.soort)}" data-kal="${esc(k.id)}" title="${esc(KSOORT_L[k.soort] || k.soort)}${k.groepen ? " · " + esc(k.groepen) : ""} · ${ddmm(k.van)}${k.tot !== k.van ? "–" + ddmm(k.tot) : ""}${k.opmerking ? " · " + esc(k.opmerking) : ""}">${k.soort === "afdrukopmerking" ? "🖨 " : ""}${esc(k.soort === "afdrukopmerking" ? (k.type || "opmerking") : k.naam)}${k.soort !== "afdrukopmerking" && k.van >= x.maandag && k.van <= zo && k.van === k.tot ? " " + DAGK[dnIso(k.van) - dnIso(x.maandag)] : ""}</span>`).join("")}</td>
+      <td class="n">${cel("A")}</td><td class="n">${cel("B")}</td><td class="n opt">${tc && tc.n ? tc.n + " s." : "–"}</td><td class="opt">${st}</td></tr>`;
+  }
+  h += `</tbody></table></div><div class="klein">Weken uit Schema ${d.jaar} en weken ouder dan 7 dagen zijn enkel te lezen. Fase, belastingdoel en wedstrijd sturen de doel-TSS, de sjablonen en de evaluatie (Z3) in de weekweergave.</div></div>`;
+  h += jAnalyse();
+  h += jKalBlok();
+  $("#hoofd").innerHTML = h;
+}
+function jGrafiek(){
+  const d = S.jd, N = d.aantal_weken, W = 1000, H = 190, L = 34, R = 6, T = 8, B = 30, bw = (W - L - R) / N;
+  const vals = []; for (let w = 1; w <= N; w++){ const x = jWeek(w); ["A","B"].forEach(g => { const t = jTot(w, g); vals.push(t ? t.tss : 0, doelTss(x, g, d.kalender) || 0); }); }
+  const max = Math.max(100, ...vals) * 1.08, y = v => T + (H - T - B) * (1 - v / max);
+  let s = `<svg class="jgraf" viewBox="0 0 ${W} ${H}" role="img" aria-label="Geplande TSS en doel-TSS per week, groep A en B">`;
+  for (let v = 0; v <= max; v += 100){ s += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L - 4}" y="${y(v) + 3}" font-size="9" text-anchor="end" fill="var(--muted)">${v}</text>`; }
+  for (let w = 1; w <= N; w++){
+    const x = jWeek(w), x0 = L + (w - 1) * bw, f = faseNorm(x.fase_analyse || x.fase);
+    s += `<rect x="${x0}" y="${H - B + 4}" width="${bw}" height="7" fill="${FASE_KLEUR[f] || "var(--grijs-bg)"}"><title>W${w}: ${esc(f || "geen fase")} ${esc((x.belastingdoel || "").replace("-", "−"))}</title></rect>`;
+    if (w === 1 || w % 4 === 1) s += `<text x="${x0 + bw / 2}" y="${H - 6}" font-size="9" text-anchor="middle" fill="var(--muted)">W${w}</text>`;
+    ["A","B"].forEach((g, i) => {
+      const t = jTot(w, g), dt = doelTss(x, g, d.kalender), bx = x0 + 1 + i * (bw - 2) / 2, bwi = (bw - 2) / 2 - 0.5, kl = g === "A" ? "var(--or)" : "var(--info)";
+      if (t && t.tss > 0) s += `<rect x="${bx}" y="${y(t.tss)}" width="${bwi}" height="${y(0) - y(t.tss)}" fill="${kl}" opacity="${t.conc ? 0.55 : 0.9}"><title>W${w} groep ${g}: gepland ${fmt(t.tss, 0)} TSS${t.conc ? " (" + t.conc + " concepten)" : ""}${dt ? " · doel " + fmt(dt, 0) : ""}</title></rect>`;
+      if (dt) s += `<line x1="${bx - 0.5}" x2="${bx + bwi + 0.5}" y1="${y(dt)}" y2="${y(dt)}" stroke="var(--fg)" stroke-width="2"><title>W${w} doel ${g}: ${fmt(dt, 0)} TSS</title></line>`;
+    });
+  }
+  s += `</svg><div class="klein"><span style="color:var(--or)">■</span> groep A · <span style="color:var(--info)">■</span> groep B · lichter = met concepten · ▬ doel-TSS · onderaan de fase: ${Object.keys(FASE_KLEUR).map(f => `<span style="color:${FASE_KLEUR[f]}">■</span> ${esc(f)}`).join(" ")}</div>`;
+  return s;
+}
+function jAnalyse(){
+  const d = S.jd, N = d.aantal_weken, per = {}, sig = [];
+  for (let w = 1; w <= N; w++){ const x = jWeek(w), f = faseNorm(x.fase_analyse || x.fase); if (f) (per[f] = per[f] || []).push(w); }
+  const vorFase = {}; (d.vorig_weken || []).forEach(v => { const f = faseNorm(v.fase_analyse || v.fase); if (f) (vorFase[f] = vorFase[f] || []).push(v.week); });
+  const kl = (afw, grens) => Math.abs(afw) <= grens ? "" : ` style="color:var(--${Math.abs(afw) <= 2 * grens ? "warn" : "bad"});font-weight:bold"`;
+  let h = `<div class="jblok"><h3>Analyse per fase t.o.v. de richtwaarden</h3><div class="jscroll"><table class="jtab"><thead><tr><th>Fase</th><th>Gr.</th><th class="n">Weken (gepland)</th><th class="n">TSS/week</th><th class="n">Doel</th><th class="n">${d.jaar - 1}</th><th class="n">T1 %</th><th class="n">T2 %</th><th class="n">T3 %</th><th class="n">T4+ %</th><th class="n">T3+ / max</th><th class="n">Zwaar/wk</th><th>Doelen die ontbreken</th></tr></thead><tbody>`;
+  d.fasen.concat(Object.keys(per).filter(f => d.fasen.indexOf(f) < 0)).filter(f => per[f]).forEach(f => {
+    const r = jpRw(f) || {};
+    ["A","B"].forEach(g => {
+      const ws = per[f], gp = ws.filter(w => { const t = jTot(w, g); return t && t.n; }), Z = [0,0,0,0,0,0]; let tss = 0, doel = 0, zw = 0; const doelen = {};
+      gp.forEach(w => { const t = jTot(w, g); tss += t.tss; zw += t.zwaar; t.z.forEach((v, i) => Z[i] += v); Object.keys(t.doelen || {}).forEach(k => doelen[k] = 1); doel += doelTss(jWeek(w), g, d.kalender) || 0; });
+      const act = Z[1] + Z[2] + Z[3] + Z[4] + Z[5], pc = i => act ? Z[i] / act * 100 : null, t4 = act ? (Z[4] + Z[5]) / act * 100 : null, t3p = act ? (Z[3] + Z[4] + Z[5]) / act * 100 : null;
+      const vw = (vorFase[f] || []).map(w => jTot(w, g, true)).filter(t => t && t.n), vgem = vw.length ? vw.reduce((a, t) => a + t.tss, 0) / vw.length : null;
+      const gem = gp.length ? tss / gp.length : null, dgem = gp.length ? doel / gp.length : null, zwk = gp.length ? zw / gp.length : null;
+      const ontbr = g === "A" && gp.length ? (r.doelen || []).filter(x => !doelen[x]) : [];
+      const zc = (v, ref) => v == null ? "–" : `<span${ref != null ? kl(v - ref, 5) : ""} title="richtwaarde ${ref != null ? ref : "–"} %">${fmt(v, 0)}</span>`;
+      h += `<tr><td>${g === "A" ? `<span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${FASE_KLEUR[f] || "transparent"}"></span> <b>${esc(f)}</b>` : ""}</td><td>${g}</td>
+        <td class="n">${ws.length} (${gp.length})</td><td class="n">${gem != null ? `<span${dgem ? kl((gem / dgem - 1) * 100, 10) : ""}>${fmt(gem, 0)}</span>` : "–"}</td><td class="n">${dgem ? fmt(dgem, 0) : "–"}</td><td class="n">${vgem != null ? fmt(vgem, 0) : "–"}</td>
+        <td class="n">${zc(pc(1), r.T1)}</td><td class="n">${zc(pc(2), r.T2)}</td><td class="n">${zc(pc(3), r.T3)}</td><td class="n">${zc(t4, r.T4_TMAX)}</td>
+        <td class="n">${t3p == null ? "–" : `<span${r.max_T3plus != null && t3p > r.max_T3plus ? ' style="color:var(--bad);font-weight:bold"' : ""}>${fmt(t3p, 0)}</span> / ${r.max_T3plus != null ? r.max_T3plus : "–"}`}</td>
+        <td class="n">${zwk == null ? "–" : `<span${r.zware_min != null && (zwk < r.zware_min - 0.5 || zwk > r.zware_max + 0.5) ? ' style="color:var(--warn);font-weight:bold"' : ""}>${fmt(zwk, 1)}</span> (${r.zware_min != null ? r.zware_min + (r.zware_max !== r.zware_min ? "–" + r.zware_max : "") : "–"})`}</td>
+        <td>${ontbr.map(x => doelChip(x)).join(" ")}</td></tr>`;
+    });
+  });
+  h += `</tbody></table></div><div class="klein">Zone-% = aandeel van de zonetijd zonder T0, gemiddeld over de weken met planning. Kleur: afwijking > 5 procentpunt (zones) of > 10 % (TSS) t.o.v. de richtwaarde. Zwaar = ≥ 5' T3, ≥ 1,5' T4+TMAX, test of wedstrijd. ${d.jaar - 1} = gemiddelde geplande TSS van die fase vorig jaar.</div>`;
+  /* signalen over het jaar: ACWR (B3), stijging (B1), verhouding B/A (B6) */
+  const b1 = Number(evRegel("B1").waarde) || 15, b3 = Number(evRegel("B3").waarde) || 1.5;
+  ["A","B"].forEach(g => { for (let w = 1; w <= N; w++){
+    const t = jTot(w, g); if (!t || !t.tss) continue;
+    const v = [1,2,3].map(k => jTot(w - k, g)), tp = v[0] ? v[0].tss : 0;
+    if (tp > 0 && (t.tss / tp - 1) * 100 >= b1 * 2) sig.push(`W${w} groep ${g}: +${fmt((t.tss / tp - 1) * 100, 0)} % t.o.v. W${w - 1} (B1).`);
+    if (v.every(x => x && x.tss > 0)){ const a = t.tss / ((t.tss + v.reduce((s, x) => s + x.tss, 0)) / 4); if (a > b3) sig.push(`W${w} groep ${g}: geplande ACWR ${fmt(a, 2)} (B3, grens ${fmt(b3, 1)}).`); }
+  } });
+  for (let w = 1; w <= N; w++){ const a = jTot(w, "A"), b = jTot(w, "B"); if (a && b && a.tss > 0 && b.tss > 0){ const r = b.tss / a.tss * 100; if (r < 55 || r > 85) sig.push(`W${w}: TSS B / A = ${fmt(r, 0)} % (B6: 55–85 %).`); } }
+  h += `<h3 style="margin-top:10px">Signalen over het jaar (${sig.length})</h3>${sig.length ? "<ul>" + sig.map(x => `<li>${esc(x)}</li>`).join("") + "</ul>" : '<div class="klein">Geen sprongen van ≥ ' + (b1 * 2) + ' %, geen ACWR boven ' + fmt(b3, 1) + ', verhouding B/A binnen 55–85 %.</div>'}</div>`;
+  return h;
+}
+function jKalBlok(){
+  const d = S.jd, f = S.kfilter, l = (d.kalender || []).filter(k => !f || k.soort === f);
+  return `<div class="jblok"><h3>Kalender ${d.jaar} (${l.length})</h3><div class="bar"><select id="j-kf" aria-label="Soort"><option value="">alle soorten</option>${d.soorten.map(x => `<option ${x === f ? "selected" : ""}>${x}</option>`).join("")}</select><button class="btn rand klein" id="j-kal2">+ Kalenderitem</button></div>
+    <div class="jscroll"><table class="jtab"><thead><tr><th>Datum</th><th>Soort</th><th>Naam / tekst</th><th>Groepen</th><th class="opt">Opmerking</th><th class="opt">Bron</th><th></th></tr></thead><tbody>
+    ${l.map(k => `<tr><td>${ddmm(k.van)}${k.tot !== k.van ? "–" + ddmm(k.tot) + "/" + k.tot.slice(2, 4) : ""}</td><td>${esc(k.soort)}${k.prio ? " " + esc(k.prio) : ""}</td><td>${esc(k.naam)}${k.plaats ? " (" + esc(k.plaats) + ")" : ""}</td><td>${esc(k.groepen || "alle")}</td><td class="opt">${esc(k.opmerking)}</td><td class="opt klein">${esc(k.bron)}</td>
+      <td>${/^Schema \d{4}$/.test(k.bron) ? '<span class="klein">in Schema</span>' : `<button class="btn rand klein" data-kal="${esc(k.id)}">Bewerk</button>`}</td></tr>`).join("")}</tbody></table></div></div>`;
+}
+function openKal(k0){
+  const k = k0 || { id: "", van: "", tot: "", soort: "clubactiviteit", type: "", prio: "", naam: "", plaats: "", groepen: "A,B,C", opmerking: "", bron: "" };
+  const lees = /^Schema \d{4}$/.test(k.bron), gr = String(k.groepen || "");
+  const o = dlg(`<h2>${k.id ? "Kalenderitem" : "Nieuw kalenderitem"}</h2>
+    ${lees ? '<div class="melding">Dit item komt uit het blad Wedstrijden van ' + esc(k.bron) + ': pas het daar aan.</div>' : ""}
+    <div class="r3"><div><label>Soort</label><select id="k-s">${S.jd.soorten.map(x => `<option ${x === k.soort ? "selected" : ""}>${x}</option>`).join("")}</select></div>
+      <div><label>Van</label><input type="date" id="k-van" value="${esc(k.van)}"></div><div><label>Tot (leeg = 1 dag)</label><input type="date" id="k-tot" value="${esc(k.tot !== k.van ? k.tot : "")}"></div></div>
+    <label id="k-nl">Naam</label><input type="text" id="k-naam" maxlength="200" value="${esc(k.naam)}">
+    <div class="r3"><div><label>Type</label><input type="text" id="k-type" maxlength="60" value="${esc(k.type)}" placeholder="bv. 2 km, Sprint, veiligheid"></div>
+      <div><label>Prioriteit (wedstrijd)</label><select id="k-p">${["","A","B","C"].map(x => `<option ${x === k.prio ? "selected" : ""}>${x}</option>`).join("")}</select></div>
+      <div><label>Plaats</label><input type="text" id="k-pl" maxlength="80" value="${esc(k.plaats)}"></div></div>
+    <label>Groepen (geen enkele = alle groepen)</label><div class="bar">${["A","B","C"].map(g => `<label class="chk"><input type="checkbox" data-kg="${g}" ${gr.indexOf(g) >= 0 ? "checked" : ""}> ${g}</label>`).join("")}</div>
+    <label>Opmerking</label><input type="text" id="k-o" maxlength="300" value="${esc(k.opmerking)}">
+    <div class="klein" id="k-uitleg"></div>
+    <div class="fout" id="k-fout"></div>
+    <div class="knoppen">${k.id && !lees ? '<button class="btn gevaar" id="k-del">Verwijderen</button><span style="flex:1"></span>' : ""}<button class="btn rand" data-sluit>Annuleren</button>${lees ? "" : '<button class="btn" id="k-ok">Opslaan</button>'}</div>`, true);
+  const q = id => o.querySelector(id);
+  const uitleg = () => { const s = q("#k-s").value; q("#k-nl").textContent = s === "afdrukopmerking" ? "Tekst op het afgedrukte blad" : "Naam";
+    q("#k-uitleg").textContent = { afdrukopmerking: "Komt bovenaan elk afgedrukt weekblad van de gekozen groepen, voor alle weken in de periode (bv. wintertijd).", examens: "Weken met examens: doel-TSS × examenfactor.", test: "Test: regel B4 waarschuwt voor een zware training de dag ervoor.", wedstrijd: "Wedstrijd: sjabloon wedstrijdweek (za VM) en regel B4." }[s] || ""; };
+  q("#k-s").onchange = uitleg; uitleg();
+  const item = () => ({ id: k.id, soort: q("#k-s").value, van: q("#k-van").value, tot: q("#k-tot").value || q("#k-van").value, naam: q("#k-naam").value, type: q("#k-type").value, prio: q("#k-p").value,
+    plaats: q("#k-pl").value, groepen: ["A","B","C"].filter(g => q(`[data-kg="${g}"]`).checked).join(","), opmerking: q("#k-o").value });
+  const klaar = async (r, weg) => { const l = S.jd.kalender.filter(x => x.id !== k.id); if (!weg) l.push(r); l.sort((a, b) => a.van < b.van ? -1 : a.van > b.van ? 1 : 0); S.jd.kalender = l; o.remove(); toonJaar(); toast(weg ? "Kalenderitem verwijderd." : "Kalenderitem bewaard."); };
+  if (q("#k-ok")) q("#k-ok").onclick = async () => { q("#k-ok").disabled = true; try { await klaar(await gs("plannerBewaarKalender", item(), k.id ? k : null)); } catch (e) { q("#k-fout").textContent = e.message; q("#k-ok").disabled = false; } };
+  if (q("#k-del")) q("#k-del").onclick = async () => { if (!confirmInline(q("#k-del"), "Klik nogmaals om te verwijderen")) return; try { await gs("plannerVerwijderKalender", k.id, k); await klaar(null, true); } catch (e) { q("#k-fout").textContent = e.message; } };
+}
+async function jBewaar(){
+  const d = S.jd, lijst = Object.keys(S.jdirty).map(Number).sort((a, b) => a - b).map(w => { const x = jWeek(w);
+    return { jaar: d.jaar, week: w, fase: x.fase, belastingdoel: x.belastingdoel, focus: x.focus, wedstrijd: x.wedstrijd, gewijzigd_op: x.bestaat ? x.gewijzigd_op : "" }; });
+  if (!lijst.length) return;
+  $("#j-bewaar").disabled = true;
+  try {
+    const r = await gs("plannerBewaarWeken", lijst);
+    r.forEach(n => { const i = d.weken.findIndex(x => x.week === n.week); if (i >= 0) d.weken[i] = n; else d.weken.push(n); });
+    d.weken.sort((a, b) => a.week - b.week); S.jdirty = {}; toonJaar(); toast(r.length + " week" + (r.length > 1 ? "en" : "") + " bewaard.");
+  } catch (e) { melding(esc(e.message), "fout"); $("#j-bewaar").disabled = false; }
+}
+function jWijzig(el){
+  const w = Number(el.dataset.jw), v = el.dataset.veld, x = jWeek(w);
+  S.jdirty[w] = Object.assign({}, S.jdirty[w] || {}, { [v]: el.value });
+  if (v === "fase") S.jdirty[w].fase_analyse = S.jd.fasen.indexOf(el.value) >= 0 ? el.value : x.fase_analyse;
+  if (el.tagName === "SELECT") toonJaar(); else { const b = $("#j-bewaar"), n = Object.keys(S.jdirty).length; b.disabled = false; b.textContent = "Bewaren (" + n + " week" + (n > 1 ? "en" : "") + ")"; el.closest("tr").classList.add("vuil"); }
+}
+
+/* ---------------- gebeurtenissen ---------------- */
+document.addEventListener("click", async e => {
+  const t = e.target.closest("button,[data-id],[data-ow]") || e.target;
+  if (t.id === "naarDashboard"){ location.href = "dashboard.html"; return; }   /* KKYKC-app */
+  if (t.id === "thema"){ const nu = document.documentElement.dataset.theme === "dark" ? "light" : "dark"; document.documentElement.dataset.theme = nu; try { localStorage.setItem("kkykc-pl-thema", nu); } catch (x) {} return; }
+  if (t.id === "vorige" && S.week > 1) return laad(S.jaar, S.week - 1);
+  if (t.id === "vorige") return laad(S.jaar - 1, 53);
+  if (t.id === "volgende" && S.week < S.d.aantal_weken) return laad(S.jaar, S.week + 1);
+  if (t.id === "volgende") return laad(S.jaar + 1, 1);
+  if (t.id === "nu"){ if (S.view === "jaar" && Object.keys(S.jdirty).length && !confirmInline(t, "Niet bewaard – nogmaals?")) return; return laad(null, null); }
+  if (t.id === "jaarknop"){ if (S.view === "jaar"){ if (Object.keys(S.jdirty).length && !confirmInline(t, "Niet bewaard – nogmaals?")) return; return laad(S.jaar, S.week || 1); } return laadJaar(S.jaar); }
+  if (t.dataset && t.dataset.jnaar){ if (Object.keys(S.jdirty).length && !confirmInline(t, "Niet bewaard?")) return; return laad(S.jd.jaar, Number(t.dataset.jnaar)); }
+  if (t.id === "j-bewaar") return jBewaar();
+  if (t.id === "j-kal" || t.id === "j-kal2") return openKal(null);
+  if (t.dataset && t.dataset.kal != null && S.view === "jaar"){ const k = S.jd.kalender.find(x => x.id === t.dataset.kal); if (k) openKal(k); return; }
+  if (t.id === "bibknop"){ S.bibOpen = !S.bibOpen; S.pick = null; return toonBib(); }
+  if (t.dataset && t.dataset.bibsluit != null){ S.bibOpen = false; if (S.pick){ S.pick = null; const ov = document.querySelector(".ovl[hidden]"); if (ov) ov.hidden = false; } return toonBib(); }
+  if (t.dataset && t.dataset.pickstop != null){ S.pick = null; const ov = document.querySelector(".ovl[hidden]"); if (ov) ov.hidden = false; return toonBib(); }
+  if (t.dataset && t.dataset.g){ S.groepen[t.dataset.g] = !S.groepen[t.dataset.g]; try { localStorage.setItem("kkykc-pl-groepen", JSON.stringify(S.groepen)); } catch (x) {} vulKeuzes(); return toonHoofd(); }
+  if (t.dataset && t.dataset.s7){ return; }   /* KKYKC-app: S7 enkel in de oude planner */
+  if (t.dataset && t.dataset.nieuw){ const p = t.dataset.nieuw.split("|"); return openEditor(nieuweSessie(p[0], p[1], p[2])); }
+  if (t.dataset && t.dataset.id){ const s = S.d.sessies.find(x => x.id === t.dataset.id); if (s) openEditor(s); return; }
+  if (t.dataset && t.dataset.ow){ const g = t.dataset.ow, s = S.d.sessies.find(x => x.groep === g && x.categorie === "opwarming");
+    if (s) return openEditor(s); if (!bewerkbaar()) return; return openEditor({ jaar: S.jaar, week: S.week, groep: g, datum: datums()[0], dagdeel: "", categorie: "opwarming", status: weekRij().gepubliceerd ? "gepubliceerd" : "concept", sets_json: JSON.stringify({ invaren: {min:0,sec:0}, uitvaren: {min:0,sec:0}, sets: [leegSet()] }) }); }
+  if (t.dataset && t.dataset.bibin){ const b = S.bib.find(x => x.id === t.dataset.bibin); if (!b) return;
+    if (S.pick){ const f = S.pick; S.pick = null; S.bibOpen = false; toonBib(); return f(b); }
+    if (!bewerkbaar()) return melding("Neem de week eerst over om sessies toe te voegen.", "");
+    const d = datums().filter(x => !bevroren(x)); if (!d.length) return melding("Alle dagen van deze week zijn bevroren.");
+    const g = S.groepen.A ? "A" : (S.groepen.B ? "B" : "C"); return openEditor(bibNaarSessie(b, g, d[0], "NM")); }
+  if (t.dataset && t.dataset.bibbew){ const b = S.bib.find(x => x.id === t.dataset.bibbew); if (b) openBibItem(b); return; }
+  if (t.id === "overnemen"){ melding("Een week overnemen uit het weekblad (2026) kan enkel in de oude planner (webapp-link).", ""); return; }   /* KKYKC-app */
+  if (t.id === "publiceer"){ t.disabled = true; try { const w = weekRij(); const r = await gs("plannerPubliceer", S.jaar, S.week, w.gewijzigd_op); naWijziging(r.sessies, r.week); toast("Gepubliceerd: dashboard, portaal en Mijn trainingen tonen deze week (na hun volgende inlezing)."); } catch (x) { melding(esc(x.message), "fout"); t.disabled = false; } return; }
+  if (t.id === "weekgeg" || t.id === "weekmaak") return openWeekGeg();
+  if (t.id === "kopweek") return openKopieWeek();
+  if (t.id === "voorstel1") return openVoorstel(1);
+  if (t.id === "voorstel4") return openVoorstel(4);
+  if (t.id === "afdruk") return openAfdruk();
+});
+document.addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target.dataset && e.target.dataset.id){ e.preventDefault(); const s = S.d.sessies.find(x => x.id === e.target.dataset.id); if (s) openEditor(s); } });
+$("#jaar").addEventListener("change", e => S.view === "jaar" ? laadJaar(Number(e.target.value)) : laad(Number(e.target.value), 1));
+document.addEventListener("change", e => { const el = e.target; if (el.dataset && el.dataset.jw && S.view === "jaar") return jWijzig(el); if (el.id === "j-kf"){ S.kfilter = el.value; toonJaar(); } });
+$("#weeksel").addEventListener("change", e => laad(S.jaar, Number(e.target.value)));
+/* slepen uit de bibliotheek naar een dagdeel */
+document.addEventListener("dragstart", e => { const b = e.target.closest && e.target.closest("[data-bib]"); if (b){ e.dataTransfer.setData("text/plain", "bib:" + b.dataset.bib); e.dataTransfer.effectAllowed = "copy"; } });
+document.addEventListener("dragover", e => { const sl = e.target.closest && e.target.closest("[data-slot]"); if (sl && bewerkbaar()){ e.preventDefault(); sl.classList.add("drop"); } });
+document.addEventListener("dragleave", e => { const sl = e.target.closest && e.target.closest("[data-slot]"); if (sl) sl.classList.remove("drop"); });
+document.addEventListener("drop", e => {
+  const sl = e.target.closest && e.target.closest("[data-slot]"); if (!sl) return; e.preventDefault(); sl.classList.remove("drop");
+  const v = e.dataTransfer.getData("text/plain"); if (!/^bib:/.test(v)) return;
+  const b = S.bib.find(x => x.id === v.slice(4)), p = sl.dataset.slot.split("|"); if (!b || bevroren(p[1])) return;
+  openEditor(bibNaarSessie(b, p[0], p[1], p[2]));
+});
+async function plannerStart() {   /* KKYKC-app: pas na het aanmelden (planner_app.js) */
+  const st = PAGINA_START;
+  if (st.groep && S.groepen && !S.groepen[st.groep]) S.groepen[st.groep] = true;
+  await laad(st.jaar, st.week, true);
+  if (st.sessie && S.d && S.d.sessies){ const s = S.d.sessies.find(x => x.id === st.sessie); if (s) openEditor(s); else melding("Deze sessie staat niet (meer) in week " + S.week + ".", ""); }
+}
+/* ---------- KKYKC-app (B3, 19/11/2026 – ingevoegd door bouw_app.py, bron: app/bron_b3/app_pagina.js) ----------
+   Dashboard en planner (enkel hoofdtrainers): aanmelden met Google (api.js) en de API i.p.v. de Apps Script-aanroep.
+   Niets van de gegevens wordt op het toestel bewaard (geen browsercache: PAGINA_WIE is leeg). Enkel thema/jaar/periode blijven in de browser.
+   Afmelden = aanmeldbewijs weg + naar de startpagina: de gegevens verdwijnen met de pagina uit het geheugen. */
+var APP_PAGINA = { gestart: false };
+(function(){
+  var st = document.createElement("style");
+  st.textContent = "#appKaart{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px}" +
+    " #appKaart>div{max-width:440px;width:100%;background:var(--panel,#fff);color:var(--fg,#222);border-radius:12px;padding:20px;font-family:Arial,Helvetica,sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.3)}" +
+    " #appKaart h2{margin-top:0} #appKaart .mu{color:var(--muted,#666);font-size:14px} #appKaart .fout{color:#c62828}";
+  document.head.appendChild(st);
+})();
+function appKaartBasis(){
+  var k = document.getElementById("appKaart");
+  if (!k){ k = document.createElement("div"); k.id = "appKaart"; k.setAttribute("role", "dialog"); k.setAttribute("aria-modal", "true"); document.body.appendChild(k); }
+  return k;
+}
+var APP_LINKS = "<p class='mu'><a href='index.html' style='color:inherit'>Start</a> · <a href='privacy.html' style='color:inherit'>Privacy</a></p>";
+/* aanmelden (eerste keer of na verlopen aanmelding: de pagina blijft staan, daarna opnieuw proberen) */
+function appKaart(tekst){
+  var k = appKaartBasis();
+  k.innerHTML = "<div><h2>Aanmelden</h2><p>Meld je aan met je Google-account (hoofdtrainer).</p>" +
+    "<p class='mu'>De app ziet enkel je naam en e-mailadres, geen bestanden.</p><div id='appGknop' style='min-height:44px;margin:12px 0'></div>" +
+    "<p class='fout' role='alert'></p>" + APP_LINKS + "</div>";
+  k.querySelector(".fout").textContent = tekst || "";
+  KKYKC.knop(document.getElementById("appGknop"));
+}
+function appGeenToegang(tekst){
+  var k = appKaartBasis();
+  k.innerHTML = "<div><h2>Geen toegang</h2><p class='fout' role='alert'></p><p class='mu'>Deze pagina is enkel voor hoofdtrainers.</p>" + APP_LINKS + "</div>";
+  k.querySelector(".fout").textContent = tekst || "Geen toegang tot deze pagina.";
+}
+/* foutcodes van api.js: token/verlopen/aud → opnieuw aanmelden · test/rol → geen toegang */
+function appFoutAanmelden(code, tekst){
+  if (code === "token" || code === "verlopen" || code === "aud"){ appKaart(tekst || "Meld je opnieuw aan."); return true; }
+  if (code === "test" || code === "rol"){ appGeenToegang(tekst); return true; }
+  return false;
+}
+function appAfmelden(){ KKYKC.afmelden(); location.replace("index.html"); }
+function appAfknop(naastId, klasse){
+  var n = document.getElementById(naastId); if (!n) return;
+  var b = document.createElement("button"); b.type = "button"; b.id = "appAf"; b.className = klasse; b.textContent = "Afmelden"; b.onclick = appAfmelden;
+  n.parentNode.insertBefore(b, n.nextSibling);
+}
+function appStart(f){
+  if (!KKYKC.ingesteld()){ appGeenToegang("De app is nog niet ingesteld."); return; }
+  KKYKC.opAanmelden(function(){ var k = document.getElementById("appKaart"); if (k) k.remove(); if (!APP_PAGINA.gestart){ APP_PAGINA.gestart = true; f(); } });
+  if (KKYKC.aangemeld()){ APP_PAGINA.gestart = true; f(); } else appKaart("");
+}
+/* ---------- planner (B3, bron: app/bron_b3/planner_app.js) ----------
+   Schrijft rechtstreeks in Planning KKYKC (dezelfde Sheet als de oude planner). Week overnemen (2026-weekbladen) en S7-meldingen: enkel in de oude planner. */
+appAfknop("thema", "tknop");
+appStart(plannerStart);
+</script>
+</body></html>

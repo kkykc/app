@@ -1,4 +1,4 @@
-/* api.js – KKYKC-app (B0, 18/11/2026). Aanmelden met Google (enkel naam/e-mail, geen Drive) + aanroepen naar de API.
+/* api.js – KKYKC-app (B0, 18/11/2026; B4 19/11: service worker + melding nieuwe versie). Aanmelden met Google (enkel naam/e-mail, geen Drive) + aanroepen naar de API.
    Geen gegevens op het toestel behalve het aanmeldbewijs in sessionStorage (weg bij sluiten van het tabblad of bij afmelden). */
 (function () {
   'use strict';
@@ -43,4 +43,27 @@
     /* Voor de gebouwde pagina's (B1+): zelfde vorm als gs() in de huidige webapps */
     gs: function (fn) { var a = Array.prototype.slice.call(arguments, 1); return KKYKC.api(fn, a).then(function (r) { return r.data; }); }
   };
+
+  /* B4: service worker (sw.js) bewaart enkel de app-bestanden, nooit gegevens. Nieuwe versie online → melding met knop Vernieuwen.
+     Herladen enkel in het tabblad waar op Vernieuwen geklikt werd (geen verlies van werk in een ander tabblad, bv. de planner). */
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    var gevraagd = false;
+    var meld = function (w) {
+      if (!w || !navigator.serviceWorker.controller || document.getElementById('kkykcNieuw')) return;
+      var d = document.createElement('div'); d.id = 'kkykcNieuw'; d.setAttribute('role', 'status');
+      d.style.cssText = 'position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:10000;background:#1f2328;color:#fff;padding:10px 14px;border-radius:10px;font:14px Arial,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.3);max-width:92vw';
+      d.textContent = 'Nieuwe versie van de app beschikbaar. ';
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = 'Vernieuwen';
+      b.style.cssText = 'margin-left:8px;padding:6px 12px;border-radius:14px;border:0;background:#e8630a;color:#fff;cursor:pointer';
+      b.onclick = function () { gevraagd = true; b.disabled = true; w.postMessage('nu'); };
+      d.appendChild(b); (document.body || document.documentElement).appendChild(d);
+    };
+    navigator.serviceWorker.addEventListener('controllerchange', function () { if (gevraagd) location.reload(); });
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').then(function (reg) {
+        if (reg.waiting) meld(reg.waiting);
+        reg.addEventListener('updatefound', function () { var w = reg.installing; if (w) w.addEventListener('statechange', function () { if (w.state === 'installed') meld(w); }); });
+      }).catch(function () {});
+    });
+  }
 })();
