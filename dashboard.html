@@ -2947,8 +2947,31 @@ toegangTeken = function(o, t){
   p.textContent = "In de app kan je Toegangsbeheer enkel bekijken. Goedkeuren, afwijzen en hoofdtrainers toevoegen doe je (tot de overstap naar de app) in het oude dashboard.";
   inh.insertBefore(p, inh.firstChild);
 };
+/* B3c: na de overzet ook trainers rechtstreeks toevoegen (e-mailadres, zonder aanvraag) – knop naast "Als hoofdtrainer toevoegen" */
+var appToegangTekenB3 = toegangTeken;
+toegangTeken = function(o, t){
+  appToegangTekenB3(o, t);
+  var h = o.querySelector("#tgHoofd"); if (!h || (t && t.alleenLezen) || o.querySelector("#tgTrainer")) return;
+  var b = document.createElement("button"); b.type = "button"; b.id = "tgTrainer"; b.className = h.className; b.textContent = "Als trainer toevoegen";
+  b.onclick = function(ev){
+    ev.stopPropagation();
+    var m = String(o.querySelector("#tgMail").value || "").trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(m)) return melding("Vul een geldig e-mailadres in.", "fout");
+    b.disabled = true;
+    gs("voegTrainerToe", m).then(function(r){ toegangTeken(o, r); melding(esc(m) + " heeft nu toegang tot het trainersportaal. Geef in Drive kijkrecht op het schema als dat nodig is."); },
+      function(e){ b.disabled = false; melding("Toevoegen mislukt (" + esc((e && e.message) || "fout") + ").", "fout"); });
+  };
+  h.parentNode.insertBefore(b, h);
+};
 appAfknop("btnThema", "btn-rand");
-appStart(function(){ start(); gs("getToegang").then(toegangTeller).catch(function(){}); appOpslag(); });
+/* B3c: sneller openen – alle leesaanroepen van de start in twee gebundelde aanroepen (planning-deel en logboek-deel tegelijk) i.p.v. drie rondes na elkaar */
+function appVoorladen(){
+  var j = null; try { j = Number(JSON.parse(localStorage.getItem("kkykc-jaar"))) || null; } catch(e){}
+  j = j || new Date().getFullYear();
+  KKYKC.voorladen([["getJaren", []], ["getPlanning", [j, false]], ["getTrainerslog", [j]], ["getControle", [j]], ["getSeizoen", []], ["getToegang", []], ["getOpslag", []]]);
+  KKYKC.voorladen([["getLogboek", [j]], ["getTesten", []]]);
+}
+appStart(function(){ appVoorladen(); start(); gs("getToegang").then(toegangTeller).catch(function(){}); appOpslag(); });
 </script>
 
 </body></html>

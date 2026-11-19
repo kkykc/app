@@ -52,7 +52,7 @@
       <button class="lijn" id="afmelden">Afmelden</button>
     </div>
   </div>
-  <p class="zacht" style="margin-top:18px">Testversie – nog niet verspreiden. · <a href="privacy.html" style="color:inherit">Privacy</a> · versie <span id="versie">62f34e83fe</span></p>
+  <p class="zacht" style="margin-top:18px">Testversie – nog niet verspreiden. · <a href="privacy.html" style="color:inherit">Privacy</a> · versie <span id="versie">eb76dfe7bf</span></p>
 </main>
 <script>
 (function () {
@@ -76,6 +76,10 @@
       $('paginas').hidden = $('naarMijn').hidden && $('naarPortaal').hidden && $('naarDashboard').hidden;
       /* B5: geen rol → eigen aanvraagstatus en toegang aanvragen als trainer (een hoofdtrainer keurt goed in Toegangsbeheer) */
       $('aanvraag').hidden = d.rollen.length > 0; if (!d.rollen.length) aanvraagToon();
+      /* B3c: na het aanmelden meteen naar de startpagina van je rol (Mijn trainingen → dashboard → trainersportaal). Via 'Account' (?blijf=1) blijf je hier. */
+      KKYKC.zetRollen(d.rollen);
+      var start = KKYKC.startpagina(d.rollen); if (start && !/[?&]blijf=1/.test(location.search)) { location.replace(start); return; }
+      KKYKC.balk();
       $('tijd').textContent = 'Aanroep: ' + (r.ms / 1000).toFixed(1).replace('.', ',') + ' s (server ' + ((r.serverMs || 0) / 1000).toFixed(1).replace('.', ',') + ' s)';
     }, function (e) {
       if (e.code === 'token' || e.code === 'verlopen' || e.code === 'aud') { toon(false); $('knop').textContent = ''; KKYKC.knop($('knop')); tekst($('melding'), e.message, true); }

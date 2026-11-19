@@ -1,9 +1,9 @@
-/* api.js – KKYKC-app (B0, 18/11/2026; B4 19/11: service worker + melding nieuwe versie). Aanmelden met Google (enkel naam/e-mail, geen Drive) + aanroepen naar de API.
-   Geen gegevens op het toestel behalve het aanmeldbewijs in sessionStorage (weg bij sluiten van het tabblad of bij afmelden). */
+/* api.js – KKYKC-app (B0, 18/11/2026; B4 19/11: service worker + melding nieuwe versie; B3c 19/11: navigatiebalk, rollen, voorladen in één aanroep, tijden in de console). Aanmelden met Google (enkel naam/e-mail, geen Drive) + aanroepen naar de API.
+   Geen gegevens op het toestel behalve het aanmeldbewijs en je rol(len) in sessionStorage (weg bij sluiten van het tabblad of bij afmelden). */
 (function () {
   'use strict';
   var CFG = { clientId: '268969308679-66i1siv7po4t2cr0fni8eghbkf7piu6n.apps.googleusercontent.com', apiUrl: 'https://script.google.com/macros/s/AKfycbwCbEbEokU-xwv29crnbaAPL4foqplCrh7N86nHSSL-GC4uH6W9MxTo1sjv5IQluO2NaQ/exec' };
-  var SLEUTEL = 'kkykc_token', token = null, bijAanmelden = [];
+  var SLEUTEL = 'kkykc_token', ROL = 'kkykc_rollen', token = null, bijAanmelden = [], VOOR = {};
   function exp(t) { try { var p = t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'); return JSON.parse(atob(p + '==='.slice((p.length + 3) % 4))).exp * 1000; } catch (e) { return 0; } }
   function geldig(t) { return !!t && exp(t) > Date.now() + 60000; }
   try { var s = sessionStorage.getItem(SLEUTEL); if (geldig(s)) token = s; else sessionStorage.removeItem(SLEUTEL); } catch (e) {}
@@ -22,7 +22,8 @@
       google.accounts.id.renderButton(el, { theme: 'outline', size: 'large', text: 'signin_with', shape: 'pill', locale: 'nl' });
     },
     afmelden: function () {
-      token = null; try { sessionStorage.removeItem(SLEUTEL); } catch (e) {}
+      token = null; VOOR = {}; try { sessionStorage.removeItem(SLEUTEL); sessionStorage.removeItem(ROL); } catch (e) {}
+      var b = document.getElementById('kkykcBalk'); if (b) b.remove();
       try { google.accounts.id.disableAutoSelect(); } catch (e) {}
     },
     /* api('wieBenIk') → Promise met data; fout: Error met .code (token, verlopen, aud, test, rol, fn, net …) en .ms */
@@ -37,12 +38,63 @@
           var ms = Math.round(performance.now() - t0);
           if (!r.ok) { if (r.code === 'token' || r.code === 'verlopen' || r.code === 'aud') KKYKC.afmelden();
             throw Object.assign(new Error(r.tekst || 'Fout'), { code: r.code, ms: ms }); }
+          try { console.info('[KKYKC] ' + fn + ' ' + ms + ' ms (server ' + r.ms + ' ms)'); } catch (e) {}   /* enkel naam + tijd, geen gegevens */
           return { data: r.data, ms: ms, serverMs: r.ms };
         });
     },
     /* Voor de gebouwde pagina's (B1+): zelfde vorm als gs() in de huidige webapps */
-    gs: function (fn) { var a = Array.prototype.slice.call(arguments, 1); return KKYKC.api(fn, a).then(function (r) { return r.data; }); }
+    gs: function (fn) {
+      var a = Array.prototype.slice.call(arguments, 1), k = fn + JSON.stringify(a), v = VOOR[k];
+      if (v) { delete VOOR[k];   /* B3c: al opgehaald in de gebundelde aanroep */
+        return v.then(function (x) { if (!x) return KKYKC.api(fn, a).then(function (r) { return r.data; });
+          if (x.ok) return x.data; throw Object.assign(new Error(x.tekst || 'Fout'), { code: x.code }); }); }
+      return KKYKC.api(fn, a).then(function (r) { return r.data; });
+    },
+    /* B3c: leesaanroepen vooraf bundelen tot één API-aanroep ('bundel'). De pagina roept daarna gewoon gs() op; die krijgt het antwoord uit de bundel.
+       Mislukt de bundel (bv. oudere server), dan gaat elke aanroep apart zoals vroeger. calls = [[fn, args], …] – args exact zoals de pagina ze doorgeeft. */
+    voorladen: function (calls) {
+      if (!geldig(token)) return;
+      var p = KKYKC.api('bundel', [calls]).then(function (r) { return r.data; }, function () { return null; });
+      calls.forEach(function (c, i) { VOOR[c[0] + JSON.stringify(c[1])] = p.then(function (d) { return d && d[i] ? d[i] : null; }); });
+    },
+    /* B3c: rollen van dit account (1× per tabblad opgevraagd, daarna uit sessionStorage) */
+    rollen: function () {
+      try { var c = JSON.parse(sessionStorage.getItem(ROL) || 'null'); if (c && token && c.t === token.slice(-24)) return Promise.resolve(c.r); } catch (e) {}
+      return KKYKC.api('wieBenIk').then(function (r) { KKYKC.zetRollen(r.data.rollen); return r.data.rollen; });
+    },
+    zetRollen: function (r) { try { if (token) sessionStorage.setItem(ROL, JSON.stringify({ t: token.slice(-24), r: r })); } catch (e) {} },
+    /* B3c: startpagina per rol – Mijn trainingen (Koppeling) → anders hoofdtrainer: dashboard → trainer: trainersportaal */
+    startpagina: function (r) { return r.indexOf('sporter') >= 0 ? 'mijn.html' : r.indexOf('hoofdtrainer') >= 0 ? 'dashboard.html' : r.indexOf('trainer') >= 0 ? 'trainers.html' : ''; },
+    /* B3c: navigatiebalk bovenaan elke pagina, enkel met de pagina's die jouw rollen toelaten (vanaf 2 pagina's) */
+    balk: function () {
+      if (!geldig(token) || document.getElementById('kkykcBalk')) return;
+      KKYKC.rollen().then(function (r) {
+        if (document.getElementById('kkykcBalk') || !document.body) return;
+        var heeft = function (l) { return r.some(function (x) { return l.indexOf(x) >= 0; }); };
+        var L = [['mijn.html', 'Mijn trainingen', ['sporter']], ['trainers.html', 'Trainersportaal', ['trainer', 'hoofdtrainer']], ['dashboard.html', 'Dashboard', ['hoofdtrainer']],
+          ['planner.html', 'Planner', ['hoofdtrainer']]].filter(function (x) { return heeft(x[2]); });
+        if (L.length < 2) return;
+        var hier = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+        var n = document.createElement('nav'); n.id = 'kkykcBalk'; n.setAttribute('aria-label', 'KKYKC-app');
+        n.style.cssText = 'display:flex;gap:6px;align-items:center;overflow-x:auto;padding:6px 10px;background:#1f2328;font:13px Arial,Helvetica,sans-serif;position:relative;z-index:50';
+        L.forEach(function (x) {
+          var a = document.createElement('a'); a.href = x[0]; a.textContent = x[1];
+          var actief = hier === x[0]; if (actief) a.setAttribute('aria-current', 'page');
+          a.style.cssText = 'white-space:nowrap;text-decoration:none;padding:5px 12px;border-radius:14px;color:#fff;' + (actief ? 'background:#c96008;font-weight:bold' : 'background:#30363d');
+          n.appendChild(a);
+        });
+        var s = document.createElement('a'); s.href = 'index.html?blijf=1'; s.textContent = 'Account';
+        s.style.cssText = 'margin-left:auto;white-space:nowrap;color:#c9d1d9;text-decoration:none;padding:5px 8px'; n.appendChild(s);
+        document.body.insertBefore(n, document.body.firstChild);
+      }, function () {});
+    }
   };
+  /* B3c: balk zodra de pagina geladen is (als al aangemeld) en na elke aanmelding */
+  var opIndex = /^(index\.html)?$/i.test(location.pathname.split('/').pop() || '');   /* de startpagina doet het zelf (na wieBenIk) */
+  if (!opIndex) {
+    bijAanmelden.push(function () { KKYKC.balk(); });
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { KKYKC.balk(); }); else KKYKC.balk();
+  }
 
   /* B4: service worker (sw.js) bewaart enkel de app-bestanden, nooit gegevens. Nieuwe versie online → melding met knop Vernieuwen.
      Herladen enkel in het tabblad waar op Vernieuwen geklikt werd (geen verlies van werk in een ander tabblad, bv. de planner). */
