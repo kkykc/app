@@ -28,6 +28,11 @@
   button.lijn { margin-top: 16px; padding: 10px 18px; border-radius: 20px; border: 1px solid var(--kader); background: transparent; color: var(--tekst); font-size: 15px; cursor: pointer; }
   .chip { display: inline-block; padding: 3px 10px; margin: 2px 4px 2px 0; border-radius: 12px; background: var(--oranje); color: #fff; font-size: 13px; }
   #knop { margin-top: 14px; min-height: 44px; }
+  #aanvraagNaam { display: block; padding: 9px; border-radius: 8px; border: 1px solid var(--kader); width: 100%; max-width: 340px; margin: 10px 0 0; background: var(--bg); color: var(--tekst); font-size: 15px; }
+  .keuze { display: flex; gap: 8px; flex-wrap: wrap; }
+  .keuze label { border: 1px solid var(--kader); border-radius: 18px; padding: 7px 14px; cursor: pointer; }
+  .keuze label:has(input:checked) { border-color: var(--oranje); background: color-mix(in srgb, var(--oranje) 14%, transparent); }
+  .uitleg { border-left: 3px solid var(--oranje); padding: 2px 0 2px 12px; margin: 10px 0; }
   a.hoofd { display: inline-block; margin-top: 12px; padding: 12px 20px; border-radius: 22px; background: var(--oranje); color: #fff; text-decoration: none; font-weight: bold; }
 </style>
 <script src="https://accounts.google.com/gsi/client" async></script>
@@ -46,12 +51,30 @@
     <div id="in" hidden>
       <p id="wie">Even geduld…</p>
       <p id="rollen"></p>
-      <p class="zacht">Wissel van pagina met de balk bovenaan.</p>
-      <div id="aanvraag" hidden><p id="aanvraagTekst" class="zacht"></p><p id="aanvraagForm" hidden><input id="aanvraagNaam" maxlength="60" placeholder="Je naam" style="padding:9px;border-radius:8px;border:1px solid var(--kader);width:100%;max-width:320px"> <button class="lijn" id="aanvraagKnop" style="margin-top:8px">Toegang aanvragen als trainer</button></p></div>
+      <p class="zacht" id="balkTip">Wissel van pagina met de balk bovenaan.</p>
+      <div id="aanvraag" hidden>
+        <h2 style="font-size:18px;margin:6px 0 8px">Testtoegang aanvragen</h2>
+        <p id="aanvraagTekst"></p>
+        <div id="sporterUitleg" hidden class="uitleg">
+          <p><b>Sporter?</b> Vul na elke training het trainingsformulier in, met dit Google-account. Zodra de hoofdtrainer je account gekoppeld heeft, zie je hier je trainingen, je planning en je evolutie.</p>
+          <p><a class="hoofd" id="naarForm" href="#" target="_blank" rel="noopener">Training invullen (formulier)</a></p>
+        </div>
+        <div id="aanvraagForm" hidden>
+          <p class="zacht" style="margin:4px 0">Ik ben</p>
+          <div class="keuze" role="radiogroup" aria-label="Rol">
+            <label><input type="radio" name="rol" value="sporter" checked> Sporter</label>
+            <label><input type="radio" name="rol" value="trainer"> Trainer</label>
+            <label><input type="radio" name="rol" value="hoofd"> Hoofdtrainer</label>
+          </div>
+          <input id="aanvraagNaam" maxlength="60" placeholder="Je voor- en achternaam" autocomplete="name">
+          <button class="lijn" id="aanvraagKnop">Testtoegang aanvragen</button>
+          <p class="zacht" id="aanvraagUitleg">De hoofdtrainer keurt je aanvraag goed in de app. Je hoeft geen toegang tot je Drive te geven.</p>
+        </div>
+      </div>
       <button class="lijn" id="afmelden">Afmelden</button>
     </div>
   </div>
-  <p class="zacht" style="margin-top:18px">Testversie – nog niet verspreiden. · <a href="privacy.html" style="color:inherit">Privacy</a> · versie <span id="versie">c51dce3168</span></p>
+  <p class="zacht" style="margin-top:18px">Testversie – nog niet verspreiden. · <a href="privacy.html" style="color:inherit">Privacy</a> · versie <span id="versie">ca8142876f</span></p>
 </main>
 <script>
 (function () {
@@ -65,30 +88,40 @@
       var d = r.data;
       tekst($('wie'), 'Je bent ' + (d.naam || d.email) + (d.naam ? ' (' + d.email + ')' : '') + '.');
       var el = $('rollen'); el.textContent = '';
-      if (!d.rollen.length) el.textContent = 'Nog geen rol gekoppeld aan dit account.';
+      if (!d.rollen.length) el.textContent = d.tester ? 'Nog geen rol gekoppeld aan dit account.' : '';
       else { el.appendChild(document.createTextNode('Rol: ')); d.rollen.forEach(function (x) { var s = document.createElement('span'); s.className = 'chip'; s.textContent = NAMEN[x] || x; el.appendChild(s); }); }
       /* B3: Mijn trainingen enkel met een Koppeling (rol sporter), ook voor hoofdtrainers · Trainersportaal: trainers en hoofdtrainers ·
          Dashboard en Planner: enkel hoofdtrainers. De API controleert dit bij elke aanroep opnieuw. */
-      /* B5: geen rol → eigen aanvraagstatus en toegang aanvragen als trainer (een hoofdtrainer keurt goed in Toegangsbeheer) */
-      $('aanvraag').hidden = d.rollen.length > 0; if (!d.rollen.length) aanvraagToon();
+      /* B3h: geen toegang (geen tester of geen rol) → testtoegang aanvragen (sporter/trainer/hoofdtrainer) of de status van je aanvraag */
+      $('aanvraag').hidden = d.tester && d.rollen.length > 0; if ($('aanvraag').hidden === false) aanvraagToon(d);
       /* B3c: na het aanmelden meteen naar de startpagina van je rol (Mijn trainingen → dashboard → trainersportaal). Via 'Account' (?blijf=1) blijf je hier. */
       KKYKC.zetRollen(d.rollen);
+      $('balkTip').hidden = !(d.tester && d.rollen.length);
       var start = KKYKC.startpagina(d.rollen); if (start && !/[?&]blijf=1/.test(location.search)) { location.replace(start); return; }
       KKYKC.balk();
     }, function (e) {
       if (e.code === 'token' || e.code === 'verlopen' || e.code === 'aud') { toon(false); $('knop').textContent = ''; KKYKC.knop($('knop')); tekst($('melding'), e.message, true); }
+      else tekst($('wie'), e.message, true);
     });
   }
-  var STATUS = { open: 'Je aanvraag is ontvangen. Een hoofdtrainer keurt ze goed of af; kom later terug.', afgewezen: 'Je aanvraag werd niet goedgekeurd. Contacteer een hoofdtrainer.' };
-  function aanvraagToon() {
-    $('aanvraagForm').hidden = true; tekst($('aanvraagTekst'), 'Even geduld…');
-    KKYKC.api('mijnToegang').then(function (r) {
-      var s = r.data.status; tekst($('aanvraagTekst'), STATUS[s] || 'Ben je trainer bij KKYKC? Vraag hier toegang aan tot het trainersportaal.'); $('aanvraagForm').hidden = !!STATUS[s];
-    }, function (e) { tekst($('aanvraagTekst'), e.message, true); });
+  var ROLNAAM = { sporter: 'sporter', trainer: 'trainer', hoofd: 'hoofdtrainer' };
+  function gekozenRol() { var x = document.querySelector('input[name=rol]:checked'); return x ? x.value : 'sporter'; }
+  function aanvraagToon(d) {
+    if (d.form_url) $('naarForm').href = d.form_url;
+    var a = d.aanvraag, el = $('aanvraagTekst');
+    $('aanvraagForm').hidden = true; $('sporterUitleg').hidden = true; el.className = '';
+    if (a && a.status === 'open') { el.textContent = 'Je aanvraag als ' + (ROLNAAM[a.rol] || a.rol) + ' is ontvangen. De hoofdtrainer geeft je testtoegang; kom later terug of meld je opnieuw aan.'; $('sporterUitleg').hidden = a.rol !== 'sporter'; return; }
+    if (a && a.status === 'afgewezen') { el.textContent = 'Je aanvraag werd niet goedgekeurd. Contacteer de hoofdtrainer.'; return; }
+    /* tester zonder rol (bv. sporter zonder Koppeling) of, na de lancering, iedereen zonder rol: zelfde aanvraag */
+    el.textContent = d.tester ? 'Je account is nog niet gekoppeld aan een rol in de app. Vraag hieronder toegang aan.' : 'De KKYKC-app is nog in test. Vraag hieronder testtoegang aan.';
+    $('aanvraagKnop').textContent = d.tester ? 'Toegang aanvragen' : 'Testtoegang aanvragen';
+    $('aanvraagForm').hidden = false; $('sporterUitleg').hidden = gekozenRol() !== 'sporter';
   }
+  Array.prototype.forEach.call(document.querySelectorAll('input[name=rol]'), function (x) { x.onchange = function () { $('sporterUitleg').hidden = gekozenRol() !== 'sporter'; }; });
   $('aanvraagKnop').onclick = function () {
     var b = $('aanvraagKnop'); b.disabled = true;
-    KKYKC.api('vraagToegang', [$('aanvraagNaam').value]).then(function () { b.disabled = false; aanvraagToon(); }, function (e) { b.disabled = false; tekst($('aanvraagTekst'), e.message, true); });
+    KKYKC.api('testAanvraag', [gekozenRol(), $('aanvraagNaam').value]).then(function () { b.disabled = false; laad(); },
+      function (e) { b.disabled = false; tekst($('aanvraagTekst'), e.message, true); });
   };
   if (!KKYKC.ingesteld()) { tekst($('uit').firstElementChild, 'De app is nog niet ingesteld (client-ID of API-adres ontbreekt).', true); return; }
   KKYKC.opAanmelden(function () { $('melding').textContent = ''; laad(); });

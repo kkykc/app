@@ -593,6 +593,7 @@ function appAanmeldKaart(melding){
 }
 function appFoutAanmelden(e){
   if (e && (e.code === 'token' || e.code === 'verlopen' || e.code === 'aud')) { balk(null); appAanmeldKaart(e.message); return true; }
+  if (e && (e.code === 'test' || e.code === 'rol')) { if (!window.kkykcNaarAanvraag){ window.kkykcNaarAanvraag = true; location.replace("index.html?blijf=1"); } return true; }   /* B3h: geen tester of geen Koppeling → aanvraag/uitleg op de startpagina */
   return false;
 }
 function appAfmelden(){ KKYKC.afmelden(); D = null; balk(null); appAanmeldKaart(''); }

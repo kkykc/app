@@ -1405,7 +1405,8 @@ function appGeenToegang(tekst){
 /* foutcodes van api.js: token/verlopen/aud → opnieuw aanmelden · test/rol → geen toegang */
 function appFoutAanmelden(code, tekst){
   if (code === "token" || code === "verlopen" || code === "aud"){ appKaart(tekst || "Meld je opnieuw aan."); return true; }
-  if (code === "test" || code === "rol"){ appGeenToegang(tekst); return true; }
+  if (code === "test"){ if (!window.kkykcNaarAanvraag){ window.kkykcNaarAanvraag = true; location.replace("index.html?blijf=1"); } return true; }   /* B3h: geen tester → aanvraagpagina */
+  if (code === "rol"){ appGeenToegang(tekst); return true; }
   return false;
 }
 function appAfmelden(){ KKYKC.afmelden(); location.replace("index.html"); }

@@ -1071,6 +1071,7 @@ function appAanmeldKaart(tekst){
 /* foutcodes van api.js: token/verlopen/aud → opnieuw aanmelden */
 function appFoutAanmelden(code, tekst){
   if (code === "token" || code === "verlopen" || code === "aud"){ appAanmeldKaart(tekst); return true; }
+  if (code === "test"){ if (!window.kkykcNaarAanvraag){ window.kkykcNaarAanvraag = true; location.replace("index.html?blijf=1"); } return true; }   /* B3h: geen tester → aanvraagpagina */
   return false;
 }
 function appAfmelden(){

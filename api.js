@@ -12,7 +12,7 @@
   /* B3f: tabgeheugen – leesantwoorden max. 5 min in sessionStorage van DIT tabblad (weg bij sluiten van het tabblad, afmelden, opnieuw aanmelden
      en na elke wijziging). Zo opent een pagina meteen als je ze net bezocht. Nooit localStorage of IndexedDB (privacy: logboeken van minderjarigen). */
   var GEH = 'kkykc_g|', GEH_MS = 300000;
-  var GEH_FN = /^(mijnData|getJaren|getPlanning|getTrainerslog|getControle|getSeizoen|getLogboek|getTesten|getToegang|getOpslag|getBibliotheek|getOpmerkingen|getPlannerData|getJaarData)$/;
+  var GEH_FN = /^(mijnData|getJaren|getPlanning|getTrainerslog|getControle|getSeizoen|getLogboek|getTesten|getToegang|getOpslag|getBibliotheek|getOpmerkingen|getPlannerData|getJaarData|pilotLijst)$/;   /* B3h: pilotLijst (teller Toegangsbeheer) ook; elke wijziging wist het geheugen */
   function geheugenMag(fn, a) { return GEH_FN.test(fn) && !(fn === 'getPlanning' && a[1] === true); }   /* 'vers' (schema opnieuw inlezen) nooit uit het geheugen */
   function geheugenLees(k) { try { var x = JSON.parse(sessionStorage.getItem(GEH + k) || 'null'); return x && Date.now() - x.t < GEH_MS ? x : null; } catch (e) { return null; } }
   function geheugenZet(k, d) { try { sessionStorage.setItem(GEH + k, JSON.stringify({ t: Date.now(), d: d })); } catch (e) { try { sessionStorage.removeItem(GEH + k); } catch (x) {} } }   /* te groot → gewoon niet onthouden */
@@ -37,7 +37,7 @@
     /* api('wieBenIk') → Promise met data; fout: Error met .code (token, verlopen, aud, test, rol, fn, net …) en .ms */
     api: function (fn, args) {
       var t0 = performance.now();
-      if (!/^(get|bundel$|wieBenIk$|mijnData$|mijnToegang$)/.test(fn)) { VOOR = {}; geheugenWis(); }   /* B3d: na een wijziging geen voorgeladen (mogelijk verouderde) gegevens meer */
+      if (!/^(get|bundel$|wieBenIk$|mijnData$|mijnToegang$|pilotLijst$)/.test(fn)) { VOOR = {}; geheugenWis(); }   /* B3d: na een wijziging geen voorgeladen (mogelijk verouderde) gegevens meer */
       if (!geldig(token)) { var e0 = new Error('Je aanmelding is verlopen. Meld je opnieuw aan.'); e0.code = 'verlopen'; KKYKC.afmelden(); return Promise.reject(e0); }
       /* text/plain = "eenvoudige" aanvraag → geen CORS-voorcontrole, die Apps Script niet beantwoordt */
       return fetch(CFG.apiUrl, { method: 'POST', body: JSON.stringify({ fn: fn, args: args || [], token: token }), redirect: 'follow' })
@@ -88,8 +88,8 @@
       var n = document.getElementById('kkykcBalk');
       if (!n) {
         n = document.createElement('nav'); n.id = 'kkykcBalk'; n.setAttribute('aria-label', 'KKYKC-app');
-        n.style.cssText = 'display:flex;gap:6px;align-items:center;overflow-x:auto;padding:6px 10px;background:#1f2328;font:13px Arial,Helvetica,sans-serif;position:relative;z-index:50;min-height:30px';
-        var L = document.createElement('span'); L.id = 'kkykcBalkL'; L.style.cssText = 'display:flex;gap:6px;align-items:center;flex:1;min-width:0';
+        n.style.cssText = 'display:flex;gap:6px;align-items:center;padding:6px 10px;background:#1f2328;font:13px Arial,Helvetica,sans-serif;position:relative;z-index:50;min-height:30px';
+        var L = document.createElement('span'); L.id = 'kkykcBalkL'; L.style.cssText = 'display:flex;gap:6px;align-items:center;flex:1;min-width:0;overflow-x:auto;scrollbar-width:thin';   /* B3h: enkel de links scrollen, de themaknop staat vast rechts */
         var k = document.createElement('button'); k.type = 'button'; k.id = 'kkykcThema';
         k.style.cssText = 'margin-left:auto;flex:none;width:32px;height:30px;border-radius:15px;border:1px solid #444c56;background:#30363d;color:#fff;font-size:16px;line-height:1;cursor:pointer';
         k.onclick = function () { zetThema(huidigThema() === 'dark' ? 'light' : 'dark'); };
