@@ -3,6 +3,12 @@
 <meta name="referrer" content="no-referrer">
 <script src="https://accounts.google.com/gsi/client" async></script>
 <script src="api.js"></script>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c96008">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}.doelchip{display:inline-flex;align-items:center;gap:4px;padding:1px 4px 1px 8px;border-radius:10px;font-size:11.5px;font-weight:bold;color:#222;white-space:nowrap;margin-left:4px;vertical-align:middle}
 .doelq{cursor:pointer;font-size:12px;line-height:1;padding:2px 3px;border-radius:50%}.doelq:focus{outline:2px solid var(--or)}
 .doel-blok{margin:8px 0}.doel-blok b{display:block;font-size:12px;text-transform:uppercase;color:var(--muted)}
@@ -2925,7 +2931,7 @@ function appStart(f){
    in de app niet voor de oude links). De API weigert beslisToegang bovendien (staat niet op de witte lijst). */
 (function(){
   var st = document.createElement("style");
-  st.textContent = "#toegDlg.alleenLezen button[data-tg], #toegDlg.alleenLezen .tg-nieuw, #toegDlg.alleenLezen .tg-t th:last-child, #toegDlg.alleenLezen .tg-t td:last-child{display:none!important}";
+  st.textContent = "#toegDlg.alleenLezen button[data-tg], #toegDlg.alleenLezen .tg-nieuw, #toegDlg.alleenLezen .tg-t:not(.pilot-t) th:last-child, #toegDlg.alleenLezen .tg-t:not(.pilot-t) td:last-child{display:none!important}";
   document.head.appendChild(st);
 })();
 var appToegangTekenOud = toegangTeken;
@@ -2934,8 +2940,47 @@ toegangTeken = function(o, t){
   o.classList.toggle("alleenLezen", !!(t && t.alleenLezen));
   var inh = o.querySelector("#toegInh"); if (!inh || !(t && t.alleenLezen)) return;
   var p = document.createElement("p"); p.className = "melding"; p.id = "toegAlleenLezen";
-  p.textContent = "In de app kan je Toegangsbeheer enkel bekijken. Goedkeuren, afwijzen en hoofdtrainers toevoegen doe je (tot de overstap naar de app) in het oude dashboard.";
+  p.textContent = "Toegang tot de oude webapps (goedkeuren, afwijzen, hoofdtrainers) beheer je tot de overstap in het oude dashboard. Testers van de app beheer je onderaan.";
   inh.insertBefore(p, inh.firstChild);
+};
+/* B3g: "Testers van de app" (pilot) – een hoofdtrainer geeft hier toegang tot de app tijdens de test, eventueel met rol trainer (trainersportaal),
+   zonder de oude aanvraagweg en zonder Drive-toestemming. Sporters: tester maken volstaat, hun rol komt uit de Koppeling (Trainingsdata). */
+var appToegangTekenB3g = toegangTeken;
+toegangTeken = function(o, t){
+  appToegangTekenB3g(o, t);
+  var inh = o.querySelector("#toegInh"); if (!inh || o.querySelector("#pilotBlok")) return;
+  var d = document.createElement("div"); d.id = "pilotBlok"; d.style.cssText = "border-top:1px solid var(--line);margin-top:14px;padding-top:10px";
+  d.innerHTML = "<h4 style='margin:0 0 4px'>Testers van de app (pilot)</h4>" +
+    "<p class='muted' style='margin:0 0 8px'>Wie hier staat, mag de app gebruiken tijdens de test. Vink <b>trainer</b> aan voor toegang tot het trainersportaal (zonder aanvraag in de oude webapp). Sporters: enkel toevoegen; hun gegevens komen via de Koppeling in Trainingsdata. Bij de overstap naar de app worden de trainers hieronder automatisch in Toegangsbeheer gezet.</p>" +
+    "<div id='pilotLijst' class='muted'>Laden…</div>" +
+    "<div style='display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:8px 0'><input id='pilotMail' type='email' placeholder='e-mailadres (Google-account)' style='flex:1;min-width:220px;padding:6px 8px'>" +
+    "<label style='white-space:nowrap'><input type='checkbox' id='pilotTrainer'> trainer</label><button type='button' id='pilotToe' class='tg-g'>Tester toevoegen</button></div>";
+  inh.appendChild(d);
+  var teken = function(r){
+    var l = d.querySelector("#pilotLijst"); l.textContent = "";
+    if (!r.pilot.length){ l.textContent = "Nog geen testers toegevoegd in de app."; return; }
+    var tb = document.createElement("table"); tb.className = "tg-t pilot-t";
+    tb.innerHTML = "<thead><tr><th>E-mail</th><th>Rol in de app</th><th>Toegevoegd</th><th></th></tr></thead>";
+    var bd = document.createElement("tbody");
+    r.pilot.forEach(function(x){
+      var tr = document.createElement("tr");
+      var rol = x.niveau === "hoofd" ? "hoofdtrainer" : (x.trainer || x.niveau === "trainer") ? "trainer" : "tester (sporter: via Koppeling)";
+      [x.email, rol, String(x.tijd || "").replace("T", " ") + (x.door ? " door " + x.door : "")].forEach(function(v){ var td = document.createElement("td"); td.textContent = v; tr.appendChild(td); });
+      var td = document.createElement("td"), b = document.createElement("button"); b.type = "button"; b.className = "tg-g"; b.textContent = "Weghalen";
+      b.onclick = function(ev){ ev.stopPropagation(); b.disabled = true; gs("pilotWeg", x.email).then(teken, function(e){ b.disabled = false; melding("Weghalen mislukt (" + esc((e && e.message) || "fout") + ").", "fout"); }); };
+      td.appendChild(b); tr.appendChild(td); bd.appendChild(tr);
+    });
+    tb.appendChild(bd); l.appendChild(tb);
+  };
+  d.querySelector("#pilotToe").onclick = function(ev){
+    ev.stopPropagation();
+    var m = String(d.querySelector("#pilotMail").value || "").trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(m)) return melding("Vul een geldig e-mailadres in.", "fout");
+    var b = d.querySelector("#pilotToe"); b.disabled = true;
+    gs("pilotZet", m, d.querySelector("#pilotTrainer").checked).then(function(r){ b.disabled = false; d.querySelector("#pilotMail").value = ""; teken(r);
+      melding(esc(m) + " kan de app nu gebruiken (meld je aan op kkykc.github.io/app)."); }, function(e){ b.disabled = false; melding("Toevoegen mislukt (" + esc((e && e.message) || "fout") + ").", "fout"); });
+  };
+  gs("pilotLijst").then(teken, function(e){ d.querySelector("#pilotLijst").textContent = "Laden mislukt (" + ((e && e.message) || "fout") + ")."; });
 };
 /* B3c: na de overzet ook trainers rechtstreeks toevoegen (e-mailadres, zonder aanvraag) – knop naast "Als hoofdtrainer toevoegen" */
 var appToegangTekenB3 = toegangTeken;
