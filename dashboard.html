@@ -2960,6 +2960,8 @@ function appVoorladen(){
   KKYKC.voorladen([["getJaren", []], ["getPlanning", [j, false]], ["getTrainerslog", [j]], ["getControle", [j]], ["getSeizoen", []], ["getToegang", []], ["getOpslag", []]]);
   KKYKC.voorladen([["getLogboek", [j]], ["getTesten", []]]);
 }
+/* B3f: "Logboek vernieuwen" haalt altijd vers op (niet uit het tabgeheugen) */
+$("#btnLog").onclick = function(){ KKYKC.vergeet("getLogboek", "getTesten"); vernieuwLogboek(); };
 appStart(function(){ appVoorladen(); start(); gs("getToegang").then(toegangTeller).catch(function(){}); appOpslag(); });
 </script>
 

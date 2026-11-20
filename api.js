@@ -8,7 +8,15 @@
   function geldig(t) { return !!t && exp(t) > Date.now() + 60000; }
   try { var s = sessionStorage.getItem(SLEUTEL); if (geldig(s)) token = s; else sessionStorage.removeItem(SLEUTEL); } catch (e) {}
 
-  function zetToken(t) { token = t; try { sessionStorage.setItem(SLEUTEL, t); } catch (e) {} bijAanmelden.forEach(function (f) { f(); }); }
+  function zetToken(t) { token = t; geheugenWis(); try { sessionStorage.setItem(SLEUTEL, t); } catch (e) {} bijAanmelden.forEach(function (f) { f(); }); }
+  /* B3f: tabgeheugen – leesantwoorden max. 5 min in sessionStorage van DIT tabblad (weg bij sluiten van het tabblad, afmelden, opnieuw aanmelden
+     en na elke wijziging). Zo opent een pagina meteen als je ze net bezocht. Nooit localStorage of IndexedDB (privacy: logboeken van minderjarigen). */
+  var GEH = 'kkykc_g|', GEH_MS = 300000;
+  var GEH_FN = /^(mijnData|getJaren|getPlanning|getTrainerslog|getControle|getSeizoen|getLogboek|getTesten|getToegang|getOpslag|getBibliotheek|getOpmerkingen|getPlannerData|getJaarData)$/;
+  function geheugenMag(fn, a) { return GEH_FN.test(fn) && !(fn === 'getPlanning' && a[1] === true); }   /* 'vers' (schema opnieuw inlezen) nooit uit het geheugen */
+  function geheugenLees(k) { try { var x = JSON.parse(sessionStorage.getItem(GEH + k) || 'null'); return x && Date.now() - x.t < GEH_MS ? x : null; } catch (e) { return null; } }
+  function geheugenZet(k, d) { try { sessionStorage.setItem(GEH + k, JSON.stringify({ t: Date.now(), d: d })); } catch (e) { try { sessionStorage.removeItem(GEH + k); } catch (x) {} } }   /* te groot → gewoon niet onthouden */
+  function geheugenWis(fn) { try { Object.keys(sessionStorage).forEach(function (s) { if (s.indexOf(GEH) === 0 && (!fn || s.indexOf(GEH + fn + '[') === 0)) sessionStorage.removeItem(s); }); } catch (e) {} }
 
   var KKYKC = window.KKYKC = {
     ingesteld: function () { return CFG.clientId.indexOf('__') !== 0 && CFG.apiUrl.indexOf('__') !== 0; },
@@ -22,14 +30,14 @@
       google.accounts.id.renderButton(el, { theme: 'outline', size: 'large', text: 'signin_with', shape: 'pill', locale: 'nl' });
     },
     afmelden: function () {
-      token = null; VOOR = {}; try { sessionStorage.removeItem(SLEUTEL); sessionStorage.removeItem(ROL); } catch (e) {}
+      token = null; VOOR = {}; geheugenWis(); try { sessionStorage.removeItem(SLEUTEL); sessionStorage.removeItem(ROL); } catch (e) {}
       var b = document.getElementById('kkykcBalk'), bl = document.getElementById('kkykcBalkL'); if (bl) bl.textContent = ''; if (b) b.removeAttribute('data-links');
       try { google.accounts.id.disableAutoSelect(); } catch (e) {}
     },
     /* api('wieBenIk') → Promise met data; fout: Error met .code (token, verlopen, aud, test, rol, fn, net …) en .ms */
     api: function (fn, args) {
       var t0 = performance.now();
-      if (!/^(get|bundel$|wieBenIk$|mijnData$|mijnToegang$)/.test(fn)) VOOR = {};   /* B3d: na een wijziging geen voorgeladen (mogelijk verouderde) gegevens meer */
+      if (!/^(get|bundel$|wieBenIk$|mijnData$|mijnToegang$)/.test(fn)) { VOOR = {}; geheugenWis(); }   /* B3d: na een wijziging geen voorgeladen (mogelijk verouderde) gegevens meer */
       if (!geldig(token)) { var e0 = new Error('Je aanmelding is verlopen. Meld je opnieuw aan.'); e0.code = 'verlopen'; KKYKC.afmelden(); return Promise.reject(e0); }
       /* text/plain = "eenvoudige" aanvraag → geen CORS-voorcontrole, die Apps Script niet beantwoordt */
       return fetch(CFG.apiUrl, { method: 'POST', body: JSON.stringify({ fn: fn, args: args || [], token: token }), redirect: 'follow' })
@@ -45,17 +53,21 @@
     },
     /* Voor de gebouwde pagina's (B1+): zelfde vorm als gs() in de huidige webapps */
     gs: function (fn) {
-      var a = Array.prototype.slice.call(arguments, 1), k = fn + JSON.stringify(a), v = VOOR[k];
+      var a = Array.prototype.slice.call(arguments, 1), k = fn + JSON.stringify(a), v = VOOR[k], mag = geheugenMag(fn, a);
+      if (mag) { var g = geheugenLees(k); if (g) { delete VOOR[k]; try { console.info('[KKYKC] ' + fn + ' uit het tabgeheugen'); } catch (e) {} return Promise.resolve(g.d); } }
+      var bewaar = function (d) { if (mag) geheugenZet(k, d); return d; };
       if (v && Date.now() - v.t > 60000) v = null;   /* B3d: voorgeladen gegevens max. 1 min gebruiken */
       if (v) { delete VOOR[k]; v = v.p;   /* B3c: al opgehaald in de gebundelde aanroep */
-        return v.then(function (x) { if (!x) return KKYKC.api(fn, a).then(function (r) { return r.data; });
-          if (x.ok) return x.data; throw Object.assign(new Error(x.tekst || 'Fout'), { code: x.code }); }); }
-      return KKYKC.api(fn, a).then(function (r) { return r.data; });
+        return v.then(function (x) { if (!x) return KKYKC.api(fn, a).then(function (r) { return bewaar(r.data); });
+          if (x.ok) return bewaar(x.data); throw Object.assign(new Error(x.tekst || 'Fout'), { code: x.code }); }); }
+      return KKYKC.api(fn, a).then(function (r) { return bewaar(r.data); });
     },
     /* B3c: leesaanroepen vooraf bundelen tot één API-aanroep ('bundel'). De pagina roept daarna gewoon gs() op; die krijgt het antwoord uit de bundel.
        Mislukt de bundel (bv. oudere server), dan gaat elke aanroep apart zoals vroeger. calls = [[fn, args], …] – args exact zoals de pagina ze doorgeeft. */
     voorladen: function (calls) {
       if (!geldig(token)) return;
+      calls = calls.filter(function (c) { return !(geheugenMag(c[0], c[1]) && geheugenLees(c[0] + JSON.stringify(c[1]))); });   /* B3f: wat al in het tabgeheugen zit niet opnieuw */
+      if (!calls.length) return;
       var p = KKYKC.api('bundel', [calls]).then(function (r) { return r.data; }, function () { return null; });
       var t = Date.now(); calls.forEach(function (c, i) { VOOR[c[0] + JSON.stringify(c[1])] = { t: t, p: p.then(function (d) { return d && d[i] ? d[i] : null; }) }; });
     },
@@ -64,6 +76,8 @@
       try { var c = JSON.parse(sessionStorage.getItem(ROL) || 'null'); if (c && token && c.t === token.slice(-24)) return Promise.resolve(c.r); } catch (e) {}
       return KKYKC.api('wieBenIk').then(function (r) { KKYKC.zetRollen(r.data.rollen); return r.data.rollen; });
     },
+    /* B3f: 'Vernieuwen'-knoppen: deze functie(s) de volgende keer van de server, niet uit het tabgeheugen */
+    vergeet: function () { Array.prototype.slice.call(arguments).forEach(function (f) { geheugenWis(f); Object.keys(VOOR).forEach(function (k) { if (k.indexOf(f + '[') === 0) delete VOOR[k]; }); }); },
     zetRollen: function (r) { try { if (token) sessionStorage.setItem(ROL, JSON.stringify({ t: token.slice(-24), r: r })); } catch (e) {} },
     /* B3c: startpagina per rol – Mijn trainingen (Koppeling) → anders hoofdtrainer: dashboard → trainer: trainersportaal */
     startpagina: function (r) { return r.indexOf('sporter') >= 0 ? 'mijn.html' : r.indexOf('hoofdtrainer') >= 0 ? 'dashboard.html' : r.indexOf('trainer') >= 0 ? 'trainers.html' : ''; },

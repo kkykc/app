@@ -87,7 +87,7 @@ var WEERGAVE = 'kalender', KAL = [];
 try { var w0 = localStorage.getItem('kkykc-mt-weergave'); if (w0 === 'lijst' || w0 === 'kalender') WEERGAVE = w0; } catch (e) {}
 function themaHuidig(){ var t = document.documentElement.getAttribute('data-theme'); if (t === 'light' || t === 'dark') return t;
   return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light'; }
-function themaKnop(){ var b = document.getElementById('btnThema'), d = themaHuidig() === 'dark';
+function themaKnop(){ var b = document.getElementById('btnThema'), d = themaHuidig() === 'dark'; if (!b) return;
   b.textContent = d ? '☀ Licht' : '☾ Donker'; b.setAttribute('aria-pressed', d ? 'true' : 'false'); b.title = d ? 'Lichte modus' : 'Donkere modus'; }
 function themaWissel(){ var n = themaHuidig() === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', n);
   try { localStorage.setItem('kkykc-mt-thema', n); } catch (e) {} themaKnop(); }
