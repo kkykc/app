@@ -1,5 +1,7 @@
 /* api.js – KKYKC-app (B0, 18/11/2026; B4 19/11: service worker + melding nieuwe versie; B3c 19/11: navigatiebalk, rollen, voorladen in één aanroep, tijden in de console). Aanmelden met Google (enkel naam/e-mail, geen Drive) + aanroepen naar de API.
-   Geen gegevens op het toestel behalve het aanmeldbewijs en je rol(len) in sessionStorage (weg bij sluiten van het tabblad of bij afmelden). */
+   Aanmeldbewijs en rol(len) in sessionStorage (weg bij sluiten van het tabblad of bij afmelden).
+   B3i (20/11/2026): wat de pagina toelaat (KKYKC.toestel) ook op het toestel (IndexedDB 'kkykc-toestel', per account, gewist bij Afmelden): meteen tonen,
+   op de achtergrond controleren met de versie v (server antwoordt {zelfde} zonder gegevens), tot dan geen wijzigingen. Leesaanroepen: 2× opnieuw bij drukte. */
 (function () {
   'use strict';
   var CFG = { clientId: '268969308679-66i1siv7po4t2cr0fni8eghbkf7piu6n.apps.googleusercontent.com', apiUrl: 'https://script.google.com/macros/s/AKfycbwCbEbEokU-xwv29crnbaAPL4foqplCrh7N86nHSSL-GC4uH6W9MxTo1sjv5IQluO2NaQ/exec' };
@@ -8,7 +10,63 @@
   function geldig(t) { return !!t && exp(t) > Date.now() + 60000; }
   try { var s = sessionStorage.getItem(SLEUTEL); if (geldig(s)) token = s; else sessionStorage.removeItem(SLEUTEL); } catch (e) {}
 
-  function zetToken(t) { token = t; geheugenWis(); try { sessionStorage.setItem(SLEUTEL, t); } catch (e) {} bijAanmelden.forEach(function (f) { f(); }); }
+  function zetToken(t) { token = t; geheugenWis(); try { sessionStorage.setItem(SLEUTEL, t); } catch (e) {}
+    var a = acct(); if (a) tWis(function (k) { return k.indexOf(a + '|') !== 0; });   /* B3i: gegevens van een ander account weg */
+    bijAanmelden.forEach(function (f) { f(); }); }
+  function uitloggen() {   /* aanmelding weg (verlopen of afmelden); de bewaarde gegevens op het toestel blijven enkel bij verlopen */
+    token = null; VOOR = {}; geheugenWis(); try { sessionStorage.removeItem(SLEUTEL); sessionStorage.removeItem(ROL); } catch (e) {}
+    var b = document.getElementById('kkykcBalk'), bl = document.getElementById('kkykcBalkL'); if (bl) bl.textContent = ''; if (b) b.removeAttribute('data-links');
+  }
+  /* ---------- B3i: bewaren op het toestel ---------- */
+  var TDB = 'kkykc-toestel', TST = { beleid: null, open: [], wacht: 0, nieuw: false, fout: null, oudste: 0 }, idbP = null;
+  function acct() { try { var p = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'); return String(JSON.parse(atob(p + '==='.slice((p.length + 3) % 4))).email || '').toLowerCase(); } catch (e) { return ''; } }
+  function idb() {
+    if (!idbP) idbP = new Promise(function (res) {
+      try { var q = indexedDB.open(TDB, 1); q.onupgradeneeded = function () { q.result.createObjectStore('g'); }; q.onsuccess = function () { res(q.result); }; q.onerror = q.onblocked = function () { res(null); }; }
+      catch (e) { res(null); } });
+    return idbP;
+  }
+  function tDo(modus, f) { return idb().then(function (db) { if (!db) return null; return new Promise(function (res) {
+    try { var tx = db.transaction('g', modus), q = f(tx.objectStore('g')); tx.oncomplete = function () { res(q && q.result !== undefined ? q.result : null); }; tx.onerror = tx.onabort = function () { res(null); }; }
+    catch (e) { res(null); } }); }); }
+  function tLees(k) { return tDo('readonly', function (s) { return s.get(k); }); }
+  function tZet(k, v) { return tDo('readwrite', function (s) { s.put(v, k); }); }
+  function tWis(filter) { return tDo('readwrite', function (s) { if (!filter) { s.clear(); return null; }
+    var c = s.openCursor(); c.onsuccess = function () { var x = c.result; if (!x) return; if (filter(String(x.key))) x['delete'](); x['continue'](); }; return null; }); }
+  function tMag(fn, a) { var b = TST.beleid; return !!(b && geldig(token) && b.fns.indexOf(fn) >= 0 && !(fn === 'getPlanning' && a[1] === true) && (!b.voorwaarde || b.voorwaarde())); }
+  function tSleutel(fn, a) { return acct() + '|' + fn + JSON.stringify(a); }
+  function tGeldig(x) { return !!(x && x.v && x.d !== undefined && TST.beleid && Date.now() - x.t < TST.beleid.dagen * 864e5); }
+  function wanneer(t) { var d = new Date(t), nu = new Date(), u = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+    var v = Math.round((new Date(nu.getFullYear(), nu.getMonth(), nu.getDate()) - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 864e5);
+    return v === 0 ? 'vandaag ' + u : v === 1 ? 'gisteren ' + u : d.getDate() + '/' + (d.getMonth() + 1) + ' ' + u; }
+  /* melding bovenaan: bewaarde gegevens → nagaan → up-to-date / nieuwe gegevens (Vernieuwen) / niet gelukt */
+  function versheid() {
+    if (!document.body) return;
+    var el = document.getElementById('kkykcVers');
+    if (!el) { el = document.createElement('div'); el.id = 'kkykcVers'; el.setAttribute('role', 'status');
+      el.style.cssText = 'display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:6px 12px;font:13px Arial,Helvetica,sans-serif;background:#fff4e5;color:#4a2a00;border-bottom:1px solid #f0c48a';
+      var nav = document.getElementById('kkykcBalk'); if (nav && nav.parentNode) nav.parentNode.insertBefore(el, nav.nextSibling); else document.body.insertBefore(el, document.body.firstChild); }
+    el.hidden = false; el.textContent = '';
+    var tekst = document.createElement('span'), knop = function (t, f) { var b = document.createElement('button'); b.type = 'button'; b.textContent = t; b.onclick = f;
+      b.style.cssText = 'padding:4px 12px;border-radius:14px;border:0;background:#e8630a;color:#fff;cursor:pointer;font:inherit'; el.appendChild(b); };
+    el.appendChild(tekst);
+    if (TST.wacht > 0) { tekst.textContent = 'Bewaarde gegevens van ' + wanneer(TST.oudste) + ' · nagaan of er nieuwe zijn…'; return; }
+    if (TST.nieuw) { tekst.textContent = 'Nieuwe gegevens beschikbaar.'; knop('Vernieuwen', function () { location.reload(); }); return; }
+    if (TST.fout) { tekst.textContent = 'Kon niet nagaan of er nieuwe gegevens zijn. Getoond: bewaarde gegevens van ' + wanneer(TST.oudste) + '.'; knop('Opnieuw', function () { location.reload(); }); return; }
+    tekst.textContent = 'Je gegevens zijn up-to-date.'; setTimeout(function () { if (!TST.wacht && !TST.nieuw && !TST.fout) el.hidden = true; }, 2500);
+  }
+  /* antwoord uit de bundel (voorladen) of een aparte aanroep; v = versie die we al hebben → {zelfde:true} */
+  function haal(fn, a, k, v) {
+    var p = VOOR[k];
+    if (p && Date.now() - p.t > 60000) p = null;   /* B3d: voorgeladen gegevens max. 1 min gebruiken */
+    if (p) { delete VOOR[k];
+      return p.p.then(function (x) {
+        if (!x) return KKYKC.api(fn, a, v);
+        if (!x.ok) throw Object.assign(new Error(x.tekst || 'Fout'), { code: x.code });
+        if (x.zelfde && (!v || v !== x.v)) return KKYKC.api(fn, a, v);
+        return { data: x.data, v: x.v, zelfde: !!x.zelfde }; }); }
+    return KKYKC.api(fn, a, v);
+  }
   /* B3f: tabgeheugen – leesantwoorden max. 5 min in sessionStorage van DIT tabblad (weg bij sluiten van het tabblad, afmelden, opnieuw aanmelden
      en na elke wijziging). Zo opent een pagina meteen als je ze net bezocht. Nooit localStorage of IndexedDB (privacy: logboeken van minderjarigen). */
   var GEH = 'kkykc_g|', GEH_MS = 300000;
@@ -29,38 +87,78 @@
         auto_select: false, cancel_on_tap_outside: true, use_fedcm_for_prompt: true, ux_mode: 'popup' });
       google.accounts.id.renderButton(el, { theme: 'outline', size: 'large', text: 'signin_with', shape: 'pill', locale: 'nl' });
     },
-    afmelden: function () {
-      token = null; VOOR = {}; geheugenWis(); try { sessionStorage.removeItem(SLEUTEL); sessionStorage.removeItem(ROL); } catch (e) {}
-      var b = document.getElementById('kkykcBalk'), bl = document.getElementById('kkykcBalkL'); if (bl) bl.textContent = ''; if (b) b.removeAttribute('data-links');
+    afmelden: function () {   /* Afmelden (knop): ook alles wat op dit toestel bewaard is */
+      uitloggen(); tWis();
       try { google.accounts.id.disableAutoSelect(); } catch (e) {}
     },
+    /* B3i: wat deze pagina op het toestel mag bewaren: { fns: [...], dagen: n, voorwaarde: function () → true/false } */
+    toestel: function (b) { TST.beleid = b; },
+    /* B3i: dashboard enkel op een eigen toestel (keuze per toestel; uitzetten wist de bewaarde dashboardgegevens) */
+    eigenToestel: function (aan) {
+      if (aan === undefined) { try { return localStorage.getItem('kkykc-eigen-toestel') === 'ja'; } catch (e) { return false; } }
+      try { if (aan) localStorage.setItem('kkykc-eigen-toestel', 'ja'); else localStorage.removeItem('kkykc-eigen-toestel'); } catch (e) {}
+      if (!aan) tWis(function (k) { return /\|(getJaren|getPlanning|getTrainerslog|getControle|getSeizoen|getLogboek|getTesten|getOpslag)\[/.test(k); });
+      return !!aan;
+    },
     /* api('wieBenIk') → Promise met data; fout: Error met .code (token, verlopen, aud, test, rol, fn, net …) en .ms */
-    api: function (fn, args) {
-      var t0 = performance.now();
-      if (!/^(get|bundel$|wieBenIk$|mijnData$|mijnToegang$|pilotLijst$)/.test(fn)) { VOOR = {}; geheugenWis(); }   /* B3d: na een wijziging geen voorgeladen (mogelijk verouderde) gegevens meer */
-      if (!geldig(token)) { var e0 = new Error('Je aanmelding is verlopen. Meld je opnieuw aan.'); e0.code = 'verlopen'; KKYKC.afmelden(); return Promise.reject(e0); }
-      /* text/plain = "eenvoudige" aanvraag → geen CORS-voorcontrole, die Apps Script niet beantwoordt */
-      return fetch(CFG.apiUrl, { method: 'POST', body: JSON.stringify({ fn: fn, args: args || [], token: token }), redirect: 'follow' })
-        .then(function (r) { if (!r.ok) throw Object.assign(new Error('De server antwoordt niet (' + r.status + ').'), { code: 'net' }); return r.json(); },
-              function () { throw Object.assign(new Error('Geen verbinding met de server.'), { code: 'net' }); })
-        .then(function (r) {
+    api: function (fn, args, v) {
+      var t0 = performance.now(), lezen = /^(get|bundel$|wieBenIk$|mijnData$|mijnToegang$|pilotLijst$)/.test(fn);
+      if (!lezen) {
+        VOOR = {}; geheugenWis();   /* B3d: na een wijziging geen voorgeladen (mogelijk verouderde) gegevens meer */
+        /* B3i: eerst moeten de getoonde bewaarde gegevens bevestigd zijn – nooit wijzigen op basis van verouderde gegevens */
+        if (TST.open.length) { var open = TST.open; TST.open = [];
+          return Promise.all(open.map(function (c) { return c.then(function () { return 0; }, function () { return 1; }); })).then(function (f) {
+            if (TST.nieuw) throw Object.assign(new Error('Er zijn nieuwe gegevens. Klik eerst bovenaan op Vernieuwen voor je iets wijzigt.'), { code: 'oud' });
+            if (f.some(Boolean)) throw Object.assign(new Error('Kon niet nagaan of je gegevens nog kloppen. Herlaad de pagina voor je iets wijzigt.'), { code: 'oud' });
+            return KKYKC.api(fn, args, v); }); }
+        var a0 = acct(); if (TST.beleid && a0) { var fns = TST.beleid.fns; tWis(function (k) { return k.indexOf(a0 + '|') === 0 && fns.some(function (f) { return k.indexOf('|' + f + '[') > 0; }); }); }   /* na een wijziging: volgende keer vers */
+      }
+      if (!geldig(token)) { var e0 = new Error('Je aanmelding is verlopen. Meld je opnieuw aan.'); e0.code = 'verlopen'; uitloggen(); return Promise.reject(e0); }
+      var body = { fn: fn, args: args || [], token: token }; if (v) body.v = v;
+      var poging = function (n) {
+        /* text/plain = "eenvoudige" aanvraag → geen CORS-voorcontrole, die Apps Script niet beantwoordt */
+        return fetch(CFG.apiUrl, { method: 'POST', body: JSON.stringify(body), redirect: 'follow' })
+          .then(function (r) { if (!r.ok) throw Object.assign(new Error('De server antwoordt niet (' + r.status + ').'), { code: 'net', status: r.status }); return r.json(); },
+                function () { throw Object.assign(new Error('Geen verbinding met de server.'), { code: 'net' }); })
+          .then(null, function (e) {   /* B3i: drukte bij Google (te veel tegelijk) of een haperende verbinding → leesaanroep 2× opnieuw na 1,5 en 3 s */
+            if (!lezen || n >= 2 || (e && e.code && e.code !== 'net') && !(e instanceof SyntaxError)) throw (e instanceof SyntaxError ? Object.assign(new Error('Onverwacht antwoord van de server.'), { code: 'net' }) : e);
+            try { console.info('[KKYKC] ' + fn + ' opnieuw (' + (n + 1) + ')'); } catch (x) {}
+            return new Promise(function (res) { setTimeout(res, 1500 * (n + 1)); }).then(function () { return poging(n + 1); });
+          });
+      };
+      return poging(0).then(function (r) {
           var ms = Math.round(performance.now() - t0);
-          if (!r.ok) { if (r.code === 'token' || r.code === 'verlopen' || r.code === 'aud') KKYKC.afmelden();
+          if (!r.ok) { if (r.code === 'token' || r.code === 'verlopen' || r.code === 'aud') uitloggen();
+            if (r.code === 'rol' || r.code === 'test') { var a1 = acct(); if (a1) tWis(function (k) { return k.indexOf(a1 + '|') === 0; }); }   /* B3i: geen toegang meer → bewaarde gegevens weg */
             throw Object.assign(new Error(r.tekst || 'Fout'), { code: r.code, ms: ms }); }
-          try { console.info('[KKYKC] ' + fn + ' ' + ms + ' ms (server ' + r.ms + ' ms)'); } catch (e) {}   /* enkel naam + tijd, geen gegevens */
-          return { data: r.data, ms: ms, serverMs: r.ms };
+          try { console.info('[KKYKC] ' + fn + ' ' + ms + ' ms (server ' + r.ms + ' ms)' + (r.zelfde ? ' ongewijzigd' : '')); } catch (e) {}   /* enkel naam + tijd, geen gegevens */
+          return { data: r.data, ms: ms, serverMs: r.ms, v: r.v, zelfde: !!r.zelfde };
         });
     },
     /* Voor de gebouwde pagina's (B1+): zelfde vorm als gs() in de huidige webapps */
     gs: function (fn) {
-      var a = Array.prototype.slice.call(arguments, 1), k = fn + JSON.stringify(a), v = VOOR[k], mag = geheugenMag(fn, a);
+      var a = Array.prototype.slice.call(arguments, 1), k = fn + JSON.stringify(a), mag = geheugenMag(fn, a);
       if (mag) { var g = geheugenLees(k); if (g) { delete VOOR[k]; try { console.info('[KKYKC] ' + fn + ' uit het tabgeheugen'); } catch (e) {} return Promise.resolve(g.d); } }
       var bewaar = function (d) { if (mag) geheugenZet(k, d); return d; };
-      if (v && Date.now() - v.t > 60000) v = null;   /* B3d: voorgeladen gegevens max. 1 min gebruiken */
-      if (v) { delete VOOR[k]; v = v.p;   /* B3c: al opgehaald in de gebundelde aanroep */
-        return v.then(function (x) { if (!x) return KKYKC.api(fn, a).then(function (r) { return bewaar(r.data); });
-          if (x.ok) return bewaar(x.data); throw Object.assign(new Error(x.tekst || 'Fout'), { code: x.code }); }); }
-      return KKYKC.api(fn, a).then(function (r) { return bewaar(r.data); });
+      if (tMag(fn, a)) {   /* B3i: bewaard op het toestel → meteen tonen + op de achtergrond controleren */
+        var sl = tSleutel(fn, a);
+        return tLees(sl).then(function (x) {
+          if (tGeldig(x)) {
+            TST.wacht++; if (!TST.oudste || x.t < TST.oudste) TST.oudste = x.t;
+            var c = haal(fn, a, k, x.v).then(function (r) {
+              if (r.zelfde) { tZet(sl, { t: Date.now(), v: x.v, d: x.d }); bewaar(x.d); }
+              else { tZet(sl, { t: Date.now(), v: r.v, d: r.data }); bewaar(r.data); TST.nieuw = true; }
+            }, function (e) { TST.fout = e; if (e && (e.code === 'test' || e.code === 'rol')) { if (!window.kkykcNaarAanvraag) { window.kkykcNaarAanvraag = true; location.replace('index.html?blijf=1'); } } throw e; });
+            TST.open.push(c);
+            c.then(function () { TST.wacht--; versheid(); }, function () { TST.wacht--; versheid(); });
+            versheid();
+            try { console.info('[KKYKC] ' + fn + ' van het toestel (' + wanneer(x.t) + ')'); } catch (e) {}
+            return x.d;
+          }
+          return haal(fn, a, k, null).then(function (r) { if (r.v) tZet(sl, { t: Date.now(), v: r.v, d: r.data }); return bewaar(r.data); });
+        });
+      }
+      return haal(fn, a, k, null).then(function (r) { return bewaar(r.data); });
     },
     /* B3c: leesaanroepen vooraf bundelen tot één API-aanroep ('bundel'). De pagina roept daarna gewoon gs() op; die krijgt het antwoord uit de bundel.
        Mislukt de bundel (bv. oudere server), dan gaat elke aanroep apart zoals vroeger. calls = [[fn, args], …] – args exact zoals de pagina ze doorgeeft. */
@@ -68,7 +166,9 @@
       if (!geldig(token)) return;
       calls = calls.filter(function (c) { return !(geheugenMag(c[0], c[1]) && geheugenLees(c[0] + JSON.stringify(c[1]))); });   /* B3f: wat al in het tabgeheugen zit niet opnieuw */
       if (!calls.length) return;
-      var p = KKYKC.api('bundel', [calls]).then(function (r) { return r.data; }, function () { return null; });
+      /* B3i: versies van wat al op het toestel staat meesturen → de server antwoordt per deelaanroep {zelfde} zonder gegevens */
+      var vs = Promise.all(calls.map(function (c) { return tMag(c[0], c[1]) ? tLees(tSleutel(c[0], c[1])).then(function (x) { return tGeldig(x) ? x.v : ''; }) : Promise.resolve(''); }));
+      var p = vs.then(function (l) { return KKYKC.api('bundel', l.some(Boolean) ? [calls, l] : [calls]); }).then(function (r) { return r.data; }, function () { return null; });
       var t = Date.now(); calls.forEach(function (c, i) { VOOR[c[0] + JSON.stringify(c[1])] = { t: t, p: p.then(function (d) { return d && d[i] ? d[i] : null; }) }; });
     },
     /* B3c: rollen van dit account (1× per tabblad opgevraagd, daarna uit sessionStorage) */
@@ -77,7 +177,8 @@
       return KKYKC.api('wieBenIk').then(function (r) { KKYKC.zetRollen(r.data.rollen); return r.data.rollen; });
     },
     /* B3f: 'Vernieuwen'-knoppen: deze functie(s) de volgende keer van de server, niet uit het tabgeheugen */
-    vergeet: function () { Array.prototype.slice.call(arguments).forEach(function (f) { geheugenWis(f); Object.keys(VOOR).forEach(function (k) { if (k.indexOf(f + '[') === 0) delete VOOR[k]; }); }); },
+    vergeet: function () { var a = acct(); Array.prototype.slice.call(arguments).forEach(function (f) { geheugenWis(f); Object.keys(VOOR).forEach(function (k) { if (k.indexOf(f + '[') === 0) delete VOOR[k]; });
+      if (a) tWis(function (k) { return k.indexOf(a + '|' + f + '[') === 0; }); }); },
     zetRollen: function (r) { try { if (token) sessionStorage.setItem(ROL, JSON.stringify({ t: token.slice(-24), r: r })); } catch (e) {} },
     /* B3c: startpagina per rol – Mijn trainingen (Koppeling) → anders hoofdtrainer: dashboard → trainer: trainersportaal */
     startpagina: function (r) { return r.indexOf('sporter') >= 0 ? 'mijn.html' : r.indexOf('hoofdtrainer') >= 0 ? 'dashboard.html' : r.indexOf('trainer') >= 0 ? 'trainers.html' : ''; },

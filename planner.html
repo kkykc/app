@@ -1419,6 +1419,8 @@ function appStart(f){
    Schrijft rechtstreeks in Planning KKYKC (dezelfde Sheet als de oude planner). Week overnemen (2026-weekbladen) en S7-meldingen: enkel in de oude planner. */
 /* B3d: sneller wisselen van week – na het laden van een week worden de vorige en volgende week alvast opgehaald (één gebundelde aanroep,
    max. 1 min geldig, gewist na elke wijziging). Afmelden en wisselen van pagina via de navigatiebalk. */
+/* B3i: planning (geen sportersgegevens) max. 7 dagen op dit toestel; meteen tonen, daarna gecontroleerd; opslaan pas na de controle */
+KKYKC.toestel({ fns: ['getPlannerData', 'getJaarData', 'getBibliotheek'], dagen: 7 });   /* B3j: + bibliotheek van het trainersportaal (plannen) */
 var appLaadOud = laad;
 laad = async function (jaar, week, volledig) { const r = await appLaadOud.apply(this, arguments); appBuren(); return r; };
 function appBuren(){
@@ -1427,6 +1429,93 @@ function appBuren(){
   [S.week + 1, S.week - 1].forEach(function (w) { if (w >= 1 && w <= n) c.push(["getPlannerData", [S.jaar, w, "zonderBib"]]); });
   if (c.length) KKYKC.voorladen(c);
 }
-appStart(plannerStart);
+/* ---------- B3j (20/11/2026): plannen uit de bibliotheek van het trainersportaal in de planner ----------
+   In de sessie-editor een plan kiezen (meteen bewaard: plannerKoppelPlan → scripteigenschap pkop van het API-project) en bekijken.
+   Trainers zien het gekoppelde plan in het trainersportaal, sporters in Mijn trainingen. Op de kaart in de week: "Plan: titel".
+   Wordt een sessie verplaatst (andere dag/groep), dan volgt de koppeling mee. De bibliotheek zelf bewerken blijft in het trainersportaal. */
+var PP = { bib: null, laden: null };
+function ppLaad(){
+  if (PP.bib) return Promise.resolve(PP.bib);
+  if (!PP.laden) PP.laden = gs("getBibliotheek").then(function(r){ PP.bib = (r && r.bib) || { plannen: {}, oefeningen: {}, koppelingen: {} }; PP.bib.koppelingen = PP.bib.koppelingen || {}; return PP.bib; },
+    function(e){ PP.laden = null; throw e; });
+  return PP.laden;
+}
+function ppKoppeling(cel){ return cel && PP.bib ? (PP.bib.koppelingen || {})[cel] || null : null; }
+function ppPlan(id){ return PP.bib && id ? (PP.bib.plannen || {})[id] || null : null; }
+function ppPlannen(groep){
+  var pl = (PP.bib && PP.bib.plannen) || {};
+  return Object.keys(pl).filter(function(id){ var p = pl[id]; return p && !p.gearchiveerd && (!(p.groepen || []).length || !groep || p.groepen.indexOf(groep) >= 0); })
+    .map(function(id){ return [id, pl[id]]; })
+    .sort(function(a, b){ return String(a[1].soort || "").localeCompare(String(b[1].soort || "")) || String(a[1].titel || "").localeCompare(String(b[1].titel || ""), "nl"); });
+}
+function ppToon(id){
+  var p = ppPlan(id); if (!p) return;
+  var oef = (PP.bib && PP.bib.oefeningen) || {}, br = function(x){ return esc(x).replace(/\n/g, "<br>"); };
+  var meta = [p.soort, p.duur ? p.duur + (/^\d+$/.test(String(p.duur)) ? " min" : "") : "", p.doelgroep, (p.groepen || []).length ? "groep " + p.groepen.join(", ") : ""].filter(Boolean).map(esc).join(" · ");
+  var h = "<h2>" + esc(p.titel) + "</h2>" + (meta ? "<div class='klein'>" + meta + "</div>" : "") +
+    (p.intro ? "<p>" + br(p.intro) + "</p>" : "") +
+    ((p.materiaal || []).length ? "<p><b>Materiaal:</b> " + p.materiaal.map(function(m){ return esc(m && m.naam ? m.naam : m); }).join(", ") + "</p>" : "") +
+    (p.blokken || []).map(function(b){
+      return "<div style='border-left:3px solid var(--line);padding-left:10px;margin:10px 0'><b>" + esc(b.titel || "Blok") + "</b>" + (b.duur ? " <span class='klein'>(" + esc(b.duur) + ")</span>" : "") +
+        (b.uitleg ? "<div class='klein'>" + br(b.uitleg) + "</div>" : "") +
+        ((b.items || []).length ? "<ul style='margin:4px 0 0 18px;padding:0'>" + b.items.map(function(i){ var o = i.oef ? oef[i.oef] || {} : {};
+          return "<li>" + esc(i.oef ? (o.naam || i.oef) : i.naam) + (i.volume ? " – " + esc(i.volume) : "") + (i.opm ? " <span class='klein'>(" + esc(i.opm) + ")</span>" : "") + "</li>"; }).join("") + "</ul>" : "") + "</div>";
+    }).join("") +
+    (p.praktisch ? "<p class='klein'><b>Praktisch:</b> " + br(p.praktisch) + "</p>" : "") +
+    "<div class='knoppen'><span style='flex:1'></span><button class='btn' data-sluit>Sluiten</button></div>";
+  dlg(h);
+}
+var ppKaartOud = kaartHtml;
+kaartHtml = function(s){
+  var h = ppKaartOud.apply(this, arguments), k = ppKoppeling(s && s.cel), p = k && ppPlan(k.plan);
+  if (!p) return h;
+  var i = h.lastIndexOf("</div>");
+  return h.slice(0, i) + "<div class='klein' style='margin-top:3px'><span class='pil p-info' style='white-space:normal;display:inline-block;max-width:100%' title='Plan uit de bibliotheek van het trainersportaal'>Plan: " + esc(p.titel) + "</span></div>" + h.slice(i);
+};
+var ppEditorOud = openEditor;
+openEditor = function(s0){
+  ppEditorOud.apply(this, arguments);
+  if (!s0 || s0.categorie === "opwarming") return;
+  var ovl = document.querySelectorAll(".ovl"), o = ovl[ovl.length - 1], prev = o && o.querySelector("#e-prev");
+  if (!prev) return;
+  var blok = document.createElement("div"); blok.id = "e-ppblok"; blok.style.cssText = "border-top:1px solid var(--line);margin-top:10px;padding-top:6px";
+  blok.innerHTML = "<label for='e-pplan'>Plan uit de bibliotheek van het trainersportaal</label>" +
+    "<div style='display:flex;gap:6px;flex-wrap:wrap;align-items:center'><select id='e-pplan' style='flex:1;min-width:200px'><option value=''>laden…</option></select>" +
+    "<button type='button' class='btn rand klein' id='e-pbekijk' disabled>Bekijken</button></div><div class='klein' id='e-pinfo'></div>";
+  prev.parentNode.insertBefore(blok, prev);
+  var sel = blok.querySelector("#e-pplan"), info = blok.querySelector("#e-pinfo"), bek = blok.querySelector("#e-pbekijk");
+  var groepNu = function(){ var g = o.querySelector("#e-groep"); return g ? g.value : s0.groep; };
+  var vul = function(){
+    var k = ppKoppeling(s0.cel), huidig = k ? k.plan : "", l = ppPlannen(groepNu());
+    if (huidig && !l.some(function(x){ return x[0] === huidig; }) && ppPlan(huidig)) l.unshift([huidig, ppPlan(huidig)]);
+    sel.innerHTML = "<option value=''>– geen plan –</option>" + l.map(function(x){ var p = x[1];
+      return "<option value='" + esc(x[0]) + "'" + (x[0] === huidig ? " selected" : "") + ">" + esc(p.titel) + (p.soort ? " (" + esc(p.soort) + ")" : "") + (p.duur ? " · " + esc(p.duur) : "") + "</option>"; }).join("");
+    sel.disabled = !s0.cel; bek.disabled = !sel.value;
+    info.textContent = !s0.cel ? "Sla de sessie eerst op; daarna kan je een plan koppelen."
+      : k ? "Gekoppeld" + (k.door ? " door " + k.door : "") + ". Trainers zien het in het trainersportaal, sporters in Mijn trainingen."
+      : (l.length ? "Kiezen = meteen bewaard. Trainers zien het plan in het trainersportaal, sporters in Mijn trainingen." : "Geen plannen voor groep " + groepNu() + " in de bibliotheek.");
+  };
+  ppLaad().then(vul, function(e){ sel.innerHTML = "<option value=''>niet beschikbaar</option>"; sel.disabled = true; info.textContent = "Bibliotheek laden mislukt (" + ((e && e.message) || "fout") + ")."; });
+  bek.onclick = function(){ if (sel.value) ppToon(sel.value); };
+  sel.onchange = async function(ev){
+    ev.stopPropagation(); bek.disabled = !sel.value; if (!s0.cel) return;
+    var plan = sel.value; sel.disabled = true; info.textContent = "Bewaren…";
+    try {
+      var r = await gs("plannerKoppelPlan", { cel: s0.cel, d: s0.datum, groep: s0.groep, dd: s0.dagdeel || "", plan: plan });
+      PP.bib.koppelingen = r.koppelingen || {}; vul(); toast(plan ? "Plan gekoppeld." : "Plan losgekoppeld."); toonHoofd();
+    } catch (e) { vul(); info.textContent = (e && e.message) || "Bewaren mislukt."; }
+  };
+  o.addEventListener("change", function(e){ if (e.target && e.target.id === "e-groep") vul(); });
+};
+/* sessie verplaatst (andere dag of groep) → de koppeling uit de app volgt mee (datum = wanneer sporters het plan zien) */
+var ppNaOud = naWijziging;
+naWijziging = function(sessies){
+  ppNaOud.apply(this, arguments);
+  if (!sessies || !PP.bib) return;
+  sessies.forEach(function(s){ var k = ppKoppeling(s.cel);
+    if (k && k.app && k.plan && (k.d !== s.datum || (k.groep || "") !== s.groep))
+      gs("plannerKoppelPlan", { cel: s.cel, d: s.datum, groep: s.groep, dd: s.dagdeel || "", plan: k.plan }).then(function(r){ PP.bib.koppelingen = r.koppelingen || PP.bib.koppelingen; }, function(){}); });
+};
+appStart(function(){ plannerStart(); ppLaad().then(function(){ if (S.d) toonHoofd(); }, function(){}); });
 </script>
 </body></html>

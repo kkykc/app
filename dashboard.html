@@ -2930,6 +2930,8 @@ function appStart(f){
    B5: de server zegt of Toegangsbeheer enkel lezen is (alleenLezen = testfase) of ook wijzigen (na de overzet).
    Toegangsbeheer in de testfase: enkel LEZEN in de app. Goedkeuren/afwijzen/hoofdtrainers blijft in het oude dashboard tot B5 (anders gelden beslissingen
    in de app niet voor de oude links). De API weigert beslisToegang bovendien (staat niet op de witte lijst). */
+/* B3i: dashboardgegevens (logboeken van alle sporters) ENKEL op een eigen toestel (keuze op de pagina Account), max. 7 dagen; nooit Toegangsbeheer */
+KKYKC.toestel({ fns: ['getJaren', 'getPlanning', 'getTrainerslog', 'getControle', 'getSeizoen', 'getLogboek', 'getTesten', 'getOpslag'], dagen: 7, voorwaarde: function(){ return KKYKC.eigenToestel(); } });
 (function(){
   var st = document.createElement("style");
   st.textContent = "#toegDlg.alleenLezen button[data-tg], #toegDlg.alleenLezen .tg-nieuw, #toegDlg.alleenLezen .tg-t:not(.pilot-t) th:last-child, #toegDlg.alleenLezen .tg-t:not(.pilot-t) td:last-child{display:none!important}";

@@ -1046,8 +1046,11 @@ async function start(){
 }
 $("#vorige").onclick = () => naarWeek(-1); $("#volgende").onclick = () => naarWeek(1); $("#vandaagKnop").onclick = () => { if (S.meta){ S.wnr = huidigeWeek(); render(); } };
 /* ---------- KKYKC-app (B2, 18/11/2026 – ingevoegd door bouw_app.py, bron: app/bron_b2/trainers_app.js) ----------
-   Aanmelden met Google (api.js) en de API i.p.v. de Apps Script-aanroep. Niets van de gegevens wordt op het toestel bewaard
-   (geen browsercache: PAGINA_WIE is leeg, dus KC staat uit). Enkel de keuze thema/weergave blijft in de browser. */
+   Aanmelden met Google (api.js) en de API i.p.v. de Apps Script-aanroep. De oude browsercache van het portaal (KC) staat uit (PAGINA_WIE leeg);
+   B3i: bewaren op het toestel via api.js (zie onder). Enkel de keuze thema/weergave blijft in de browser. */
+/* B3i: planning, trainerslog en bibliotheek max. 7 dagen op dit toestel (meteen tonen, daarna gecontroleerd; gewist bij Afmelden).
+   NIET: de opmerkingen van sporters (getOpmerkingen) – die worden altijd vers opgehaald. */
+KKYKC.toestel({ fns: ['getJaren', 'getPlanning', 'getTrainerslog', 'getBibliotheek', 'getMedia'], dagen: 7 });
 (function(){
   var st = document.createElement("style");
   st.textContent = "body.appuit #htabs, body.appuit .wrap > section, body.appuit #appAf, body.appuit #naarDashboard{display:none}" +

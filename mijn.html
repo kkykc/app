@@ -582,7 +582,9 @@ function mtNietGelukt(m){
   balk('<span>Kon niet nagaan of er nieuwe gegevens zijn (' + esc(m) + '). Getoond: je gegevens van <b>' + wanneer(MT_CACHE.t) + '</b>.</span><button type="button" onclick="location.reload()">Opnieuw proberen</button>', 'nieuw');
 }
 /* ---------- KKYKC-app (B1, 18/11/2026 – ingevoegd door bouw_app.py, bron: app/bron_b1/mijn_app.js) ----------
-   Aanmelden met Google (api.js) en de API (mijnData) i.p.v. de Apps Script-aanroep. Niets van de gegevens wordt op het toestel bewaard. */
+   Aanmelden met Google (api.js) en de API (mijnData) i.p.v. de Apps Script-aanroep. B3i: je eigen gegevens op het toestel (zie onder). */
+/* B3i: je eigen gegevens max. 14 dagen op dit toestel (meteen tonen, daarna gecontroleerd; gewist bij Afmelden) */
+KKYKC.toestel({ fns: ['mijnData'], dagen: 14 });
 function appAanmeldKaart(melding){
   document.getElementById('wie').textContent = '';
   document.getElementById('inhoud').innerHTML = '<h2>Aanmelden</h2><p>Meld je aan met het Google-account waarmee je het trainingsformulier invult.</p>' +

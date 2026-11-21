@@ -71,10 +71,15 @@
           <p class="zacht" id="aanvraagUitleg">De hoofdtrainer keurt je aanvraag goed in de app. Je hoeft geen toegang tot je Drive te geven.</p>
         </div>
       </div>
+      <div id="eigenBlok" hidden class="uitleg">
+        <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer"><input type="checkbox" id="eigenToestel" style="margin-top:3px">
+          <span><b>Dit is mijn eigen toestel</b>: gegevens van het dashboard hier onthouden (max. 7 dagen), zodat het meteen opent.<br>
+          <span class="zacht">Niet aanvinken op een gedeelde of geleende computer. Afmelden of uitvinken wist alles.</span></span></label>
+      </div>
       <button class="lijn" id="afmelden">Afmelden</button>
     </div>
   </div>
-  <p class="zacht" style="margin-top:18px">Testversie – nog niet verspreiden. · <a href="privacy.html" style="color:inherit">Privacy</a> · versie <span id="versie">ca8142876f</span></p>
+  <p class="zacht" style="margin-top:18px">Testversie – nog niet verspreiden. · <a href="privacy.html" style="color:inherit">Privacy</a> · versie <span id="versie">182439670e</span></p>
 </main>
 <script>
 (function () {
@@ -97,6 +102,7 @@
       /* B3c: na het aanmelden meteen naar de startpagina van je rol (Mijn trainingen → dashboard → trainersportaal). Via 'Account' (?blijf=1) blijf je hier. */
       KKYKC.zetRollen(d.rollen);
       $('balkTip').hidden = !(d.tester && d.rollen.length);
+      $('eigenBlok').hidden = d.rollen.indexOf('hoofdtrainer') < 0; $('eigenToestel').checked = KKYKC.eigenToestel();   /* B3i */
       var start = KKYKC.startpagina(d.rollen); if (start && !/[?&]blijf=1/.test(location.search)) { location.replace(start); return; }
       KKYKC.balk();
     }, function (e) {
@@ -125,6 +131,7 @@
   };
   if (!KKYKC.ingesteld()) { tekst($('uit').firstElementChild, 'De app is nog niet ingesteld (client-ID of API-adres ontbreekt).', true); return; }
   KKYKC.opAanmelden(function () { $('melding').textContent = ''; laad(); });
+  $('eigenToestel').onchange = function () { KKYKC.eigenToestel(this.checked); };
   $('afmelden').onclick = function () { KKYKC.afmelden(); toon(false); $('knop').textContent = ''; KKYKC.knop($('knop')); };
   if (KKYKC.aangemeld()) laad(); else KKYKC.knop($('knop'));
 })();
