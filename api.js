@@ -10,9 +10,32 @@
   function geldig(t) { return !!t && exp(t) > Date.now() + 60000; }
   try { var s = sessionStorage.getItem(SLEUTEL); if (geldig(s)) token = s; else sessionStorage.removeItem(SLEUTEL); } catch (e) {}
 
-  function zetToken(t) { token = t; geheugenWis(); try { sessionStorage.setItem(SLEUTEL, t); } catch (e) {}
+  function zetToken(t) { token = t; geheugenWis(); try { sessionStorage.setItem(SLEUTEL, t); } catch (e) {} planVernieuwen();
     var a = acct(); if (a) tWis(function (k) { return k.indexOf(a + '|') !== 0; });   /* B3i: gegevens van een ander account weg */
     bijAanmelden.forEach(function (f) { f(); }); }
+  /* ---------- B3k: aangemeld blijven via Google (geen eigen langlopend aanmeldbewijs op het toestel) ----------
+     Het aanmeldbewijs van Google is 1 uur geldig. Wie zich hier al eens aanmeldde, wordt automatisch opnieuw aangemeld (FedCM 'auto select'):
+     bij het openen van een pagina en ±5 min voor het bewijs verloopt. Na 'Afmelden' niet meer automatisch tot je zelf weer op de knop drukt.
+     Meerdere Google-accounts in de browser: Google toont dan een keuze (één klik). */
+  var AUTO = 'kkykc-auto', gisInit = false, autoGedaan = false, vernieuwT = null;
+  function autoMag() { try { return localStorage.getItem(AUTO) !== 'uit'; } catch (e) { return true; } }
+  function gisKlaar() {
+    if (!window.google || !google.accounts || !google.accounts.id) return false;
+    if (!gisInit) { gisInit = true;
+      google.accounts.id.initialize({ client_id: CFG.clientId, callback: function (r) { try { localStorage.removeItem(AUTO); } catch (e) {} zetToken(r.credential); },
+        auto_select: autoMag(), cancel_on_tap_outside: true, use_fedcm_for_prompt: true, ux_mode: 'popup', itp_support: true }); }
+    return true;
+  }
+  function autoAanmelden(opnieuw) {
+    if (!autoMag() || (autoGedaan && !opnieuw) || (!opnieuw && geldig(token))) return;
+    if (!gisKlaar()) { setTimeout(function () { autoAanmelden(opnieuw); }, 300); return; }
+    autoGedaan = true; try { google.accounts.id.prompt(); } catch (e) {}
+  }
+  function planVernieuwen() {   /* ±5 min voor het bewijs verloopt: stil een nieuw bewijs vragen (lukt het niet, dan vraagt de pagina later om aan te melden) */
+    clearTimeout(vernieuwT); if (!token) return;
+    var ms = exp(token) - Date.now() - 300000;
+    vernieuwT = setTimeout(function () { if (token) autoAanmelden(true); }, Math.max(ms, 30000));
+  }
   function uitloggen() {   /* aanmelding weg (verlopen of afmelden); de bewaarde gegevens op het toestel blijven enkel bij verlopen */
     token = null; VOOR = {}; geheugenWis(); try { sessionStorage.removeItem(SLEUTEL); sessionStorage.removeItem(ROL); } catch (e) {}
     var b = document.getElementById('kkykcBalk'), bl = document.getElementById('kkykcBalkL'); if (bl) bl.textContent = ''; if (b) b.removeAttribute('data-links');
@@ -80,15 +103,15 @@
     ingesteld: function () { return CFG.clientId.indexOf('__') !== 0 && CFG.apiUrl.indexOf('__') !== 0; },
     aangemeld: function () { return geldig(token); },
     opAanmelden: function (f) { bijAanmelden.push(f); },
-    /* Toont de Google-knop in el. De gebruiker kiest zelf het account → geen multi-account-fout. */
+    /* Toont de Google-knop in el. De gebruiker kiest zelf het account → geen multi-account-fout.
+       B3k: daarnaast automatisch aanmelden (Google, FedCM) voor wie zich hier al eens aanmeldde en niet zelf afmeldde – geen klik nodig. */
     knop: function (el) {
-      if (!window.google || !google.accounts || !google.accounts.id) { setTimeout(function () { KKYKC.knop(el); }, 200); return; }
-      google.accounts.id.initialize({ client_id: CFG.clientId, callback: function (r) { zetToken(r.credential); },
-        auto_select: false, cancel_on_tap_outside: true, use_fedcm_for_prompt: true, ux_mode: 'popup' });
+      if (!gisKlaar()) { setTimeout(function () { KKYKC.knop(el); }, 200); return; }
       google.accounts.id.renderButton(el, { theme: 'outline', size: 'large', text: 'signin_with', shape: 'pill', locale: 'nl' });
+      autoAanmelden();
     },
-    afmelden: function () {   /* Afmelden (knop): ook alles wat op dit toestel bewaard is */
-      uitloggen(); tWis();
+    afmelden: function () {   /* Afmelden (knop): ook alles wat op dit toestel bewaard is, en niet meer automatisch aanmelden */
+      uitloggen(); tWis(); clearTimeout(vernieuwT); try { localStorage.setItem(AUTO, 'uit'); } catch (e) {}
       try { google.accounts.id.disableAutoSelect(); } catch (e) {}
     },
     /* B3i: wat deze pagina op het toestel mag bewaren: { fns: [...], dagen: n, voorwaarde: function () → true/false } */
@@ -236,6 +259,7 @@
   (function () {   /* bij het laden: gekozen thema meteen toepassen en de sleutels van de pagina's gelijkzetten (vóór hun eigen code) */
     try { var v = localStorage.getItem('kkykc-thema'); if (v === 'dark' || v === 'light') { document.documentElement.setAttribute('data-theme', v); THEMA_SL.forEach(function (k) { localStorage.setItem(k, v); }); } } catch (e) {}
   })();
+  if (token) planVernieuwen();   /* B3k */
   /* balk zodra de pagina geladen is en na elke aanmelding; op de startpagina eerst enkel de themaknop (de pagina vult de rest na wieBenIk) */
   var opIndex = /^(index\.html)?$/i.test(location.pathname.split('/').pop() || '');
   var auto = function () { KKYKC.balk(opIndex ? { zonderLinks: true } : null); };
