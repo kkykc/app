@@ -41,7 +41,7 @@
     var b = document.getElementById('kkykcBalk'), bl = document.getElementById('kkykcBalkL'); if (bl) bl.textContent = ''; if (b) b.removeAttribute('data-links');
   }
   /* ---------- B3i: bewaren op het toestel ---------- */
-  var TDB = 'kkykc-toestel', TST = { beleid: null, open: [], wacht: 0, nieuw: false, fout: null, oudste: 0 }, idbP = null;
+  var TDB = 'kkykc-toestel', TST = { beleid: null, open: [], wacht: 0, nieuw: false, fout: null, oudste: 0, gezien: {}, schrijf: 0, timer: 0 }, idbP = null;   /* B6b: gezien/schrijf/timer (A4) */
   function acct() { try { var p = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'); return String(JSON.parse(atob(p + '==='.slice((p.length + 3) % 4))).email || '').toLowerCase(); } catch (e) { return ''; } }
   function idb() {
     if (!idbP) idbP = new Promise(function (res) {
@@ -67,16 +67,39 @@
     if (!document.body) return;
     var el = document.getElementById('kkykcVers');
     if (!el) { el = document.createElement('div'); el.id = 'kkykcVers'; el.setAttribute('role', 'status');
-      el.style.cssText = 'display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:6px 12px;font:13px Arial,Helvetica,sans-serif;background:#fff4e5;color:#4a2a00;border-bottom:1px solid #f0c48a';
+      el.style.cssText = 'display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:6px 12px;font:13px Arial,Helvetica,sans-serif';
+      /* B6b (A5): kleuren volgen het thema (licht/donker, ook de systeeminstelling) i.p.v. altijd licht oranje */
+      if (!document.getElementById('kkykcVersStijl')) { var st = document.createElement('style'); st.id = 'kkykcVersStijl';
+        st.textContent = '#kkykcVers{background:#fff4e5;color:#4a2a00;border-bottom:1px solid #f0c48a}' +
+          ':root[data-theme=dark] #kkykcVers{background:#33240f;color:#ffe2bf;border-bottom-color:#6b4a1f}' +
+          '@media (prefers-color-scheme: dark){:root:not([data-theme=light]) #kkykcVers{background:#33240f;color:#ffe2bf;border-bottom-color:#6b4a1f}}' +
+          '#kkykcVers button{padding:4px 12px;border-radius:14px;border:0;background:#c25507;color:#fff;cursor:pointer;font:inherit}';
+        document.head.appendChild(st); }
       var nav = document.getElementById('kkykcBalk'); if (nav && nav.parentNode) nav.parentNode.insertBefore(el, nav.nextSibling); else document.body.insertBefore(el, document.body.firstChild); }
     el.hidden = false; el.textContent = '';
-    var tekst = document.createElement('span'), knop = function (t, f) { var b = document.createElement('button'); b.type = 'button'; b.textContent = t; b.onclick = f;
-      b.style.cssText = 'padding:4px 12px;border-radius:14px;border:0;background:#e8630a;color:#fff;cursor:pointer;font:inherit'; el.appendChild(b); };
+    var tekst = document.createElement('span'), knop = function (t, f) { var b = document.createElement('button'); b.type = 'button'; b.textContent = t; b.onclick = f; el.appendChild(b); };
     el.appendChild(tekst);
     if (TST.wacht > 0) { tekst.textContent = 'Bewaarde gegevens van ' + wanneer(TST.oudste) + ' · nagaan of er nieuwe zijn…'; return; }
     if (TST.nieuw) { tekst.textContent = 'Nieuwe gegevens beschikbaar.'; knop('Vernieuwen', function () { location.reload(); }); return; }
     if (TST.fout) { tekst.textContent = 'Kon niet nagaan of er nieuwe gegevens zijn. Getoond: bewaarde gegevens van ' + wanneer(TST.oudste) + '.'; knop('Opnieuw', function () { location.reload(); }); return; }
     tekst.textContent = 'Je gegevens zijn up-to-date.'; setTimeout(function () { if (!TST.wacht && !TST.nieuw && !TST.fout) el.hidden = true; }, 2500);
+  }
+  /* B6b (A4, 21/11/2026): na een geslaagde wijziging de gegevens die deze pagina op het toestel bewaart meteen opnieuw ophalen en bewaren (op de achtergrond,
+     2 s na de laatste wijziging, max. 6 leesaanroepen in één aanroep 'bundel'), zodat de volgende opening weer meteen van het toestel komt. Vroeger bleef het toestel leeg
+     tot de volgende opening (= traag). Komt er intussen nog een wijziging, dan wordt het resultaat weggegooid (nooit verouderde gegevens bewaren). */
+  function naWijziging() {
+    if (!TST.beleid || !Object.keys(TST.gezien).length) return;
+    clearTimeout(TST.timer);
+    TST.timer = setTimeout(function () {
+      var n = TST.schrijf, a = acct(), calls = Object.keys(TST.gezien).map(function (k) { return TST.gezien[k]; })
+        .filter(function (c) { return c[0] !== 'getMedia' && tMag(c[0], c[1]); }).slice(-6);   /* de 6 laatst geopende (planner: weken) */
+      if (!calls.length || !a || !geldig(token)) return;
+      KKYKC.api('bundel', [calls]).then(function (r) {
+        if (n !== TST.schrijf || acct() !== a) return;
+        (r.data || []).forEach(function (x, i) { if (x && x.ok && x.v && x.data !== undefined) tZet(a + '|' + calls[i][0] + JSON.stringify(calls[i][1]), { t: Date.now(), v: x.v, d: x.data }); });
+        try { console.info('[KKYKC] na de wijziging opnieuw bewaard op het toestel: ' + calls.map(function (c) { return c[0]; }).join(', ')); } catch (e) {}
+      }, function () {});
+    }, 2000);
   }
   /* antwoord uit de bundel (voorladen) of een aparte aanroep; v = versie die we al hebben → {zelfde:true} */
   function haal(fn, a, k, v) {
@@ -134,7 +157,8 @@
             if (TST.nieuw) throw Object.assign(new Error('Er zijn nieuwe gegevens. Klik eerst bovenaan op Vernieuwen voor je iets wijzigt.'), { code: 'oud' });
             if (f.some(Boolean)) throw Object.assign(new Error('Kon niet nagaan of je gegevens nog kloppen. Herlaad de pagina voor je iets wijzigt.'), { code: 'oud' });
             return KKYKC.api(fn, args, v); }); }
-        var a0 = acct(); if (TST.beleid && a0) { var fns = TST.beleid.fns; tWis(function (k) { return k.indexOf(a0 + '|') === 0 && fns.some(function (f) { return k.indexOf('|' + f + '[') > 0; }); }); }   /* na een wijziging: volgende keer vers */
+        var a0 = acct(); if (TST.beleid && a0) { var fns = TST.beleid.fns; tWis(function (k) { return k.indexOf(a0 + '|') === 0 && fns.some(function (f) { return f !== 'getMedia' && k.indexOf('|' + f + '[') > 0; }); }); }   /* na een wijziging: volgende keer vers (B6b: afbeeldingen per id wijzigen nooit → blijven) */
+        TST.schrijf++;
       }
       if (!geldig(token)) { var e0 = new Error('Je aanmelding is verlopen. Meld je opnieuw aan.'); e0.code = 'verlopen'; uitloggen(); return Promise.reject(e0); }
       var body = { fn: fn, args: args || [], token: token }; if (v) body.v = v;
@@ -155,6 +179,7 @@
             if (r.code === 'rol' || r.code === 'test') { var a1 = acct(); if (a1) tWis(function (k) { return k.indexOf(a1 + '|') === 0; }); }   /* B3i: geen toegang meer → bewaarde gegevens weg */
             throw Object.assign(new Error(r.tekst || 'Fout'), { code: r.code, ms: ms }); }
           try { console.info('[KKYKC] ' + fn + ' ' + ms + ' ms (server ' + r.ms + ' ms)' + (r.zelfde ? ' ongewijzigd' : '')); } catch (e) {}   /* enkel naam + tijd, geen gegevens */
+          if (!lezen) naWijziging();   /* B6b (A4) */
           return { data: r.data, ms: ms, serverMs: r.ms, v: r.v, zelfde: !!r.zelfde };
         });
     },
@@ -164,7 +189,7 @@
       if (mag) { var g = geheugenLees(k); if (g) { delete VOOR[k]; try { console.info('[KKYKC] ' + fn + ' uit het tabgeheugen'); } catch (e) {} return Promise.resolve(g.d); } }
       var bewaar = function (d) { if (mag) geheugenZet(k, d); return d; };
       if (tMag(fn, a)) {   /* B3i: bewaard op het toestel → meteen tonen + op de achtergrond controleren */
-        var sl = tSleutel(fn, a);
+        var sl = tSleutel(fn, a); TST.gezien[fn + JSON.stringify(a)] = [fn, a];   /* B6b (A4): na een wijziging opnieuw ophalen */
         return tLees(sl).then(function (x) {
           if (tGeldig(x)) {
             TST.wacht++; if (!TST.oudste || x.t < TST.oudste) TST.oudste = x.t;

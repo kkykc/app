@@ -481,7 +481,7 @@ async function laadMedia(){
   if (nodig.length){ try { Object.assign(B.media, await gs("getMedia", nodig.slice(0, 40))); } catch(e){ return; } }
   document.querySelectorAll("img[data-mid]").forEach(x => { const d = B.media[x.dataset.mid]; if (d && x.getAttribute("src") !== d) x.src = d; });
 }
-function pasBibToe(r){ B.bib = r.bib; B.kan = r.kanBewerken; B.wie = r.wie; B.notities = r.notities || []; B.fout = r.fout || ""; controleerAccount(r.wie); }
+function pasBibToe(r){ B.bib = r.bib; B.kan = r.kanBewerken; B.kanT = !!r.kanToevoegen; B.wie = r.wie; B.notities = r.notities || []; B.fout = r.fout || ""; controleerAccount(r.wie); }
 async function laadBib(){
   try { pasBibToe(await gs("getBibliotheek")); }
   catch(e){ B.fout = e.message; }
@@ -620,7 +620,7 @@ function opmDialoog(f){
     const kop = p ? `<h2>💬 Opmerkingen · ${esc(p.type)}${p.dd ? " · "+esc(p.dd) : ""} · ${DAGEN[wd(p.dn)]} ${ddmm(p.dn)} · groep ${esc(p.groep)}</h2>` : `<h2>💬 Opmerkingen van sporters</h2>`;
     o.querySelector("#opmIn").innerHTML = `${kop}<p class="meta">Uit het trainingsformulier en de logboeken${O.bijgewerkt ? ", bijgewerkt "+esc(O.bijgewerkt.replace("T"," ")) : ""} (elke 15 min). Labels zijn trefwoorden, geen interpretatie. Vertrouwelijk: niet doorsturen of kopiëren naar andere kanalen.</p>
       ${filters}<div>${l.length ? l.map(opmItem).join("") : `<p class="meta">Geen opmerkingen${f.cel ? " bij deze training" : " voor deze keuze"}.</p>`}</div>${O.ingekort ? `<p class="meta">Lijst ingekort (te veel tekst); de oudste opmerkingen ontbreken.</p>` : ""}
-      <div id="fout" class="fout" role="alert"></div><div class="acties">${B.kan ? `<button class="btn rand" id="oV" title="Enkel hoofdtrainers: nu opnieuw uit de logboeken lezen (± 20 s)">↻ Nu opnieuw lezen</button>` : ""}<button class="btn rand" id="x">Sluiten</button></div>`;
+      <div id="fout" class="fout" role="alert"></div><div class="acties"><button class="btn rand" id="x">Sluiten</button></div>`;
     o.querySelector("#x").onclick = o.sluit;
     o.querySelectorAll("[data-og]").forEach(b => b.onclick = () => { O.groep = b.dataset.og; teken(); });
     o.querySelectorAll("[data-od]").forEach(b => b.onclick = () => { O.dagen = Number(b.dataset.od); teken(); });
@@ -638,7 +638,7 @@ function renderBib(){
   if (!B.bib){ v.innerHTML = `<div class="melding fout">Bibliotheek niet beschikbaar: ${esc(B.fout || "nog aan het laden…")}</div>`; return; }
   const subs = `<div class="tabs" role="group" aria-label="Onderdeel"><button type="button" data-sub="plannen" aria-pressed="${B.bibSub==="plannen"}">Plannen</button><button type="button" data-sub="oefeningen" aria-pressed="${B.bibSub==="oefeningen"}">Oefeningen</button></div>`;
   const zoek = `<input type="search" id="bZoek" placeholder="Zoeken…" value="${esc(B.bibZoek)}" aria-label="Zoeken">`;
-  let h = `<div class="bar">${subs}${zoek}${B.kan ? `<button class="btn klein" id="bNieuw">+ Nieuw${B.bibSub==="plannen" ? " plan" : "e oefening"}</button><button class="btn rand klein" id="bImp" title="Plannen en oefeningen importeren (bv. draaiboek C-groep)">⤓ Importeren</button>` : ""}</div>`;
+  let h = `<div class="bar">${subs}${zoek}${B.kan || B.kanT ? `<button class="btn klein" id="bNieuw">+ Nieuw${B.bibSub==="plannen" ? " plan" : "e oefening"}</button>` : ""}</div>`;
   const z = B.bibZoek.toLowerCase();
   if (B.bibSub === "plannen"){
     h += `<div class="tabs chips" role="group" aria-label="Soort"><button type="button" data-soort="" aria-pressed="${!B.bibSoort}">Alles</button>${Object.entries(SOORTEN).map(([k,t]) => `<button type="button" data-soort="${k}" aria-pressed="${B.bibSoort===k}">${t}</button>`).join("")}${B.kan ? `<button type="button" data-soort="_archief" aria-pressed="${B.bibSoort==="_archief"}">Archief</button>` : ""}</div>`;
@@ -670,7 +670,7 @@ function oefPopup(id){
   const blok = (k, t) => t ? `<div class="oefveld"><b>${k}</b>${tekst(t)}</div>` : "";
   const o = dlgStapel(`<h2>${esc(x.naam)}</h2><div class="meta">${esc([CATS[x.cat||"andere"], (x.groepen||[]).length ? "groep "+x.groepen.join(", ") : "", x.materiaal, x.spieren].filter(Boolean).join(" · "))}</div>${img(x.media, "groot")}
     ${blok("Uitvoering", x.uitleg)}${blok("Waarom", x.waarom)}${blok("Lichter", x.lichter)}${blok("Zwaarder", x.zwaarder)}${x.video ? `<p><a href="${esc(x.video)}" target="_blank" rel="noopener">▶ Video bekijken</a></p>` : ""}
-    <div class="acties">${B.kan ? `<button class="btn rand" id="oe">✎ Bewerken</button>` : ""}<button class="btn rand" id="ox">Sluiten</button></div>`);
+    <div class="acties">${magBew("o", id) ? `<button class="btn rand" id="oe">✎ Bewerken</button>` : ""}<button class="btn rand" id="ox">Sluiten</button></div>`);
   o.querySelector("#ox").onclick = o.sluit; o.querySelector("#ox").focus(); if (o.querySelector("#oe")) o.querySelector("#oe").onclick = () => { o.sluit(); oefEditor(id); };
   laadMedia();
 }
@@ -689,7 +689,7 @@ function planDetail(id){
     <section class="pblok noprint"><h3>Ingepland op</h3>${ingepland.length ? ingepland.map(k => `<div class="meta">${k.d.slice(8,10)}/${k.d.slice(5,7)} · groep ${esc(k.groep)} ${esc(k.dd||"")} · ${esc(k.type||"")}${B.kan ? ` <button type="button" class="linkknop" data-ont="${esc(k.cel)}">ontkoppel</button>` : ""}</div>`).join("") : `<div class="meta">Nog niet gekoppeld aan een training.</div>`}</section>
     ${p.bron ? `<p class="hist">Bron: ${esc(p.bron)} · laatst gewijzigd ${esc((p.gewijzigd||"").replace("T"," "))}</p>` : ""}
     <div id="fout" class="fout" role="alert"></div>
-    <div class="acties noprint"><button class="btn rand" id="pr">🖨 Afdrukken</button>${B.kan ? `<button class="btn rand" id="ip">🔗 Inplannen</button><button class="btn rand" id="e">✎ Bewerken</button><button class="btn rand" id="dup">⧉ Dupliceren</button><button class="btn rand" id="ar">${p.gearchiveerd ? "Terugzetten" : "Archiveren"}</button>` : ""}</div></div>`);
+    <div class="acties noprint"><button class="btn rand" id="pr">🖨 Afdrukken</button>${B.kan ? `<button class="btn rand" id="ip">🔗 Inplannen</button><button class="btn rand" id="e">✎ Bewerken</button><button class="btn rand" id="dup">⧉ Dupliceren</button><button class="btn rand" id="ar">${p.gearchiveerd ? "Terugzetten" : "Archiveren"}</button>`  : B.kanT ? `${magBew("p", id) ? `<button class="btn rand" id="e">✎ Bewerken</button>` : ""}<button class="btn rand" id="dup">⧉ Dupliceren</button>` : ""}</div></div>`);
   o.querySelector(".dlg").classList.add("breed");
   o.querySelector("#x").onclick = o.sluit;
   o.querySelectorAll("[data-oef]").forEach(b => b.onclick = () => oefPopup(b.dataset.oef));
@@ -697,9 +697,9 @@ function planDetail(id){
   o.querySelector("#pr").onclick = () => { document.body.classList.add("drukplan"); window.print(); setTimeout(() => document.body.classList.remove("drukplan"), 500); };
   const fout = t => o.querySelector("#fout").textContent = t;
   o.querySelectorAll("[data-ont]").forEach(b => b.onclick = async () => { const k = B.bib.koppelingen[b.dataset.ont]; try { bibNa(await gs("koppelPlan", [{cel:b.dataset.ont, d:k.d, groep:k.groep}], "")); o.sluit(); planDetail(id); } catch(e){ fout(e.message); } });
+  if (o.querySelector("#e")) o.querySelector("#e").onclick = () => { o.sluit(); planEditor(id); };   /* KKYKC-app B6a: ook trainer (eigen plan) */
+  if (o.querySelector("#dup")) o.querySelector("#dup").onclick = () => { o.sluit(); planEditor(id, true); };
   if (B.kan){
-    o.querySelector("#e").onclick = () => { o.sluit(); planEditor(id); };
-    o.querySelector("#dup").onclick = () => { o.sluit(); planEditor(id, true); };
     o.querySelector("#ar").onclick = async () => { try { bibNa(await gs("archiveerPlan", id, !p.gearchiveerd)); o.sluit(); renderBib(); melding(p.gearchiveerd ? "Plan teruggezet." : "Plan gearchiveerd."); } catch(e){ fout(e.message); } };
     o.querySelector("#ip").onclick = () => { o.sluit(); inplanDialoog(id); };
   }
@@ -994,7 +994,11 @@ function pasToe(r, tl){ S.meta = r.meta; S.jaar = r.meta.jaar; S.plan = (r.plan|
 function cacheStaat(){ return KC.kopie({r:{meta:S.meta, plan:S.plan.map(({dn, ...x}) => x)}, tl:{items:S.items, vandaag:S.vandaag}, bib:{bib:B.bib, kanBewerken:B.kan, wie:B.wie, notities:B.notities, fout:B.fout}, om:{items:O.items, bijgewerkt:O.bijgewerkt, van:O.van, tot:O.tot, fout:O.fout, ingekort:O.ingekort}}); }
 async function haalAlles(){
   const jaren = await gs("getJaren"); if (!jaren.length) throw new Error("Geen jaar ingesteld.");
-  const j = Number(jaren[0]?.jaar ?? jaren[0]);
+  /* B6b (A1, 21/11/2026): het ISO-jaar van vandaag als dat in de lijst staat, anders het nieuwste (zoals jaarCfg_ op de server). Vroeger altijd het nieuwste:
+     een trainer ziet ook jaren die enkel in Planning KKYKC staan → zodra er 2027-weken gepland zijn, opende het portaal op 2027 i.p.v. de huidige week. */
+  const lijst = jaren.map(x => Number(x?.jaar ?? x)), d0 = new Date(), t0 = new Date(Date.UTC(d0.getFullYear(), d0.getMonth(), d0.getDate()));
+  t0.setUTCDate(t0.getUTCDate() + 3 - ((t0.getUTCDay() + 6) % 7));
+  const j = lijst.includes(t0.getUTCFullYear()) ? t0.getUTCFullYear() : lijst[0];
   const stP = Promise.resolve(null);   /* KKYKC-app: geen browsercache */   // tegelijk: vingerafdruk van wat we nu ophalen
   B.fout = "";
   const [r, tl, , om] = await Promise.all([gs("getPlanning", j, false, true), gs("getTrainerslog", j), laadBib(), laadOpm()]);
@@ -1095,4 +1099,7 @@ function appStart(){
   if (KKYKC.aangemeld()) appLaad(); else appAanmeldKaart("");
 }
 appStart();
+/* B6a (21/11/2026): mag dit item bewerkt worden? Hoofdtrainer alles; trainer enkel items die hij zelf in de app toevoegde (bib.eigen van de server).
+   Enkel voor de knoppen: de server (ApiBib.gs) controleert hetzelfde. s = "p" (plan) of "o" (oefening). */
+function magBew(s, id){ return !!B.kan || (!!B.kanT && !!B.bib && ((B.bib.eigen || {})[s] || []).indexOf(id) >= 0); }
 </script></body></html>

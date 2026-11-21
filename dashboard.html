@@ -2975,6 +2975,9 @@ toegangTeken = function(o, t){
   var mislukt = function(b, wat){ return function(e){ b.disabled = false; melding(wat + " mislukt (" + esc((e && e.message) || "fout") + ").", "fout"); }; };
   var teken = function(r){
     appPilotTel(r);
+    /* B6c: na de lancering (app_live) is dit de enige aanvraagweg → "Toegang tot de app" i.p.v. testers */
+    if (r.live){ d.querySelector("h4").textContent = "Toegang tot de app"; d.querySelector("#pilotToe").textContent = "Toegang geven";
+      d.querySelector("p.muted").textContent = "Wie zich aanmeldt zonder rol, vraagt op de startpagina toegang aan als sporter, trainer of hoofdtrainer; de aanvraag verschijnt hier. Trainer en hoofdtrainer komen bij Toestaan ook in Toegangsbeheer. Sporters: zet hun Koppeling in Trainingsdata (tab Koppeling)."; }
     /* aanvragen (open en afgewezen) */
     var a = d.querySelector("#pilotAanv"); a.textContent = "";
     var aanv = r.aanvragen || [];
@@ -2987,10 +2990,10 @@ toegangTeken = function(o, t){
         var tr = document.createElement("tr"); if (x.status === "afgewezen") tr.style.opacity = "0.6";
         var tn = cel(tr, x.naam); tn.appendChild(document.createElement("br"));
         var kl = document.createElement("small"); kl.className = "muted"; kl.textContent = x.email + " · " + String(x.tijd || "").replace("T", " "); tn.appendChild(kl);
-        cel(tr, (PILOT_VRAAG[x.rol] || x.rol) + (x.status === "afgewezen" ? " (afgewezen)" : ""));
+        cel(tr, (PILOT_VRAAG[x.rol] || x.rol) + (x.rol === "sporter" ? (x.toestemming ? " · 16+/toestemming ouder aangevinkt" : " · zonder vinkje toestemming") : "") + (x.status === "afgewezen" ? " (afgewezen)" : ""));   /* B6c */
         var s = pilotRolKeuze(x.rol === "sporter" ? "tester" : x.rol); cel(tr, "").appendChild(s);
         var td = cel(tr, ""); td.style.whiteSpace = "nowrap";
-        td.appendChild(knop("Toestaan", function(b){ gs("pilotZet", x.email, s.value).then(function(r2){ teken(r2); melding(esc(x.email) + " heeft nu testtoegang als " + esc(PILOT_ROL[s.value]) + "."); }, mislukt(b, "Toestaan")); }));
+        td.appendChild(knop("Toestaan", function(b){ gs("pilotZet", x.email, s.value).then(function(r2){ teken(r2); melding(esc(x.email) + " heeft nu " + (r2.live ? "toegang" : "testtoegang") + " als " + esc(PILOT_ROL[s.value]) + "."); }, mislukt(b, "Toestaan")); }));
         if (x.status === "open"){ td.appendChild(document.createTextNode(" ")); td.appendChild(knop("Afwijzen", function(b){ gs("pilotAfwijzen", x.email).then(teken, mislukt(b, "Afwijzen")); })); }
         ba.appendChild(tr);
       });
@@ -2998,7 +3001,7 @@ toegangTeken = function(o, t){
     }
     /* testers */
     var l = d.querySelector("#pilotLijst"); l.textContent = "";
-    if (!r.pilot.length){ l.textContent = "Nog geen testers toegevoegd in de app."; return; }
+    if (!r.pilot.length){ l.textContent = r.live ? "Nog niemand via de app toegang gegeven." : "Nog geen testers toegevoegd in de app."; return; }
     var tb = document.createElement("table"); tb.className = "tg-t pilot-t";
     tb.innerHTML = "<thead><tr><th>E-mail</th><th>Naam</th><th>Rol in de app</th><th>Toegevoegd</th><th></th></tr></thead>";
     var bd = document.createElement("tbody");

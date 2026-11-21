@@ -705,7 +705,7 @@ async function openVoorstel(n){
     q("#v-ok").disabled = true; q("#v-ok").textContent = "Bewaren…";
     try {
       const r = await gs("plannerStelVoor", S.jaar, S.week, n, true, V.controle);
-      o.remove(); if (n === 1 && r.sessies) naWijziging(r.sessies); else await laad(S.jaar, S.week);   /* KKYKC-app (B3e) */
+      o.remove(); if (r.pkop) ppNaVoorstel(r.pkop); if (n === 1 && r.sessies) naWijziging(r.sessies); else await laad(S.jaar, S.week);   /* KKYKC-app (B3e, B6b: koppelingen) */
       toast(r.bewaard + " sessie(s) als concept bewaard" + (r.verwijderd ? ", " + r.verwijderd + " oud voorstel vervangen" : "") + ". Pas aan waar nodig en publiceer daarna.");
     } catch (e) { q("#v-fout").textContent = e.message; q("#v-opn").hidden = false; q("#v-ok").textContent = "Bewaren als concept"; }
   };
@@ -1517,5 +1517,16 @@ naWijziging = function(sessies){
       gs("plannerKoppelPlan", { cel: s.cel, d: s.datum, groep: s.groep, dd: s.dagdeel || "", plan: k.plan }).then(function(r){ PP.bib.koppelingen = r.koppelingen || PP.bib.koppelingen; }, function(){}); });
 };
 appStart(function(){ plannerStart(); ppLaad().then(function(){ if (S.d) toonHoofd(); }, function(){}); });
+/* B6b (A3, 21/11/2026): na het bewaren van een weekvoorstel/mesocyclus zet de server de koppelingen van plannen over naar de nieuwe sessies (zelfde dag,
+   dagdeel en groep). Hier: koppelingen bijwerken (kaart "Plan: titel") en melden wat niet overgezet kon worden. Geen gegevens van gebruikers in de melding. */
+function ppNaVoorstel(x){
+  if (!x) return;
+  if (PP.bib && x.koppelingen) PP.bib.koppelingen = x.koppelingen;
+  var t = [];
+  if (x.overgezet) t.push(x.overgezet + " gekoppeld(e) plan(nen) meegenomen naar de nieuwe sessies.");
+  if (x.verloren) t.push(x.verloren + " koppeling(en) konden niet overgezet worden (geen sessie op dezelfde dag, hetzelfde dagdeel en dezelfde groep): koppel het plan opnieuw in de sessie.");
+  if (x.bevestigd) t.push(x.bevestigd + " vervangen concept(en) had(den) al een bevestiging in het trainerslog.");
+  if (t.length) melding(t.join(" "), x.verloren || x.bevestigd ? "fout" : "");
+}
 </script>
 </body></html>

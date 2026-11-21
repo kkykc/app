@@ -53,7 +53,7 @@
       <p id="rollen"></p>
       <p class="zacht" id="balkTip">Wissel van pagina met de balk bovenaan.</p>
       <div id="aanvraag" hidden>
-        <h2 style="font-size:18px;margin:6px 0 8px">Testtoegang aanvragen</h2>
+        <h2 style="font-size:18px;margin:6px 0 8px" id="aanvraagKop">Testtoegang aanvragen</h2>
         <p id="aanvraagTekst"></p>
         <div id="sporterUitleg" hidden class="uitleg">
           <p><b>Sporter?</b> Vul na elke training het trainingsformulier in, met dit Google-account. Zodra de hoofdtrainer je account gekoppeld heeft, zie je hier je trainingen, je planning en je evolutie.</p>
@@ -67,6 +67,8 @@
             <label><input type="radio" name="rol" value="hoofd"> Hoofdtrainer</label>
           </div>
           <input id="aanvraagNaam" maxlength="60" placeholder="Je voor- en achternaam" autocomplete="name">
+          <label id="toestemmingRij" style="display:flex;gap:8px;align-items:flex-start;margin:8px 0;cursor:pointer"><input type="checkbox" id="aanvraagToestemming" style="margin-top:3px">
+            <span>Ik ben 16 jaar of ouder, <b>of</b> een ouder gaf toestemming om de app te gebruiken (zie <a href="privacy.html" style="color:inherit">Privacy</a>).</span></label>
           <button class="lijn" id="aanvraagKnop">Testtoegang aanvragen</button>
           <p class="zacht" id="aanvraagUitleg">De hoofdtrainer keurt je aanvraag goed in de app. Je hoeft geen toegang tot je Drive te geven.</p>
         </div>
@@ -79,7 +81,7 @@
       <button class="lijn" id="afmelden">Afmelden</button>
     </div>
   </div>
-  <p class="zacht" style="margin-top:18px">Testversie – nog niet verspreiden. · <a href="privacy.html" style="color:inherit">Privacy</a> · versie <span id="versie">278f11c75a</span></p>
+  <p class="zacht" style="margin-top:18px"><span id="testversie">Testversie – nog niet verspreiden. · </span> <a href="privacy.html" style="color:inherit">Privacy</a> · versie <span id="versie">0439cda37b</span></p>
 </main>
 <script>
 (function () {
@@ -91,6 +93,7 @@
     toon(true); tekst($('wie'), 'Even geduld…'); $('rollen').textContent = '';
     KKYKC.api('wieBenIk').then(function (r) {
       var d = r.data;
+      $('testversie').hidden = !!d.live;   /* B6c: na de lancering geen 'Testversie' meer */
       tekst($('wie'), 'Je bent ' + (d.naam || d.email) + (d.naam ? ' (' + d.email + ')' : '') + '.');
       var el = $('rollen'); el.textContent = '';
       if (!d.rollen.length) el.textContent = d.tester ? 'Nog geen rol gekoppeld aan dit account.' : '';
@@ -116,17 +119,21 @@
     if (d.form_url) $('naarForm').href = d.form_url;
     var a = d.aanvraag, el = $('aanvraagTekst');
     $('aanvraagForm').hidden = true; $('sporterUitleg').hidden = true; el.className = '';
-    if (a && a.status === 'open') { el.textContent = 'Je aanvraag als ' + (ROLNAAM[a.rol] || a.rol) + ' is ontvangen. De hoofdtrainer geeft je testtoegang; kom later terug of meld je opnieuw aan.'; $('sporterUitleg').hidden = a.rol !== 'sporter'; return; }
+    $('aanvraagKop').textContent = d.live || d.tester ? 'Toegang aanvragen' : 'Testtoegang aanvragen';   /* B6c */
+    if (a && a.status === 'open') { el.textContent = 'Je aanvraag als ' + (ROLNAAM[a.rol] || a.rol) + ' is ontvangen. De hoofdtrainer geeft je ' + (d.live ? 'toegang' : 'testtoegang') + '; kom later terug of meld je opnieuw aan.'; $('sporterUitleg').hidden = a.rol !== 'sporter'; return; }
     if (a && a.status === 'afgewezen') { el.textContent = 'Je aanvraag werd niet goedgekeurd. Contacteer de hoofdtrainer.'; return; }
     /* tester zonder rol (bv. sporter zonder Koppeling) of, na de lancering, iedereen zonder rol: zelfde aanvraag */
     el.textContent = d.tester ? 'Je account is nog niet gekoppeld aan een rol in de app. Vraag hieronder toegang aan.' : 'De KKYKC-app is nog in test. Vraag hieronder testtoegang aan.';
     $('aanvraagKnop').textContent = d.tester ? 'Toegang aanvragen' : 'Testtoegang aanvragen';
-    $('aanvraagForm').hidden = false; $('sporterUitleg').hidden = gekozenRol() !== 'sporter';
+    $('aanvraagForm').hidden = false; rolGewijzigd();
   }
-  Array.prototype.forEach.call(document.querySelectorAll('input[name=rol]'), function (x) { x.onchange = function () { $('sporterUitleg').hidden = gekozenRol() !== 'sporter'; }; });
+  /* B6c: toestemming (16+ of ouder) enkel bij een aanvraag als sporter; de server controleert en bewaart het vinkje bij de aanvraag */
+  function rolGewijzigd() { $('sporterUitleg').hidden = gekozenRol() !== 'sporter'; $('toestemmingRij').hidden = gekozenRol() !== 'sporter'; }
+  Array.prototype.forEach.call(document.querySelectorAll('input[name=rol]'), function (x) { x.onchange = rolGewijzigd; });
   $('aanvraagKnop').onclick = function () {
+    if (gekozenRol() === 'sporter' && !$('aanvraagToestemming').checked) { tekst($('aanvraagTekst'), 'Vink aan dat je 16 jaar of ouder bent of dat een ouder toestemming gaf.', true); return; }
     var b = $('aanvraagKnop'); b.disabled = true;
-    KKYKC.api('testAanvraag', [gekozenRol(), $('aanvraagNaam').value]).then(function () { b.disabled = false; laad(); },
+    KKYKC.api('testAanvraag', [gekozenRol(), $('aanvraagNaam').value, gekozenRol() === 'sporter' && $('aanvraagToestemming').checked]).then(function () { b.disabled = false; laad(); },
       function (e) { b.disabled = false; tekst($('aanvraagTekst'), e.message, true); });
   };
   if (!KKYKC.ingesteld()) { tekst($('uit').firstElementChild, 'De app is nog niet ingesteld (client-ID of API-adres ontbreekt).', true); return; }
