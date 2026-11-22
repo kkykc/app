@@ -20,11 +20,11 @@
 </script>
 <style>
 :root{--or:#C96008;--or-ink:#9A4700;--geel:#FDE68A;--bg:#fff;--fg:#1C1712;--mu:#6E6257;--ln:#E8DDD0;--kaart:#FFFBF6;--beige:#E2D3C3;--grijs:#ECE7E1;
-  --ok:#2F7D3B;--ok-bg:#DCEFDD;--warn:#9A6A00;--warn-bg:#FCEBB6;--oranje:#B4560B;--oranje-bg:#FAD9BC;--blauw:#2F6B8F;--blauw-bg:#DCEAF3;color-scheme:light}
+  --ok:#2F7D3B;--ok-bg:#DCEFDD;--warn:#9A6A00;--warn-bg:#FCEBB6;--oranje:#B4560B;--oranje-bg:#FAD9BC;--blauw:#2F6B8F;--blauw-bg:#DCEAF3;--bad:#A8261B;--bad-bg:#F6CFC9;--ctl:#2F6B8F;--atl:#C2185B;--tsb:#C96008;color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17130F;--fg:#F3ECE4;--mu:#B2A595;--ln:#3A3027;--kaart:#211B15;--beige:#4A3B2E;--grijs:#2C2620;--or-ink:#F0A060;
-  --ok:#7FCB8A;--ok-bg:#1F3A24;--warn:#E9C25A;--warn-bg:#3D3112;--oranje:#F0A060;--oranje-bg:#43280F;--blauw:#7DB3D6;--blauw-bg:#1C2D3A;color-scheme:dark}}
+  --ok:#7FCB8A;--ok-bg:#1F3A24;--warn:#E9C25A;--warn-bg:#3D3112;--oranje:#F0A060;--oranje-bg:#43280F;--blauw:#7DB3D6;--blauw-bg:#1C2D3A;--bad:#F08A7E;--bad-bg:#47201B;--ctl:#7DB3D6;--atl:#F48FB1;--tsb:#F0A060;color-scheme:dark}}
 :root[data-theme="dark"]{--bg:#17130F;--fg:#F3ECE4;--mu:#B2A595;--ln:#3A3027;--kaart:#211B15;--beige:#4A3B2E;--grijs:#2C2620;--or-ink:#F0A060;
-  --ok:#7FCB8A;--ok-bg:#1F3A24;--warn:#E9C25A;--warn-bg:#3D3112;--oranje:#F0A060;--oranje-bg:#43280F;--blauw:#7DB3D6;--blauw-bg:#1C2D3A;color-scheme:dark}
+  --ok:#7FCB8A;--ok-bg:#1F3A24;--warn:#E9C25A;--warn-bg:#3D3112;--oranje:#F0A060;--oranje-bg:#43280F;--blauw:#7DB3D6;--blauw-bg:#1C2D3A;--bad:#F08A7E;--bad-bg:#47201B;--ctl:#7DB3D6;--atl:#F48FB1;--tsb:#F0A060;color-scheme:dark}
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--fg);font-size:15px}
 header{background:var(--or);color:#fff;padding:12px 16px}
@@ -80,6 +80,12 @@ h3{margin:14px 0 6px}
 #mtbalk.nieuw{background:var(--oranje-bg);border-color:var(--oranje)}#mtbalk.ok{background:var(--ok-bg);border-color:var(--ok)}
 #mtbalk button{margin-left:auto;background:var(--or);color:#fff;border:0;border-radius:6px;padding:6px 14px;font:inherit;font-size:13px;font-weight:bold;cursor:pointer}
 @media (max-width:930px){#mtbalk{margin:10px 12px 0}}
+/* B7 (22/11/2026, app): trainingsstatus, compliance, grafiek zoals het dashboard */
+.tegels{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin:8px 0}
+.tegel{background:var(--kaart);border:1px solid var(--ln);border-radius:8px;padding:8px 10px}.tegel .k{font-size:12px;color:var(--mu)}.tegel .v{font-size:22px;font-weight:bold;margin:2px 0}.tegel .f{font-size:12px;color:var(--mu)}
+svg.pmc text{fill:var(--mu);font-family:Arial,Helvetica,sans-serif;font-size:11px}svg.pmc .grid{stroke:var(--ln)}
+.legende i.bol{width:9px;height:9px;border:0;border-radius:50%}
+details.ex{border-color:var(--ln)}
 </style></head>
 <body>
 <header><div class="hin"><div><h1>Mijn trainingen</h1><div id="wie">Laden…</div></div>
@@ -387,7 +393,8 @@ function teken(){
   else h += '<div class="scroll"><table><thead><tr><th>Datum</th><th>Soort</th><th>km</th><th>Tijd</th><th>Gevoel</th><th>RPE</th></tr></thead><tbody>' +
     D.laatste.map(function(t){ return '<tr><td>' + esc(datum(t.d)) + (t.dd ? ' ' + esc(t.dd) : '') + '</td><td>' + esc(t.soort) + (t.nota ? '<div class="mu">' + esc(t.nota) + '</div>' : '') +
       '</td><td>' + esc(t.afstand) + '</td><td>' + esc(t.tijd) + '</td><td>' + esc(t.gevoel) + '</td><td>' + esc(t.rpe) + '</td></tr>'; }).join('') + '</tbody></table></div>';
-  h += blokVorm() + blokWeken() + blokTesten() + blokWedstrijden();   /* v8 */
+  var J = null; try { J = jaarBeeld(); } catch (e) { J = null; }   /* B7: zonder jaarplanning (groep C, oude API) de vroegere blokken */
+  h += (J ? blokStatus(J) + blokPmc(J) + blokCompliance(J) : blokVorm() + blokWeken()) + blokTesten() + blokWedstrijden();   /* v8 · B7 */
   h += '<p class="mu">Je ziet hier enkel je eigen gegevens. Iets niet juist? Pas het aan in je logboek of vraag het aan je trainer.</p>';
   document.getElementById('inhoud').innerHTML = h;
 }
@@ -511,6 +518,205 @@ function blokBoodschap(){
   return W.teksten.slice().sort(function(a, b){ return (b.s || 0) - (a.s || 0); }).map(function(t){
     return '<div class="dag" style="border-left:4px solid var(--ok)"><b>' + esc(t.titel || 'Van je trainer') + (t.s ? ' <span class="mu">· ' + t.s + '</span>' : '') + '</b><div class="inh">' + esc(t.tekst) + '</div></div>'; }).join('');
 }
+
+/* ---------- B7 (22/11/2026, enkel de app): jaarbeeld zoals het dashboard ----------
+   D.pj = geplande trainingen van je groep van het hele jaar (API mijnData, trainerslog toegepast). Daarmee: dezelfde koppeling gepland ↔ ingevuld,
+   compliance, fitheid/vermoeidheid/vorm (met fitheid volgens plan) en het vooruitzicht (trainingsstatus) als op het dashboard.
+   Zonder D.pj (groep C, of de API gaf het niet) blijven de vroegere blokken (blokVorm, blokWeken) staan. */
+var PMC_WEKEN = 8;
+try { var pw0 = localStorage.getItem('kkykc-mt-pmc'); if (pw0 === '8' || pw0 === '16' || pw0 === '0') PMC_WEKEN = Number(pw0); } catch (e) {}
+function kiesPmc(w){ PMC_WEKEN = w; try { localStorage.setItem('kkykc-mt-pmc', String(w)); } catch (e) {} teken(); var e = document.getElementById('mijnvorm'); if (e) e.scrollIntoView(); }
+function pmcLoop(loads, start, eind){   /* CTL 42 d, ATL 7 d, TSB = CTL − ATL van gisteren (zoals TrainingPeaks en het dashboard) */
+  var ctl = 0, atl = 0, uit = [];
+  for (var n = start; n <= eind; n++){ var tsb = ctl - atl, L = loads[n] || 0; ctl += (L - ctl) / 42; atl += (L - atl) / 7; uit.push({n: n, L: L, ctl: ctl, atl: atl, tsb: tsb}); }
+  return uit;
+}
+function somV(a){ return a.reduce(function(s, v){ return s + (v || 0); }, 0); }
+function jaarBeeld(){
+  if (!D || !D.pj || !D.pj.length) return null;
+  var vand = dnr(D.vandaag), maandag = function(n){ return n - wdag(n); };
+  var pl = D.pj.map(function(q){
+    var p = {d: q.d, dn: dnr(q.d), dd: q.dd || '', cat: q.cat || 'overig', z: q.z || [], lm: q.lm || 0, lt: q.lt || '', duur: q.duur || 0, km: q.km, s: q.s || '', inh: q.rem ? 'met rem' : ''};
+    p.tss = (p.z.some(function(v){ return v; }) || p.lm) ? planTss(p) : 0;
+    p.rpeExp = p.duur > 0 && p.cat !== 'overig' ? rpeVanTssUur(p.tss / (p.duur / 60)) : null;
+    return p; });
+  var inv = (D.hist || []).map(function(t){ return {d: t.d, dd: t.dd, soort: t.soort, afstand: t.afstand, tijd: t.tijd, rpe: t.rpe}; });
+  var bew = D.logboek; D.logboek = inv; bereidLogboek(); D.logboek = bew;
+  var actief = {}, perDag = {};
+  inv.forEach(function(e){ e.dn = dnr(e.d); actief[maandag(e.dn)] = 1; (perDag[e.dn] = perDag[e.dn] || []).push(e); });
+  /* koppeling (koppel() van het dashboard): week zonder invoer = niet gelogd; dezelfde dag en categorie = uitgevoerd; anders gemist */
+  var kp = [], open = [];
+  pl.filter(function(p){ return p.dn <= vand && p.s !== 'n'; }).forEach(function(p){
+    var w = maandag(p.dn), r = {p: p, dn: p.dn, w: w, st: '', e: null};
+    if (!actief[w]){ if (p.dn === vand) return; r.st = 'nl'; kp.push(r); return; }
+    var kand = (perDag[p.dn] || []).filter(function(e){ return !e.m && (e.cat === p.cat || (p.cat === 'overig' && e.cat)); });
+    if (p.dd && kand.some(function(e){ return e.dd; })) kand.sort(function(a, b){ return (a.dd !== p.dd) - (b.dd !== p.dd); });
+    if (kand.length){ var e = kand[0]; e.m = p; r.st = 'u'; r.e = e; }
+    else { if (p.dn === vand) return; r.st = 'g'; open.push(r); }
+    kp.push(r);
+  });
+  inv.forEach(function(e){
+    if (e.m) return;
+    if (!e.cat){ open.forEach(function(r){ if (r.dn === e.dn && r.st === 'g') r.st = 'tc'; }); e.twijfel = true; return; }
+    var b = open.filter(function(r){ return Math.abs(r.dn - e.dn) === 1 && r.st === 'g' && r.p.cat === e.cat; })[0];
+    if (b){ b.st = 'tc'; e.twijfel = true; return; }
+    e.extra = true;
+  });
+  /* belasting per training (zelfde volgorde als het dashboard) en per dag */
+  var loads = {}, plLoads = {};
+  inv.forEach(function(e){ var b = belasting(e, e.m || null); e.load = b.l || 0; loads[e.dn] = (loads[e.dn] || 0) + e.load;
+    e.dRpe = e.m && e.rpeN != null && e.m.rpeExp != null ? e.rpeN - e.m.rpeExp : null; });
+  pl.forEach(function(p){ plLoads[p.dn] = (plLoads[p.dn] || 0) + p.tss; });
+  var p0 = D.jaar ? Math.round(Date.UTC(Number(D.jaar), 0, 1) / 864e5) : vand;
+  var start = Math.min.apply(null, pl.map(function(p){ return p.dn; }).concat([p0]));
+  var reeks = pmcLoop(loads, start, vand), plReeks = pmcLoop(plLoads, start, vand + 13);
+  var nu = reeks[reeks.length - 1], gist = reeks[reeks.length - 2] || {ctl: 0, atl: 0};
+  /* per week */
+  var W = {};
+  kp.forEach(function(r){ var o = W[r.w] = W[r.w] || {w: r.w, gp: 0, u: 0, g: 0, nl: 0, tc: 0};
+    o.gp++; if (r.st === 'u') o.u++; else if (r.st === 'g') o.g++; else if (r.st === 'nl') o.nl++; else o.tc++; });
+  Object.keys(W).forEach(function(k){ var o = W[k];
+    o.b = o.u + o.g; o.compl = o.b ? o.u / o.b : null; o.gelogd = o.nl === 0;
+    o.tp = somV(pl.filter(function(p){ return maandag(p.dn) === o.w && p.s !== 'n' && (p.dn < vand || (p.dn === vand && kp.some(function(r){ return r.p === p && r.st === 'u'; }))); }).map(function(p){ return p.tss; }));
+    var iw = inv.filter(function(e){ return maandag(e.dn) === o.w; });
+    o.tu = somV(iw.map(function(e){ return e.load; })); o.ex = iw.filter(function(e){ return e.extra; }).length;
+    var dr = iw.filter(function(e){ return e.dRpe != null; }).map(function(e){ return e.dRpe; }); o.dr = dr.length ? somV(dr) / dr.length : null;
+    o.nGeschrapt = pl.filter(function(p){ return maandag(p.dn) === o.w && p.s === 'n' && p.dn <= vand; }).length; });
+  var hw = maandag(vand), som = function(l, k){ return somV(l.map(function(o){ return o[k]; })); };
+  var alle = Object.keys(W).map(function(k){ return W[k]; }), l4 = alle.filter(function(o){ return o.w >= hw - 28 && o.w < hw; }), l1 = W[hw - 7] || null;
+  var compl = {seizoen: som(alle, 'b') ? som(alle, 'u') / som(alle, 'b') : null, u: som(alle, 'u'), b: som(alle, 'b'), nl: som(alle, 'nl'), tc: som(alle, 'tc'),
+    vier: som(l4, 'b') ? som(l4, 'u') / som(l4, 'b') : null, u4: som(l4, 'u'), b4: som(l4, 'b'), l1: l1,
+    geschrapt: pl.filter(function(p){ return p.s === 'n' && p.dn <= vand; }).length, extra: inv.filter(function(e){ return e.extra; }).length };
+  return {vand: vand, pl: pl, inv: inv, kp: kp, W: W, reeks: reeks, plReeks: plReeks, ctl: nu.ctl, atl: nu.atl, tsb: nu.tsb, ctlG: gist.ctl, atlG: gist.atl, compl: compl, proj: projectieMijn(pl, inv, vand, gist)};
+}
+/* vooruitzicht (projectie() van het dashboard): plan van de komende weken × eigen uitvoering van de laatste 28 dagen */
+function projectieMijn(pl, inv, vand, gist){
+  if (!inv.length) return null;
+  var plan = {}; pl.forEach(function(p){ plan[p.dn] = (plan[p.dn] || 0) + p.tss; });
+  var H = Math.min(42, Math.max.apply(null, pl.map(function(p){ return p.dn; })) - vand + 1); if (H < 14) return null;
+  var v28 = vand - 28, plV = somV(pl.filter(function(p){ return p.dn >= v28 && p.dn < vand; }).map(function(p){ return p.tss; }));
+  var ses = inv.filter(function(e){ return e.dn >= v28 && e.dn < vand && e.load > 0; }), uV = somV(ses.map(function(e){ return e.load; }));
+  if (!plV) return null;
+  var r = Math.min(2, uV / plV), tssL = pl.filter(function(p){ return p.dn >= v28 && p.dn < vand && p.tss > 0; }).map(function(p){ return p.tss; }).sort(function(a, b){ return a - b; });
+  var perSes = ses.length ? uV / ses.length : (tssL.length ? tssL[Math.floor(tssL.length / 2)] : 50);
+  var run = function(f){ var ctl = gist.ctl, atl = gist.atl; for (var n = vand; n < vand + H; n++){ var L = f(n); ctl += (L - ctl) / 42; atl += (L - atl) / 7; } return ctl; };
+  return {H: H, r: r, perSes: perSes, nu: gist.ctl, zo: run(function(n){ return (plan[n] || 0) * r; }), plan: run(function(n){ return plan[n] || 0; }), extra: run(function(n){ return (plan[n] || 0) * r + perSes / 7; })};
+}
+function pctT(x){ return x == null || !isFinite(x) ? '–' : Math.round(x * 100) + ' %'; }
+function complPilM(x, uitleg){ return '<span class="pil ' + (x == null ? 'p-grijs' : x >= 0.9 ? 'p-ok' : x >= 0.6 ? 'p-warn' : 'p-bad') + '"' + (uitleg ? ' title="' + esc(uitleg) + '"' : '') + '>' + pctT(x) + '</span>'; }
+
+/* ---- trainingsstatus ---- */
+function blokStatus(J){
+  var p = J.proj, h = '<h2>Mijn trainingsstatus</h2>';
+  if (!p) return h + '<p class="mu">Nog te weinig ingevulde trainingen of planning om je trainingsstatus te berekenen (ingevulde trainingen in de laatste 4 weken en minstens 2 weken planning vooruit nodig).</p>';
+  var wk = Math.round(p.H / 7), dz = p.zo - p.nu, st = dz > 2 ? ['p-ok', 'opbouw', 'Je bouwt fitheid op.', 'ok'] : dz < -2 ? ['p-bad', 'afbouw', 'Je fitheid daalt.', 'bad'] : ['p-warn', 'onderhoud', 'Je houdt je fitheid op peil, maar bouwt niet verder op.', 'warn'];
+  var t = st[2] + ' Je deed de laatste 4 weken ' + pctT(p.r) + ' van de geplande belasting. Train je zo verder, dan gaat je fitheid de komende ' + wk + ' weken van ' + fmt(p.nu, 0) + ' naar ' + fmt(p.zo, 0) + '.';
+  if (dz <= 2) t += ' Met één training per week extra kom je op ' + fmt(p.extra, 0) + (p.plan > p.zo + 1 ? ', als je het schema volledig volgt op ' + fmt(p.plan, 0) : '') + '.';
+  if (p.plan < p.nu - 2) t += ' Ook het schema zelf plant de komende weken minder belasting (fitheid volgens plan ' + fmt(p.plan, 0) + '): dat is meestal bewust, bv. een rustweek of de aanloop naar een wedstrijd.';
+  h += '<div class="tegels">' +
+    '<div class="tegel"><div class="k">Status</div><div class="v"><span class="pil ' + st[0] + '" style="font-size:15px">' + st[1] + '</span></div><div class="f">komende ' + wk + ' weken</div></div>' +
+    '<div class="tegel"><div class="k">Fitheid nu</div><div class="v">' + fmt(p.nu, 0) + '</div><div class="f">gisteren</div></div>' +
+    '<div class="tegel"><div class="k">Zo verder</div><div class="v">' + fmt(p.zo, 0) + '</div><div class="f">plan × ' + fmt(p.r, 2) + '</div></div>' +
+    '<div class="tegel"><div class="k">Volgens plan</div><div class="v">' + fmt(p.plan, 0) + '</div><div class="f">100 % van het schema</div></div>' +
+    '<div class="tegel"><div class="k">+1 training/week</div><div class="v">' + fmt(p.extra, 0) + '</div><div class="f">+' + fmt(p.perSes, 0) + ' belasting per week</div></div></div>';
+  h += '<div class="dag" style="border-left:4px solid var(--' + st[3] + ')">' + esc(t) + '</div>';
+  h += '<details class="ex"><summary>Wat betekent dit?</summary><ul>' +
+    '<li><b style="display:inline">Fitheid</b> is je gemiddelde trainingsbelasting van de laatste 6 weken. Ze stijgt als je regelmatig traint en daalt als je minder traint.</li>' +
+    '<li><b style="display:inline">Opbouw</b>: je fitheid stijgt meer dan 2 punten. Zo word je op termijn sterker en sneller.</li>' +
+    '<li><b style="display:inline">Onderhoud</b>: je fitheid blijft ongeveer gelijk (binnen 2 punten). Je verliest niets, maar je lichaam krijgt ook geen extra prikkel om beter te worden.</li>' +
+    '<li><b style="display:inline">Afbouw</b>: je fitheid daalt meer dan 2 punten. Na een drukke periode, bij ziekte of vlak voor een wedstrijd is dat normaal; duurt het lang, bespreek het dan met je trainer.</li>' +
+    '<li><b style="display:inline">Zo verder</b> = de geplande trainingen van de komende weken × wat jij de laatste 4 weken van het plan deed (' + fmt(p.r, 2) + '). <b style="display:inline">+1 training/week</b> = daarbovenop één training zoals jouw gemiddelde (' + fmt(p.perSes, 0) + ').</li>' +
+    '<li>Fitheid meet belasting, geen prestatie. Rust hoort erbij: wie altijd maximaal belast, wordt moe in plaats van sterker.</li></ul></details>';
+  return h;
+}
+
+/* ---- fitheid, vermoeidheid en vorm: dezelfde grafiek als het dashboard (pmcGrafiek), breedte = beschikbare plaats.
+   Verschil: vormschaal minstens ±40 (dashboard ±30), zodat de rode zone onder −30 altijd te zien is; grenzen −10 en −30 staan erbij. ---- */
+function pmcSvg(J){
+  var vand = J.vand, tot = vand + 13, van = PMC_WEKEN ? Math.min(vand - 7 * PMC_WEKEN, tot - 27) : J.reeks[0].n;
+  var R = J.reeks.filter(function(r){ return r.n >= van; }), P = J.plReeks.filter(function(r){ return r.n >= van && r.n <= tot; });
+  if (!R.length) return '<p class="mu">Geen gegevens.</p>';
+  var bw0 = document.getElementById('inhoud'), W = Math.round(Math.max(340, Math.min(900, ((bw0 && bw0.clientWidth) || 672) - 32)));
+  var ml = 34, mr = 10, iw = W - ml - mr, H1 = W < 600 ? 170 : 210, H2 = W < 600 ? 84 : 96, gap = 26, mt = 12, H = mt + H1 + gap + H2 + 26;
+  var maxY = Math.max.apply(null, [10].concat(R.map(function(r){ return Math.max(r.ctl, r.atl); }), P.map(function(r){ return r.ctl; }))) * 1.1;
+  var maxL = Math.max.apply(null, [10].concat(R.map(function(r){ return r.L; })));
+  var tMax = Math.max.apply(null, [40].concat(R.map(function(r){ return Math.abs(r.tsb); })));
+  var sx = function(n){ return ml + (n - van) / (tot - van) * iw; }, sy = function(v){ return mt + H1 - v / maxY * H1; };
+  var t0 = mt + H1 + gap, ty = function(v){ return t0 + H2 / 2 - v / tMax * (H2 / 2); }, f1 = function(v){ return v.toFixed(1); };
+  var pts = function(l, k, y){ return l.map(function(r){ return f1(sx(r.n)) + ',' + f1(y(r[k])); }).join(' '); };
+  var s = '<svg class="pmc" viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="Fitheid, vermoeidheid en vorm">';
+  [0, .25, .5, .75, 1].forEach(function(f){ var v = maxY * f; s += '<line class="grid" x1="' + ml + '" x2="' + (ml + iw) + '" y1="' + f1(sy(v)) + '" y2="' + f1(sy(v)) + '"/><text x="' + (ml - 5) + '" y="' + f1(sy(v) + 4) + '" text-anchor="end">' + Math.round(v) + '</text>'; });
+  var bw = Math.max(1.5, iw / (tot - van) - 1.5);
+  R.forEach(function(r){ if (r.L > 0) s += '<rect x="' + f1(sx(r.n) - bw / 2) + '" y="' + f1(mt + H1 - r.L / maxL * H1 * 0.35) + '" width="' + f1(bw) + '" height="' + f1(r.L / maxL * H1 * 0.35) + '" fill="var(--beige)"><title>' + ddmm(r.n) + ': belasting ' + fmt(r.L, 0) + '</title></rect>'; });
+  s += '<polyline fill="none" stroke="var(--ctl)" stroke-width="1.6" stroke-dasharray="5 4" opacity=".75" points="' + pts(P, 'ctl', sy) + '"/>';
+  s += '<polyline fill="none" stroke="var(--atl)" stroke-width="1.8" points="' + pts(R, 'atl', sy) + '"/>';
+  s += '<polyline fill="none" stroke="var(--ctl)" stroke-width="2.6" points="' + pts(R, 'ctl', sy) + '"/>';
+  var l = R[R.length - 1]; s += '<circle cx="' + f1(sx(l.n)) + '" cy="' + f1(sy(l.ctl)) + '" r="4" fill="var(--ctl)"><title>fitheid ' + fmt(l.ctl, 1) + '</title></circle>';
+  s += '<text x="' + ml + '" y="' + (t0 - 8) + '" style="font-weight:bold">Vorm</text>';
+  s += '<rect x="' + ml + '" y="' + f1(ty(-10)) + '" width="' + iw + '" height="' + f1(Math.max(0, Math.min(ty(-30), t0 + H2) - ty(-10))) + '" fill="var(--warn-bg)" opacity=".6"/>';
+  if (ty(-30) < t0 + H2) s += '<rect x="' + ml + '" y="' + f1(ty(-30)) + '" width="' + iw + '" height="' + f1(t0 + H2 - ty(-30)) + '" fill="var(--bad-bg)" opacity=".6"/>';
+  [tMax, 0, -tMax].forEach(function(v){ s += '<line class="grid" x1="' + ml + '" x2="' + (ml + iw) + '" y1="' + f1(ty(v)) + '" y2="' + f1(ty(v)) + '"/><text x="' + (ml - 5) + '" y="' + f1(ty(v) + 4) + '" text-anchor="end">' + Math.round(v) + '</text>'; });
+  [-10, -30].forEach(function(v){ s += '<text x="' + (ml + iw - 3) + '" y="' + f1(ty(v) - 3) + '" text-anchor="end" style="font-size:10px">' + (v < 0 ? '−' : '') + Math.abs(v) + '</text>'; });   /* grenzen van de zones */
+  s += '<polyline fill="none" stroke="var(--tsb)" stroke-width="2" points="' + pts(R, 'tsb', ty) + '"/>';
+  var stap = Math.max(1, Math.ceil((tot - van) / 7 / Math.max(4, Math.floor(iw / 55))));
+  for (var n = van; n <= tot; n++) if (wdag(n) === 0 && Math.round((n - van) / 7) % stap === 0) s += '<text x="' + f1(sx(n)) + '" y="' + (H - 6) + '" text-anchor="middle">W' + isoWeek(n) + '</text>';
+  s += '<line x1="' + f1(sx(vand)) + '" x2="' + f1(sx(vand)) + '" y1="' + mt + '" y2="' + (t0 + H2) + '" stroke="var(--mu)" stroke-dasharray="3 3"/><text x="' + f1(sx(vand) + 4) + '" y="' + (mt + 10) + '">vandaag</text>';
+  /* testen (groen) en wedstrijden (blauw) */
+  var mk = {}, Pr = D.prest || {}, Wd = Pr.wed;
+  (Pr.testen || []).forEach(function(t){ if (t.maand || !t.d) return; var d = dnr(String(t.d).slice(0, 10)); if (d < van || d > tot) return;
+    (mk[d] = mk[d] || {t: false, l: []}).l.push((t.dist === 200 ? '200 m' : '2 km') + '-test ' + (t.dist === 200 ? wft(t.s) : wfs(t.s))); mk[d].t = true; });
+  if (Wd) (Wd.rij || []).forEach(function(r){ var c = Wd.wed[r.w] || {}, dd = r.d || c.van; if (!dd) return; var d = dnr(String(dd).slice(0, 10)); if (d < van || d > tot) return;
+    (mk[d] = mk[d] || {t: false, l: []}).l.push((c.plaats || c.reeks || 'wedstrijd') + ': ' + [r.boot, r.afst ? r.afst + ' m' : ''].filter(Boolean).join(' ') + (r.rank ? ' ' + r.rank + '/' + (r.nf || '?') : '')); });
+  Object.keys(mk).forEach(function(d){ var m = mk[d], xx = f1(sx(+d)), kl = m.t ? 'var(--ok)' : 'var(--blauw)', u = {}, lijst = m.l.filter(function(x){ return u[x] ? false : (u[x] = 1); });
+    s += '<g><title>' + esc(ddmm(+d) + ' · ' + lijst.join(' · ')) + '</title><line x1="' + xx + '" x2="' + xx + '" y1="' + mt + '" y2="' + (mt + H1) + '" stroke="' + kl + '" stroke-width="1.5" stroke-dasharray="2 3"/><circle cx="' + xx + '" cy="' + (mt + 6) + '" r="5" fill="' + kl + '"/></g>'; });
+  return s + '</svg>';
+}
+function blokPmc(J){
+  var tt = tsbTxt(J.tsb), keuze = [[8, '8 weken'], [16, '16 weken'], [0, 'heel ' + (D.jaar || 'jaar')]];
+  return '<h2 id="mijnvorm">Mijn vorm</h2><p>Vorm vandaag: <span class="pil ' + tt[0] + '">' + fmt(J.tsb, 0) + ' · ' + tt[1] + '</span> <span class="mu">fitheid ' + fmt(J.ctl, 0) + ' · vermoeidheid ' + fmt(J.atl, 0) + '</span></p>' +
+    '<div class="weergave" role="group" aria-label="Periode grafiek" style="margin:6px 0">' + keuze.map(function(k){ return '<button type="button" aria-pressed="' + (PMC_WEKEN === k[0]) + '" onclick="kiesPmc(' + k[0] + ')">' + k[1] + '</button>'; }).join('') + '</div>' +
+    '<div class="legende"><span><i class="bol" style="background:var(--ok)"></i>test</span><span><i class="bol" style="background:var(--blauw)"></i>wedstrijd</span>' +
+    '<span><i style="border-color:var(--ctl)"></i>fitheid (6 weken)</span><span><i style="border-color:var(--ctl);border-left-style:dotted"></i>fitheid volgens plan (gestreept)</span><span><i style="border-color:var(--atl)"></i>vermoeidheid (1 week)</span>' +
+    '<span><i style="border-color:var(--beige)"></i>belasting per dag</span><span><i style="border-color:var(--tsb)"></i>vorm: geel −10…−30 goed aan het trainen, rood onder −30 erg vermoeid</span></div>' +
+    '<div class="scroll">' + pmcSvg(J) + '</div>' +
+    '<details class="ex"><summary>Wat betekent dit?</summary><ul>' +
+    '<li><b style="display:inline">Fitheid</b> (blauw) = je gemiddelde belasting van de laatste 6 weken. De gestreepte lijn is je fitheid als je het schema van je groep volledig zou volgen.</li>' +
+    '<li><b style="display:inline">Vermoeidheid</b> (roze) = je gemiddelde belasting van de laatste week. Ze reageert snel: na een zware week schiet ze omhoog.</li>' +
+    '<li><b style="display:inline">Vorm</b> = fitheid − vermoeidheid (van gisteren). Boven 5: fris, goed voor een test of wedstrijd. Tussen −10 en −30 (geel): je traint goed door, normaal in een opbouwperiode. Onder −30 (rood): veel vermoeidheid, plan rust in en zeg het aan je trainer.</li>' +
+    '<li>Belasting = duur × hoe zwaar je de training vond (RPE); 100 = één uur aan drempeltempo. Zonder RPE wordt het plan of een typische waarde voor die soort training gebruikt: vul dus altijd je RPE in.</li></ul></details>';
+}
+
+/* ---- compliance ---- */
+function blokCompliance(J){
+  var C = J.compl, ws = Object.keys(J.W).map(Number).sort(function(a, b){ return b - a; }).slice(0, 6), hw = J.vand - wdag(J.vand);
+  var h = '<h2>Mijn compliance</h2><p class="mu">Hoeveel van de geplande trainingen van je groep je deed.</p><div class="tegels">' +
+    '<div class="tegel"><div class="k">Vorige week' + (C.l1 ? ' (W' + isoWeek(C.l1.w) + ')' : '') + '</div><div class="v">' + (C.l1 && C.l1.gelogd ? complPilM(C.l1.compl) : '<span class="pil p-grijs">' + (C.l1 ? 'niet gelogd' : '–') + '</span>') + '</div><div class="f">' + (C.l1 && C.l1.gelogd ? C.l1.u + ' van ' + C.l1.b + ' gedaan' : C.l1 ? 'niets ingevuld' : 'geen planning') + '</div></div>' +
+    '<div class="tegel"><div class="k">Laatste 4 weken</div><div class="v">' + complPilM(C.vier) + '</div><div class="f">' + C.u4 + ' van ' + C.b4 + ' gedaan</div></div>' +
+    '<div class="tegel"><div class="k">Seizoen ' + esc(D.jaar || '') + '</div><div class="v">' + complPilM(C.seizoen) + '</div><div class="f">' + C.u + ' van ' + C.b + ' gedaan</div></div>' +
+    '<div class="tegel"><div class="k">Extra trainingen</div><div class="v">' + C.extra + '</div><div class="f">niet gepland, wel ingevuld</div></div></div>';
+  if (ws.length) h += '<div class="scroll"><table><thead><tr><th>Week</th><th>Gedaan</th><th>Compliance</th><th>Belasting</th><th>Zwaarte t.o.v. plan</th></tr></thead><tbody>' +
+    ws.map(function(w){ var o = J.W[w], q = o.tp ? o.tu / o.tp : null, noot = [];
+      if (o.tc) noot.push(o.tc + ' te controleren'); if (o.nGeschrapt) noot.push(o.nGeschrapt + ' niet doorgegaan');
+      return '<tr><td>W' + isoWeek(w) + ' <span class="mu">' + ddmm(w) + '</span>' + (w === hw ? ' <span class="mu">(lopend)</span>' : '') + '</td>' +
+        '<td>' + (o.gelogd ? o.u + ' van ' + o.b + (o.ex ? ' <span class="mu">+ ' + o.ex + ' extra</span>' : '') : '<span class="pil p-grijs">niet gelogd</span>') + (noot.length ? '<div class="mu">' + esc(noot.join(' · ')) + '</div>' : '') + '</td>' +
+        '<td>' + (o.gelogd ? complPilM(o.compl, o.u + ' / (' + o.u + ' + ' + o.g + ')') : '–') + '</td>' +
+        '<td>' + (!o.gelogd || q == null ? '<span class="mu">–</span>' : '<span class="pil ' + (q >= 0.8 && q <= 1.2 ? 'p-ok' : q >= 0.5 && q <= 1.5 ? 'p-warn' : 'p-bad') + '">' + Math.round(q * 100) + ' % van het plan</span>') + '</td>' +
+        '<td>' + (o.dr == null ? '<span class="mu">–</span>' : dRpePil(o.dr)) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  h += '<details class="ex"><summary>Hoe wordt compliance berekend?</summary><ul>' +
+    '<li><b style="display:inline">Compliance = gedaan / (gedaan + gemist).</b> Groen vanaf 90 %, geel 60–89 %, oranje onder 60 %.</li>' +
+    '<li><b style="display:inline">Gedaan</b>: je vulde op de dag van een geplande training een training van dezelfde soort (water of land) in. Hoe lang of hoe zwaar, zie je bij Belasting en in de kalender.</li>' +
+    '<li><b style="display:inline">Gemist</b>: een geplande training zonder invoer, in een week waarin je wél iets invulde.</li>' +
+    '<li><b style="display:inline">Telt niet mee</b>: weken waarin je niets invulde (<i>niet gelogd</i>: dan weten we niet of je trainde), trainingen die je trainer als niet doorgegaan aanduidde' + (C.geschrapt ? ' (dit seizoen ' + C.geschrapt + ')' : '') + ', twijfelgevallen (<i>te controleren</i>: invoer een dag vroeger of later, of een onbekende soort) en trainingen van vandaag die je nog niet invulde.</li>' +
+    '<li><b style="display:inline">Extra trainingen</b> verhogen je compliance niet, maar tellen wel mee voor je belasting en fitheid.</li>' +
+    '<li><b style="display:inline">Belasting</b> = wat je deed (ook extra trainingen) tegenover wat gepland was. <b style="display:inline">Zwaarte</b> = je RPE tegenover de verwachte RPE van de geplande trainingen.</li>' +
+    '<li>Je kiest zelf wanneer je traint: een lagere compliance is op zich geen probleem. Ze helpt jou en je trainer zien of het schema bij je past. Training vergeten in te vullen of een verkeerde datum? Vul ze aan of verbeter ze via het formulier, dan telt ze mee.</li></ul></details>';
+  return h;
+}
+
+/* grafiek opnieuw tekenen als de breedte echt verandert (draaien van de gsm), niet bij het verschuiven van de adresbalk */
+var PMC_BREED = window.innerWidth, PMC_T = null;
+window.addEventListener('resize', function(){ clearTimeout(PMC_T); PMC_T = setTimeout(function(){
+  if (Math.abs(window.innerWidth - PMC_BREED) < 40 || !D || !D.pj) return; PMC_BREED = window.innerWidth; teken(); }, 300); });
 
 /* ---------- laden: v8 (11/11/2026) eerst de laatst geladen gegevens, dan de nieuwe op de achtergrond ----------
    De ophaling langs de backend duurt enkele seconden. Daarom: bewaarde gegevens (per account, deze browser) meteen tonen,
