@@ -1420,7 +1420,7 @@ function appStart(f){
 /* B3d: sneller wisselen van week – na het laden van een week worden de vorige en volgende week alvast opgehaald (één gebundelde aanroep,
    max. 1 min geldig, gewist na elke wijziging). Afmelden en wisselen van pagina via de navigatiebalk. */
 /* B3i: planning (geen sportersgegevens) max. 7 dagen op dit toestel; meteen tonen, daarna gecontroleerd; opslaan pas na de controle */
-KKYKC.toestel({ fns: ['getPlannerData', 'getJaarData', 'getBibliotheek'], dagen: 7 });   /* B3j: + bibliotheek van het trainersportaal (plannen) */
+KKYKC.toestel({ fns: ['getPlannerData', 'getJaarData', 'getBibliotheek', 'getTrainerslog'], dagen: 7 });   /* B3j: + bibliotheek van het trainersportaal (plannen) · B8: + trainerslog (zoals het dashboard) */
 var appLaadOud = laad;
 laad = async function (jaar, week, volledig) { const r = await appLaadOud.apply(this, arguments); appBuren(); return r; };
 function appBuren(){
@@ -1517,6 +1517,9 @@ naWijziging = function(sessies){
       gs("plannerKoppelPlan", { cel: s.cel, d: s.datum, groep: s.groep, dd: s.dagdeel || "", plan: k.plan }).then(function(r){ PP.bib.koppelingen = r.koppelingen || PP.bib.koppelingen; }, function(){}); });
 };
 appStart(function(){ plannerStart(); ppLaad().then(function(){ if (S.d) toonHoofd(); }, function(){}); });
+/* B8: trainerslog na het laden van een week (per jaar één keer) */
+var tlpLaadOud = laad;
+laad = async function () { var r = await tlpLaadOud.apply(this, arguments); tlpLaad(); return r; };
 /* B6b (A3, 21/11/2026): na het bewaren van een weekvoorstel/mesocyclus zet de server de koppelingen van plannen over naar de nieuwe sessies (zelfde dag,
    dagdeel en groep). Hier: koppelingen bijwerken (kaart "Plan: titel") en melden wat niet overgezet kon worden. Geen gegevens van gebruikers in de melding. */
 function ppNaVoorstel(x){
@@ -1528,5 +1531,51 @@ function ppNaVoorstel(x){
   if (x.bevestigd) t.push(x.bevestigd + " vervangen concept(en) had(den) al een bevestiging in het trainerslog.");
   if (t.length) melding(t.join(" "), x.verloren || x.bevestigd ? "fout" : "");
 }
+
+
+/* ---------- B8 (22/11/2026): aanpassingen van trainers (trainersportaal) in de planner ----------
+   Per voorbije sessie een label (✓ bevestigd · aangepast · niet doorgegaan + reden) en in de sessie-editor wat de trainer aanpaste.
+   Bewust NIET in de week-TSS, de vergelijking met vorige week, de evaluatie of de generator: de planner beoordeelt en bouwt het plan;
+   de uitvoering (met deze aanpassingen) staat in het dashboard en in Mijn trainingen. */
+var TLP = { jaar: null, items: {}, laden: null };
+var TLP_STATUS = { ok: "zoals gepland", aangepast: "aangepast", niet_doorgegaan: "niet doorgegaan" };
+var TLP_REDENEN = { weer: "weer", water: "water", opkomst: "te weinig sporters", ziek_blessure: "ziekte/blessure", materiaal: "materiaal/lokaal", te_zwaar: "te zwaar", te_licht: "te licht", tijd: "tijdgebrek", evenement: "evenement/wedstrijd", keuze: "keuze trainer", andere: "andere" };
+function tlpLaad(){
+  if (!S.jaar || (TLP.jaar === S.jaar && !TLP.laden) || TLP.laden === S.jaar) return;
+  var j = S.jaar; TLP.laden = j;
+  gs("getTrainerslog", j).then(function(r){ if (S.jaar !== j) return; TLP.jaar = j; TLP.items = (r && r.items) || {}; TLP.laden = null; if (S.d && S.view === "week") toonHoofd(); },
+    function(){ TLP.laden = null; });
+}
+function tlpItem(s){ return s && s.cel && TLP.jaar === S.jaar ? TLP.items[s.cel] || null : null; }
+function tlpWie(a){ return String((a && a.door) || "").split("@")[0]; }
+var tlpKaartOud = kaartHtml;
+kaartHtml = function(s){
+  var h = tlpKaartOud.apply(this, arguments), a = tlpItem(s); if (!a) return h;
+  var t = a.status === "ok" ? "✓ bevestigd" : a.status === "niet_doorgegaan" ? "niet doorgegaan" : "aangepast", kl = a.status === "ok" ? "p-ok" : a.status === "niet_doorgegaan" ? "p-bad" : "p-warn";
+  var tip = "Trainer" + (tlpWie(a) ? " " + tlpWie(a) : "") + ": " + (TLP_STATUS[a.status] || a.status) + (a.reden ? " · " + (TLP_REDENEN[a.reden] || a.reden) : "") + (a.opm ? " · " + a.opm : "");
+  var u = a.uit || {}, wat = a.status === "aangepast" ? [u.duur != null ? u.duur + " min" : "", u.km != null ? String(u.km).replace(".", ",") + " km" : "", u.doel || ""].filter(Boolean).join(" · ") : "";
+  var i = h.lastIndexOf("</div>");
+  return h.slice(0, i) + "<div class='klein' style='margin-top:3px'><span class='pil " + kl + "' title='" + esc(tip) + "'>" + esc(t) + (a.reden ? " · " + esc(TLP_REDENEN[a.reden] || a.reden) : "") + "</span>" +
+    (wat ? " <span class='klein'>uitgevoerd: " + esc(wat) + "</span>" : "") + "</div>" + h.slice(i);
+};
+var tlpEditorOud = openEditor;
+openEditor = function(s0){
+  tlpEditorOud.apply(this, arguments);
+  var a = tlpItem(s0); if (!a) return;
+  var ovl = document.querySelectorAll(".ovl"), o = ovl[ovl.length - 1], kop = o && o.querySelector(".dlg h2"); if (!kop) return;
+  var u = a.uit || {}, rij = [];
+  if (a.status === "aangepast"){
+    if (u.inhoud) rij.push("Inhoud: " + u.inhoud);
+    if (u.duur != null) rij.push("Duur: " + u.duur + " min");
+    if (u.km != null) rij.push("Afstand: " + String(u.km).replace(".", ",") + " km");
+    if (u.doel) rij.push("Doel: " + u.doel);
+  }
+  var b = document.createElement("div"); b.className = "melding"; b.id = "e-tlblok";
+  b.innerHTML = "<b>Trainerslog" + (tlpWie(a) ? " (" + esc(tlpWie(a)) + ", " + esc(String(a.tijd || "").replace("T", " ")) + ")" : "") + ":</b> " + esc(TLP_STATUS[a.status] || a.status) +
+    (a.reden ? " · " + esc(TLP_REDENEN[a.reden] || a.reden) : "") + (rij.length ? "<br>" + rij.map(esc).join("<br>") : "") + (a.opm ? "<br>💬 " + esc(a.opm) : "") +
+    "<div class='klein'>" + (a.status === "niet_doorgegaan" ? "Telt niet mee voor compliance en belasting (dashboard, Mijn trainingen)." : a.status === "aangepast" ? "Dashboard en Mijn trainingen rekenen met de aangepaste waarden." : "") +
+    " Week-TSS, evaluatie en generator in de planner blijven op het plan.</div>";
+  kop.parentNode.insertBefore(b, kop.nextSibling);
+};
 </script>
 </body></html>

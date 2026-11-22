@@ -62,6 +62,7 @@ details.ex{margin:6px 0;border:1px solid var(--li,#ddd);border-radius:8px;paddin
 .c-oranje{border-color:var(--oranje);background:var(--oranje-bg)}.c-extra{border-color:var(--blauw);background:var(--blauw-bg)}
 .c-niet{border-color:var(--mu);background:transparent;opacity:.75}
 .c-gepland{border:1px dashed var(--beige);border-left:4px solid var(--beige);background:transparent}
+.c-weg{border-color:var(--bad);background:transparent;opacity:.8}.c-weg b{text-decoration:line-through}   /* B8: niet doorgegaan (trainer) */
 .legende{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:var(--mu);margin:4px 0 8px}
 .legende i{display:inline-block;width:12px;height:10px;border-left:4px solid;margin-right:4px;vertical-align:middle;border-radius:2px}
 .vgl{width:100%;font-size:14px;margin-top:6px}.vgl th{color:var(--mu);font-weight:normal;width:34%}
@@ -238,6 +239,7 @@ function koppel(){
     x.p.sort(function(a, b){ return String(a.dd).localeCompare(String(b.dd)); });
     x.p.forEach(function(p){
       var past = function(t){ return !!t.cat && (t.cat === p.cat || p.cat === 'overig'); };   /* soort onbekend: niet koppelen (zoals het dashboard) */
+      if (tlN(p)){ p.log = null; p.st = {c: 'c-weg', t: 'niet doorgegaan' + tlReden(p)}; return; }   /* B8 */
       var kand = vrij.filter(past), j = -1;
       if (p.dd) kand.forEach(function(t){ if (j < 0 && t.dd === p.dd) j = vrij.indexOf(t); });
       if (j < 0 && kand.length) j = vrij.indexOf(kand[0]);
@@ -276,7 +278,7 @@ function kalender(){
   van -= wdag(van); tot += 6 - wdag(tot); KAL = [];
   var h = '<div class="legende"><span><i style="border-color:var(--ok)"></i>80–120 % van het plan</span><span><i style="border-color:var(--warn)"></i>50–79 % of 121–150 %</span>' +
     '<span><i style="border-color:var(--oranje)"></i>minder of meer</span><span><i style="border-color:var(--blauw)"></i>extra training</span>' +
-    '<span><i style="border-color:var(--mu)"></i>niet ingevuld</span><span><i style="border-color:var(--beige);border-style:dashed"></i>gepland</span></div>';
+    '<span><i style="border-color:var(--bad)"></i>niet doorgegaan (trainer)</span><span><i style="border-color:var(--mu)"></i>niet ingevuld</span><span><i style="border-color:var(--beige);border-style:dashed"></i>gepland</span></div>';
   h += '<div class="kal">';
   for (var ws = van; ws <= tot; ws += 7){
     var wi = D.weekinfo[isoWeek(ws)] || {};
@@ -286,7 +288,7 @@ function kalender(){
       var x = perDag[n] || {p: [], extra: []}, c = '<div class="kd' + (n === vand ? ' vandaag' : '') + '"><span class="dnr">' + ddmm(n) + '</span>';
       x.p.forEach(function(p){
         var k = KAL.push({p: p}) - 1;
-        c += '<button class="wo ' + p.st.c + '" onclick="kalDetail(' + k + ')" title="' + esc(p.st.t + ': ' + (p.inh || '')) + '"><b>' + esc(p.dd || (p.type || 'Training')) + ' ' + esc(kort(p)) + '</b>' +
+        c += '<button class="wo ' + p.st.c + '" onclick="kalDetail(' + k + ')" title="' + esc(p.st.t + (tlA(p) ? ' · aangepast door de trainer' : '') + ': ' + (p.inh || '')) + '"><b>' + esc(p.dd || (p.type || 'Training')) + ' ' + esc(kort(p)) + (tlA(p) ? ' ✎' : '') + '</b>' +
           (p.doel ? '<span class="dl" style="background:' + kleur(p.doel) + '"></span>' : '') + '<span class="lang">' + esc(p.inh || '') + '</span></button>';
       });
       (x.extra || []).forEach(function(t){
@@ -310,7 +312,7 @@ function snel(km, mi){ return km && mi ? km / (mi / 60) : null; }
 function kalDetail(k){
   var it = KAL[k], p = it.p || null, e = p ? p.log : it.t, h = '';
   if (p){
-    h += '<h3>' + esc(datum(p.d)) + (p.dd ? ' · ' + esc(p.dd) : '') + '</h3><div class="mu">' + esc(p.type || '') + (p.type ? ' · ' : '') + esc(p.st.t) + '</div>' + chip(p.i);
+    h += '<h3>' + esc(datum(p.d)) + (p.dd ? ' · ' + esc(p.dd) : '') + '</h3><div class="mu">' + esc(p.type || '') + (p.type ? ' · ' : '') + esc(p.st.t) + '</div>' + chip(p.i) + tlBlok(p);
   } else h += '<h3>' + esc(datum(e.d)) + (e.dd ? ' · ' + esc(e.dd) : '') + '</h3><div class="mu">Extra training (niet gepland voor je groep op deze dag)</div>';
   if (p && e){
     var ok = e.kmOk !== false, rij = function(l, g, u, v){ return '<tr><th scope="row">' + l + '</th><td>' + g + '</td><td>' + u + '</td><td>' + (v || '') + '</td></tr>'; };
@@ -330,7 +332,7 @@ function kalDetail(k){
     h += '<div class="mu" style="margin-top:6px">Verwachte RPE = de RPE die past bij de geplande belasting per uur. ΔRPE vanaf ±' + fmt(T().delta_rpe, 1) + ' = duidelijk zwaarder of lichter dan gepland. 100 TSS = 1 uur op drempel.</div>';
   } else if (p){
     h += planBlok(p, false);
-    h += p.st.c === 'c-niet' ? '<div class="blok mu">Niets ingevuld voor deze training. Toch getraind? Vul ze nog in via het formulier; daarna zie je hier de vergelijking met het plan.</div>'
+    h += tlN(p) ? '<div class="blok mu">Deze training ging niet door. Ze telt niet mee als gemist. Trainde je die dag toch, dan staat je invoer bij de extra trainingen.</div>' : p.st.c === 'c-niet' ? '<div class="blok mu">Niets ingevuld voor deze training. Toch getraind? Vul ze nog in via het formulier; daarna zie je hier de vergelijking met het plan.</div>'
                              : '<div class="blok mu">Na het invullen zie je hier de vergelijking met het plan (duur, afstand, belasting en RPE).</div>';
   } else {
     var rows = [['Soort', esc([e.soort, e.cat && '(' + e.cat + ')'].filter(Boolean).join(' '))], ['Afstand', e.afstand ? esc(e.afstand) : ''], ['Tijd', e.tijd ? esc(e.tijd) : ''],
@@ -373,7 +375,7 @@ function lijst(){
   var h = '<h2>Komende 2 weken</h2>', vand = D.vandaag, n = 0;
   D.plan.forEach(function(p, i){
     if (p.d < vand) return; n++;
-    h += '<div class="dag"><b>' + esc(datum(p.d)) + (p.dd ? ' · ' + esc(p.dd) : '') + '</b>' + chip(i) +
+    h += '<div class="dag"><b>' + esc(datum(p.d)) + (p.dd ? ' · ' + esc(p.dd) : '') + '</b>' + chip(i) + tlPil(p) +
       '<div class="inh">' + esc(p.inh) + (extraTekst(p) ? '<br>' + esc(extraTekst(p)) : '') + '</div>' + extraBlok(p) +
       (p.duur ? '<div class="mu">± ' + Math.round(p.duur) + ' min' + (p.km ? ' · ± ' + String(Math.round(p.km * 10) / 10).replace('.', ',') + ' km' : '') + '</div>' : '') + '</div>';
   });
@@ -453,7 +455,7 @@ function blokVorm(){
 function blokWeken(){
   var perDag = koppel(), vand = dnr(D.vandaag), wk = {};
   Object.keys(perDag).forEach(function(k){ var n = Number(k); if (n > vand) return; var w = n - wdag(n), x = perDag[k], o = wk[w] = wk[w] || {gp: 0, gd: 0, tp: 0, tu: 0, dr: []};
-    x.p.forEach(function(p){ o.gp++; if (p.log) o.gd++; if (p.tss != null) o.tp += p.tss; if (p.log && p.log.b && p.log.b.l != null) o.tu += p.log.b.l; if (p.log && p.log.dRpe != null) o.dr.push(p.log.dRpe); });
+    x.p.forEach(function(p){ if (tlN(p)) return; o.gp++; if (p.log) o.gd++; if (p.tss != null) o.tp += p.tss; if (p.log && p.log.b && p.log.b.l != null) o.tu += p.log.b.l; if (p.log && p.log.dRpe != null) o.dr.push(p.log.dRpe); });
     (x.extra || []).forEach(function(t){ if (t.b && t.b.l != null) o.tu += t.b.l; o.ex = (o.ex || 0) + 1; }); });
   var ws = Object.keys(wk).map(Number).sort(function(a, b){ return b - a; }).slice(0, 5);
   if (!ws.length) return '';
@@ -717,6 +719,30 @@ function blokCompliance(J){
 var PMC_BREED = window.innerWidth, PMC_T = null;
 window.addEventListener('resize', function(){ clearTimeout(PMC_T); PMC_T = setTimeout(function(){
   if (Math.abs(window.innerWidth - PMC_BREED) < 40 || !D || !D.pj) return; PMC_BREED = window.innerWidth; teken(); }, 300); });
+
+/* ---------- B8 (22/11/2026): aanpassingen van de trainer (trainersportaal) op kalender, lijst en detail ----------
+   De server (mijnData) legt het trainerslog al over het plan: p.tl = {s: 'ok'|'n'|'a', r: reden, inh: wat er gedaan werd}, p.o = oorspronkelijke duur/km;
+   zones en duur zijn dan al aangepast, dus belasting en verwachte RPE rekenen met wat er echt gepland/gedaan werd (zoals het dashboard). */
+var TL_REDEN_TXT = {weer: 'weer', water: 'water', opkomst: 'te weinig sporters', materiaal: 'materiaal/lokaal', te_zwaar: 'te zwaar', te_licht: 'te licht', tijd: 'tijdgebrek', evenement: 'evenement/wedstrijd', keuze: 'keuze trainer'};
+function tlN(p){ return !!(p && p.tl && p.tl.s === 'n'); }
+function tlA(p){ return !!(p && p.tl && p.tl.s === 'a'); }
+function tlReden(p){ var r = p && p.tl && TL_REDEN_TXT[p.tl.r]; return r ? ' · ' + r : ''; }
+function tlPil(p){
+  if (!p || !p.tl) return '';
+  return p.tl.s === 'n' ? ' <span class="pil p-bad">niet doorgegaan' + esc(tlReden(p)) + '</span>' : p.tl.s === 'a' ? ' <span class="pil p-warn">aangepast' + esc(tlReden(p)) + '</span>' : ' <span class="pil p-ok">✓ zoals gepland</span>';
+}
+function tlBlok(p){
+  if (!p || !p.tl) return '';
+  var o = p.o || {}, w = [];
+  if (p.tl.s === 'a'){
+    if (o.duur && p.duur !== o.duur) w.push('duur ' + fmt(o.duur, 0) + ' → ' + fmt(p.duur, 0) + ' min');
+    if (o.km != null && p.km != null && Math.abs(p.km - o.km) >= 0.05) w.push('afstand ' + fmt(o.km, 1) + ' → ' + fmt(p.km, 1) + ' km');
+  }
+  var t = p.tl.s === 'n' ? 'Deze training ging niet door' + (p.tl.r ? ' (' + (TL_REDEN_TXT[p.tl.r] || '') + ')' : '') + '.'
+        : p.tl.s === 'a' ? 'De trainer paste deze training aan' + (p.tl.r ? ' (' + (TL_REDEN_TXT[p.tl.r] || '') + ')' : '') + '.' : 'De trainer bevestigde: zoals gepland.';
+  return '<div class="blok" style="border-left:4px solid var(--' + (p.tl.s === 'n' ? 'bad' : p.tl.s === 'a' ? 'warn' : 'ok') + ');padding-left:8px"><b>Trainer</b>' + esc(t) +
+    (p.tl.inh ? '<div class="inh">Gedaan: ' + esc(p.tl.inh) + '</div>' : '') + (w.length ? '<div class="mu">' + esc(w.join(' · ')) + '. De vergelijking hieronder gebruikt de aangepaste waarden.</div>' : '') + '</div>';
+}
 
 /* ---------- laden: v8 (11/11/2026) eerst de laatst geladen gegevens, dan de nieuwe op de achtergrond ----------
    De ophaling langs de backend duurt enkele seconden. Daarom: bewaarde gegevens (per account, deze browser) meteen tonen,
