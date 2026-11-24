@@ -1,5 +1,8 @@
 /* api.js – KKYKC-app (B0, 18/11/2026; B4 19/11: service worker + melding nieuwe versie; B3c 19/11: navigatiebalk, rollen, voorladen in één aanroep, tijden in de console). Aanmelden met Google (enkel naam/e-mail, geen Drive) + aanroepen naar de API.
    Aanmeldbewijs en rol(len) in sessionStorage (weg bij sluiten van het tabblad of bij afmelden).
+   B9 (24/11/2026): keuze "Aangemeld blijven" onder de Google-knop → de API geeft een eigen sessiebewijs (30 dagen, schuift op bij gebruik, max. 180 dagen)
+   dat ook in localStorage staat ('kkykc_sessie'), zodat de app na het sluiten aangemeld blijft. Afmelden wist het; 'Afmelden op al mijn toestellen' maakt
+   alle bewijzen van het account ongeldig. Zonder vinkje: zoals vroeger (enkel dit tabblad).
    B3i (20/11/2026): wat de pagina toelaat (KKYKC.toestel) ook op het toestel (IndexedDB 'kkykc-toestel', per account, gewist bij Afmelden): meteen tonen,
    op de achtergrond controleren met de versie v (server antwoordt {zelfde} zonder gegevens), tot dan geen wijzigingen. Leesaanroepen: 2× opnieuw bij drukte. */
 (function () {
@@ -8,7 +11,17 @@
   var SLEUTEL = 'kkykc_token', ROL = 'kkykc_rollen', token = null, bijAanmelden = [], VOOR = {};
   function exp(t) { try { var p = t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'); return JSON.parse(atob(p + '==='.slice((p.length + 3) % 4))).exp * 1000; } catch (e) { return 0; } }
   function geldig(t) { return !!t && exp(t) > Date.now() + 60000; }
+  var SESSIE = 'kkykc_sessie', BLIJF = 'kkykc-blijf';
+  function isSessie(t) { return !!t && t.indexOf('kkykc1.') === 0; }
+  function blijfMag() { try { return localStorage.getItem(BLIJF) === 'ja'; } catch (e) { return false; } }
   try { var s = sessionStorage.getItem(SLEUTEL); if (geldig(s)) token = s; else sessionStorage.removeItem(SLEUTEL); } catch (e) {}
+  if (!token) { try { var s2 = localStorage.getItem(SESSIE); if (geldig(s2)) { token = s2; sessionStorage.setItem(SLEUTEL, s2); } else localStorage.removeItem(SESSIE); } catch (e) {} }   /* B9 */
+  function zetSessie(t) {   /* B9: sessiebewijs van de server (nieuw of vernieuwd) – zelfde account, dus geen gegevens wissen */
+    if (!isSessie(t) || !geldig(t)) return;
+    var rol = null; try { var c = JSON.parse(sessionStorage.getItem(ROL) || 'null'); if (c && token && c.t === token.slice(-24)) rol = c.r; } catch (e) {}
+    token = t; clearTimeout(vernieuwT);
+    try { sessionStorage.setItem(SLEUTEL, t); localStorage.setItem(SESSIE, t); if (rol) sessionStorage.setItem(ROL, JSON.stringify({ t: t.slice(-24), r: rol })); } catch (e) {}
+  }
 
   function zetToken(t) { token = t; geheugenWis(); try { sessionStorage.setItem(SLEUTEL, t); } catch (e) {} planVernieuwen();
     var a = acct(); if (a) tWis(function (k) { return k.indexOf(a + '|') !== 0; });   /* B3i: gegevens van een ander account weg */
@@ -32,12 +45,12 @@
     autoGedaan = true; try { google.accounts.id.prompt(); } catch (e) {}
   }
   function planVernieuwen() {   /* ±5 min voor het bewijs verloopt: stil een nieuw bewijs vragen (lukt het niet, dan vraagt de pagina later om aan te melden) */
-    clearTimeout(vernieuwT); if (!token) return;
+    clearTimeout(vernieuwT); if (!token || isSessie(token)) return;   /* B9: sessiebewijs vernieuwt de server zelf */
     var ms = exp(token) - Date.now() - 300000;
     vernieuwT = setTimeout(function () { if (token) autoAanmelden(true); }, Math.max(ms, 30000));
   }
   function uitloggen() {   /* aanmelding weg (verlopen of afmelden); de bewaarde gegevens op het toestel blijven enkel bij verlopen */
-    token = null; VOOR = {}; geheugenWis(); try { sessionStorage.removeItem(SLEUTEL); sessionStorage.removeItem(ROL); } catch (e) {}
+    token = null; VOOR = {}; geheugenWis(); try { sessionStorage.removeItem(SLEUTEL); sessionStorage.removeItem(ROL); localStorage.removeItem(SESSIE); } catch (e) {}
     var b = document.getElementById('kkykcBalk'), bl = document.getElementById('kkykcBalkL'); if (bl) bl.textContent = ''; if (b) b.removeAttribute('data-links');
   }
   /* ---------- B3i: bewaren op het toestel ---------- */
@@ -131,12 +144,24 @@
     knop: function (el) {
       if (!gisKlaar()) { setTimeout(function () { KKYKC.knop(el); }, 200); return; }
       google.accounts.id.renderButton(el, { theme: 'outline', size: 'large', text: 'signin_with', shape: 'pill', locale: 'nl' });
+      /* B9: keuze 'Aangemeld blijven' onder de knop (standaard uit; onthouden per toestel) */
+      if (!document.getElementById('kkykcBlijf') && el.parentNode) {
+        var l = document.createElement('label'); l.id = 'kkykcBlijfRij';
+        l.style.cssText = 'display:flex;gap:8px;align-items:flex-start;margin:10px 0 4px;cursor:pointer;font-size:14px;max-width:420px';
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'kkykcBlijf'; cb.style.marginTop = '3px'; cb.checked = blijfMag();
+        cb.onchange = function () { try { if (cb.checked) localStorage.setItem(BLIJF, 'ja'); else localStorage.removeItem(BLIJF); } catch (e) {} };
+        var sp = document.createElement('span'); sp.innerHTML = '<b>Aangemeld blijven</b> op dit toestel (30 dagen, verlengt bij gebruik).<br><span style="opacity:.75">Niet aanvinken op een gedeelde of geleende computer.</span>';
+        l.appendChild(cb); l.appendChild(sp); el.parentNode.insertBefore(l, el.nextSibling);
+      }
       autoAanmelden();
     },
     afmelden: function () {   /* Afmelden (knop): ook alles wat op dit toestel bewaard is, en niet meer automatisch aanmelden */
       uitloggen(); tWis(); clearTimeout(vernieuwT); try { localStorage.setItem(AUTO, 'uit'); } catch (e) {}
       try { google.accounts.id.disableAutoSelect(); } catch (e) {}
     },
+    /* B9: alle 'aangemeld blijven'-bewijzen van dit account ongeldig maken (ook op andere toestellen), daarna hier afmelden */
+    afmeldenOveral: function () { return KKYKC.api('sessieOveral').then(function () { KKYKC.afmelden(); }); },
+    aangemeldBlijvend: function () { return isSessie(token); },
     /* B3i: wat deze pagina op het toestel mag bewaren: { fns: [...], dagen: n, voorwaarde: function () → true/false } */
     toestel: function (b) { TST.beleid = b; },
     /* B3i: dashboard enkel op een eigen toestel (keuze per toestel; uitzetten wist de bewaarde dashboardgegevens) */
@@ -162,6 +187,7 @@
       }
       if (!geldig(token)) { var e0 = new Error('Je aanmelding is verlopen. Meld je opnieuw aan.'); e0.code = 'verlopen'; uitloggen(); return Promise.reject(e0); }
       var body = { fn: fn, args: args || [], token: token }; if (v) body.v = v;
+      if (!isSessie(token) && blijfMag()) body.blijf = true;   /* B9: Google-bewijs + keuze → de server geeft een sessiebewijs terug */
       var poging = function (n) {
         /* text/plain = "eenvoudige" aanvraag → geen CORS-voorcontrole, die Apps Script niet beantwoordt */
         return fetch(CFG.apiUrl, { method: 'POST', body: JSON.stringify(body), redirect: 'follow' })
@@ -175,6 +201,7 @@
       };
       return poging(0).then(function (r) {
           var ms = Math.round(performance.now() - t0);
+          if (r.ok && r.sessie) zetSessie(r.sessie);   /* B9 */
           if (!r.ok) { if (r.code === 'token' || r.code === 'verlopen' || r.code === 'aud') uitloggen();
             if (r.code === 'rol' || r.code === 'test') { var a1 = acct(); if (a1) tWis(function (k) { return k.indexOf(a1 + '|') === 0; }); }   /* B3i: geen toegang meer → bewaarde gegevens weg */
             throw Object.assign(new Error(r.tekst || 'Fout'), { code: r.code, ms: ms }); }

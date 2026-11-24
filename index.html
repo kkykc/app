@@ -79,9 +79,11 @@
           <span class="zacht">Niet aanvinken op een gedeelde of geleende computer. Afmelden of uitvinken wist alles.</span></span></label>
       </div>
       <button class="lijn" id="afmelden">Afmelden</button>
+      <button class="lijn" id="afmeldenOveral" title="Ook op je andere toestellen waar je 'Aangemeld blijven' koos">Afmelden op al mijn toestellen</button>
+      <p class="zacht" id="blijfInfo" hidden>Je blijft op dit toestel aangemeld (30 dagen, verlengt bij gebruik).</p>
     </div>
   </div>
-  <p class="zacht" style="margin-top:18px"><span id="testversie">Testversie – nog niet verspreiden. · </span> <a href="privacy.html" style="color:inherit">Privacy</a> · versie <span id="versie">aaabdb76b2</span></p>
+  <p class="zacht" style="margin-top:18px"><span id="testversie">Testversie – nog niet verspreiden. · </span> <a href="privacy.html" style="color:inherit">Privacy</a> · versie <span id="versie">ffb3c945de</span></p>
 </main>
 <script>
 (function () {
@@ -104,6 +106,7 @@
       $('aanvraag').hidden = d.tester && d.rollen.length > 0; if ($('aanvraag').hidden === false) aanvraagToon(d);
       /* B3c: na het aanmelden meteen naar de startpagina van je rol (Mijn trainingen → dashboard → trainersportaal). Via 'Account' (?blijf=1) blijf je hier. */
       KKYKC.zetRollen(d.rollen);
+      $('blijfInfo').hidden = !KKYKC.aangemeldBlijvend();   /* B9 */
       $('balkTip').hidden = !(d.tester && d.rollen.length);
       $('eigenBlok').hidden = d.rollen.indexOf('hoofdtrainer') < 0; $('eigenToestel').checked = KKYKC.eigenToestel();   /* B3i */
       var start = KKYKC.startpagina(d.rollen); if (start && !/[?&]blijf=1/.test(location.search)) { location.replace(start); return; }
@@ -140,6 +143,10 @@
   KKYKC.opAanmelden(function () { $('melding').textContent = ''; laad(); });
   $('eigenToestel').onchange = function () { KKYKC.eigenToestel(this.checked); };
   $('afmelden').onclick = function () { KKYKC.afmelden(); toon(false); $('knop').textContent = ''; KKYKC.knop($('knop')); };
+  /* B9: alle 'aangemeld blijven'-bewijzen van dit account ongeldig (alle toestellen) */
+  $('afmeldenOveral').onclick = function () { var b = this; b.disabled = true;
+    KKYKC.afmeldenOveral().then(function () { b.disabled = false; toon(false); $('knop').textContent = ''; KKYKC.knop($('knop')); tekst($('melding'), 'Je bent afgemeld op al je toestellen.'); },
+      function (e) { b.disabled = false; tekst($('wie'), e.message, true); }); };
   if (KKYKC.aangemeld()) laad(); else KKYKC.knop($('knop'));
 })();
 </script>
